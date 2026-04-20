@@ -15,7 +15,7 @@ import {
 } from "@/lib/utils";
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { PinOff, Pin, Loader, RefreshCw, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
+import { PinOff, Pin, Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import YTPlayer from "./yt-player";
@@ -40,7 +40,7 @@ export default function VideoListPlayer({
   const [loopMode, setLoopMode] = useState<"none" | "all" | "one">("none");
   const [shuffledItems, setShuffledItems] = useState<VideoListInfo["items"]>([]);
   const [forceReplay, setForceReplay] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const [isPinned, setIsPinned] = useState(false);
   const [bookmarkedVideos, setBookmarkedVideos] = useState<Map<string, BookmarkData>>(new Map());
   const [skippedVideos, setSkippedVideos] = useState<Set<string>>(new Set());
@@ -220,48 +220,7 @@ export default function VideoListPlayer({
     }
   };
 
-  async function handleRefresh() {
-    if (!videolist) return; // Remove videos check since it's no longer needed
-    setIsRefreshing(true);
-    try {
-      let data;
-      if (playlistId) {
-        data = await parseYouTubePlaylist(`https://youtube.com/playlist?list=${playlistId}`);
-        if (data) {
-          await addOrUpdatePlaylist(data);
-        }
-      } else if (channelId) {
-        data = await parseYouTubeChannel(`https://youtube.com/channel/${channelId}/videos`);
-        if (data) {
-          await addOrUpdateChannel(data);
-        }
-      }
 
-      if (data) {
-        setVideoList(data);
-        // Keep current video if it still exists in the new playlist
-        if (currentVideoId && data.items.find((item) => item.id === currentVideoId)) {
-          // Current video still exists, keep it
-        } else {
-          // Current video was removed, switch to first video
-          // Find first non-skipped video
-          const firstNonSkipped = data.items.find(item => !skippedVideos.has(item.id));
-          setCurrentVideoId(firstNonSkipped?.id || null);
-        }
-        toast({
-          title: playlistId ? "Playlist refreshed from YouTube!" : "Channel refreshed from YouTube!"
-        });
-      }
-    } catch (e) {
-      toast({
-        title: playlistId ? "Failed to refresh playlist" : "Failed to refresh channel",
-        description: e instanceof Error ? e.message : "Unknown error",
-        variant: "destructive"
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  }
 
   async function handlePinWindow() {
     await window.electron.setAlwaysOnTop(!isPinned);
@@ -397,20 +356,7 @@ export default function VideoListPlayer({
               </TooltipContent>
             </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={handleRefresh} className="btn-icon">
-                  {isRefreshing ? (
-                    <Loader className="animate-spin" size={16} strokeWidth={1.5} />
-                  ) : (
-                    <RefreshCw size={16} strokeWidth={1.5} />
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Refresh {playlistId ? "Playlist" : "Channel"}</p>
-              </TooltipContent>
-            </Tooltip>
+
           </TooltipProvider>
 
         </div>
