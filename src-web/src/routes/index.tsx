@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import ThemeSwitcher from "@/components/theme-swither";
+import ThemeSwitcher from "@/components/theme-switcher";
 import Nav from "@/components/nav";
 
 export const Route = createFileRoute("/")({

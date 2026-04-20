@@ -179,7 +179,7 @@ export function disableInspectShortcut() {
 
 export async function getTheme() {
   const store = await getStore();
-  return (await store.get<string>("theme")) || "system";
+  return (await store.get<string>("theme")) || "light";
 }
 
 export async function setTheme(theme: string) {

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import Nav from '@/components/nav'
-import ThemeSwitcher from '@/components/theme-swither'
+import ThemeSwitcher from '@/components/theme-switcher'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/components/ui/sidebar'
 

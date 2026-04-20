@@ -18,7 +18,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { PinOff, Pin, Loader, RefreshCw, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
-import ThemeSwitcher from "./theme-swither";
+import ThemeSwitcher from "./theme-switcher";
 import { useSidebar } from "./ui/sidebar";
 import YTPlayer from "./yt-player";
 import { parseYouTubePlaylist } from "@/lib/playlist-parser";

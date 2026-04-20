@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import Nav from '@/components/nav'
-import ThemeSwitcher from '@/components/theme-swither'
+import ThemeSwitcher from '@/components/theme-switcher'
 import { useSidebar } from '@/components/ui/sidebar'
 
 export const Route = createFileRoute('/bookmarks')({
