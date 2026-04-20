@@ -433,16 +433,16 @@ export default function VideoListPlayer({
                     onClick={toggleShuffle}
                     className={cn("p-1 rounded hover:bg-accent", isShuffled && "text-primary")}
                   >
-                    <Shuffle strokeWidth={1.5} size={20} />
+                    <Shuffle strokeWidth={1.5} size={18} />
                   </button>
                   <button
                     onClick={toggleLoopMode}
                     className={cn("p-1 rounded hover:bg-accent", loopMode !== "none" && "text-primary")}
                   >
                     {loopMode === "one" ? (
-                      <Repeat1 strokeWidth={1.5} size={20} />
+                      <Repeat1 strokeWidth={1.5} size={18} />
                     ) : (
-                      <Repeat strokeWidth={1.5} size={20} />
+                      <Repeat strokeWidth={1.5} size={18} />
                     )}
                   </button>
                 </div>
