@@ -3,6 +3,22 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.0.4](https://github.com/limboy/localtube/compare/v1.0.3...v1.0.4) - 2026-04-21
+
+### Features
+
+- set application name to LocalTube in main process ([c42838c](https://github.com/limboy/localtube/commit/c42838cca1ada55b104101c34ca3bc2f38a96fc1))
+- add screenshot to README, ignore RELEASENOTES.md, and improve video player sidebar layout responsiveness ([ca28816](https://github.com/limboy/localtube/commit/ca28816d48016e06575e15e5ab4b3690d098e014))
+
+### Documentation
+
+- update CHANGELOG for v1.0.3 ([774d612](https://github.com/limboy/localtube/commit/774d612fc64c5daf39059a8818d85cd72d5cd113))
+
+### Chores
+
+- add MIT license and update README prerequisites and directory name ([09954b6](https://github.com/limboy/localtube/commit/09954b6d35105326534d2d0299aab9b52efd0484))
+- remove obsolete RELEASENOTES.md file ([fe968f6](https://github.com/limboy/localtube/commit/fe968f68bece3ac1927beed1798e6ed7d0427a77))
+
 ## [v1.0.3](https://github.com/limboy/localtube/compare/v1.0.2...v1.0.3) - 2026-04-20
 
 ### Features
