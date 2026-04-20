@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Bookmark, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Bookmark, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkOff } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import {
   DropdownMenu,
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/theme-provider";
 import {
+  removeBookmark,
   cn,
   addOrUpdatePlaylist,
   removePlaylist,
@@ -702,6 +703,19 @@ export default function AppSidebar() {
   };
 
 
+  const handleRemoveBookmark = async (videoId: string) => {
+    const confirmed = await window.electron.confirm("Are you sure to remove this bookmark?", {
+      title: "Remove Bookmark",
+      kind: "warning",
+      okLabel: "Remove"
+    });
+    if (confirmed) {
+      await removeBookmark(videoId);
+      await loadBookmarksData();
+    }
+  };
+
+
   const handleTabChange = async (value: string) => {
     if (value === 'playlists') {
       navigate({ to: '/playlist' });
@@ -953,18 +967,18 @@ export default function AppSidebar() {
                             const isActive = bookmarkMatch && activeBookmarkVideoId === bookmark.id;
 
                             return (
-                              <SidebarMenuButton
-                                key={bookmark.id}
-                                asChild
-                                className={cn(
-                                  "pr-2 group/bookmark h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
-                                  isActive ? "bg-sidebar-accent" : ""
-                                )}
-                              >
-                                <button
-                                  onClick={() => navigate({ to: '/bookmarks', search: { videoId: bookmark.id } })}
+                              <SidebarMenuItem key={bookmark.id} className="group/bookmark list-none">
+                                <SidebarMenuButton
+                                  asChild
+                                  className={cn(
+                                    "pr-2 h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                                    isActive ? "bg-sidebar-accent" : ""
+                                  )}
                                 >
-                                  <SidebarMenuItem className="select-none flex items-start gap-2 w-full flex-1">
+                                  <div
+                                    onClick={() => navigate({ to: '/bookmarks', search: { videoId: bookmark.id } })}
+                                    className="flex items-start gap-2 w-full cursor-default"
+                                  >
                                     <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
                                       {bookmark.thumbnail && (
                                         <img
@@ -978,21 +992,32 @@ export default function AppSidebar() {
                                       <span className="line-clamp-1 leading-tight mb-0.5">
                                         {bookmark.title}
                                       </span>
-                                      <div className="flex items-center gap-1.5 opacity-50 text-sm">
-                                        <span className="truncate max-w-20">
-                                          {bookmark.data?.title}
-                                        </span>
-                                        {bookmark.duration && (
-                                          <>
-                                            <span>•</span>
-                                            <span>{bookmark.duration}</span>
-                                          </>
-                                        )}
+                                      <div className="flex items-center justify-between opacity-50 text-sm font-normal">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <span className="truncate max-w-20">
+                                            {bookmark.data?.title}
+                                          </span>
+                                          {bookmark.duration && (
+                                            <>
+                                              <span>•</span>
+                                              <span>{bookmark.duration}</span>
+                                            </>
+                                          )}
+                                        </div>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveBookmark(bookmark.id);
+                                          }}
+                                          className="opacity-0 group-hover/bookmark:opacity-100 p-0.5 hover:bg-sidebar-border rounded flex-none transition-opacity ml-1"
+                                        >
+                                          <BookmarkOff size={14} className="hover:text-red-500 transition-colors" />
+                                        </button>
                                       </div>
                                     </div>
-                                  </SidebarMenuItem>
-                                </button>
-                              </SidebarMenuButton>
+                                  </div>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
                             );
                           })}
                           {bookmarks.length === 0 && (

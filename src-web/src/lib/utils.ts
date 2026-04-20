@@ -142,6 +142,14 @@ export async function saveBookmarks(bookmarks: Map<string, BookmarkData>) {
   await store.save();
 }
 
+export async function removeBookmark(videoId: string) {
+  const bookmarks = await loadBookmarks();
+  if (bookmarks.has(videoId)) {
+    bookmarks.delete(videoId);
+    await saveBookmarks(bookmarks);
+  }
+}
+
 export async function loadSkippedVideos(): Promise<Set<string>> {
   const store = await getStore();
   const skipped = await store.get<string[]>("skippedVideos") || [];

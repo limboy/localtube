@@ -1,11 +1,7 @@
-import { useToast } from "@/hooks/use-toast";
-import { parseYouTubeChannel } from "@/lib/channel-parser";
 import {
   loadPlaylist,
-  addOrUpdatePlaylist,
   cn,
   loadChannel,
-  addOrUpdateChannel,
   loadBookmarks,
   saveBookmarks,
   loadPlaylists,
@@ -20,7 +16,6 @@ import { Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "luc
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import YTPlayer from "./yt-player";
-import { parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { useNavigate } from "@tanstack/react-router";
 
 export default function VideoListPlayer({
@@ -34,7 +29,6 @@ export default function VideoListPlayer({
   showBookmarkedOnly?: boolean;
   initialVideoId?: string;
 }) {
-  const { toast } = useToast();
   const [videolist, setVideoList] = useState<VideoListInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
