@@ -58,10 +58,4 @@ export interface EnrichedBookmark {
 }
 
 
-export interface DividerInfo {
-  id: string;
-  type: 'divider';
-  createdAt: number;
-}
 
-export type SidebarItem = PlaylistInfo | ChannelInfo | DividerInfo;

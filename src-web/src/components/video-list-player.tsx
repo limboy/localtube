@@ -13,7 +13,7 @@ import {
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 
 import { Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
-import { Button } from "./ui/button";
+
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import YTPlayer from "./yt-player";

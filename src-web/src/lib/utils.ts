@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, DividerInfo, SidebarItem } from "@/types";
+import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, VideoItem } from "@/types";
 import { setupKonamiCode } from "./konami";
 import { getInnertube } from "./innertube";
 
@@ -233,7 +233,6 @@ export async function enrichBookmarks(
   }>();
 
   for (const playlist of playlists) {
-    if (isDivider(playlist)) continue;
     for (const item of playlist.items) {
       if (!videoLookup.has(item.id)) {
         videoLookup.set(item.id, { video: item, owner: playlist, type: 'playlist' });
@@ -242,7 +241,6 @@ export async function enrichBookmarks(
   }
 
   for (const channel of channels) {
-    if (isDivider(channel)) continue;
     for (const item of channel.items) {
       if (!videoLookup.has(item.id)) {
         videoLookup.set(item.id, { video: item, owner: channel, type: 'channel' });
@@ -271,171 +269,7 @@ export async function enrichBookmarks(
   return enriched.sort((a, b) => b.bookmarkedAt - a.bookmarkedAt);
 }
 
-export async function loadPlaylistsWithDividers(): Promise<SidebarItem[]> {
-  const store = await getStore();
-  const items = (await store.get<SidebarItem[]>("playlistsWithDividers")) || [];
-  return items;
-}
 
-export async function savePlaylistsWithDividers(items: SidebarItem[]) {
-  const store = await getStore();
-  await store.set("playlistsWithDividers", items);
-  await store.save();
-  window.dispatchEvent(new CustomEvent('store-updated'));
-}
-
-export async function loadChannelsWithDividers(): Promise<SidebarItem[]> {
-  const store = await getStore();
-  const items = (await store.get<SidebarItem[]>("channelsWithDividers")) || [];
-  return items;
-}
-
-export async function saveChannelsWithDividers(items: SidebarItem[]) {
-  const store = await getStore();
-  await store.set("channelsWithDividers", items);
-  await store.save();
-  window.dispatchEvent(new CustomEvent('store-updated'));
-}
-
-export async function addDividerAfterItem(itemId: string, type: 'playlist' | 'channel') {
-  const divider: DividerInfo = {
-    id: `divider-${Date.now()}`,
-    type: 'divider',
-    createdAt: Date.now()
-  };
-
-  if (type === 'playlist') {
-    await initializePlaylistsWithDividers();
-    const items = await loadPlaylistsWithDividers();
-    const itemIndex = items.findIndex(item => item.id === itemId);
-    if (itemIndex !== -1) {
-      items.splice(itemIndex + 1, 0, divider);
-      await savePlaylistsWithDividers(items);
-    }
-  } else {
-    await initializeChannelsWithDividers();
-    const items = await loadChannelsWithDividers();
-    const itemIndex = items.findIndex(item => item.id === itemId);
-    if (itemIndex !== -1) {
-      items.splice(itemIndex + 1, 0, divider);
-      await saveChannelsWithDividers(items);
-    }
-  }
-}
-
-export async function removeDivider(dividerId: string, type: 'playlist' | 'channel') {
-  if (type === 'playlist') {
-    const items = await loadPlaylistsWithDividers();
-    const filteredItems = items.filter(item => item.id !== dividerId);
-    await savePlaylistsWithDividers(filteredItems);
-  } else {
-    const items = await loadChannelsWithDividers();
-    const filteredItems = items.filter(item => item.id !== dividerId);
-    await saveChannelsWithDividers(filteredItems);
-  }
-}
-
-export async function initializePlaylistsWithDividers() {
-  const playlistsWithDividers = await loadPlaylistsWithDividers();
-  if (playlistsWithDividers.length === 0) {
-    const playlists = await loadPlaylists();
-    const initialItems = playlists.map(p => ({ ...p, type: 'playlist' as const }));
-    await savePlaylistsWithDividers(initialItems);
-  }
-}
-
-export async function initializeChannelsWithDividers() {
-  const channelsWithDividers = await loadChannelsWithDividers();
-  if (channelsWithDividers.length === 0) {
-    const channels = await loadChannels();
-    const initialItems = channels.map(c => ({ ...c, type: 'channel' as const }));
-    await saveChannelsWithDividers(initialItems);
-  }
-}
-
-export function isDivider(item: SidebarItem): item is DividerInfo {
-  return 'type' in item && item.type === 'divider';
-}
-
-export function isPlaylistItem(item: SidebarItem): item is PlaylistInfo {
-  return !isDivider(item);
-}
-
-export function isChannelItem(item: SidebarItem): item is ChannelInfo {
-  return !isDivider(item);
-}
-
-export async function syncPlaylistsWithDividers() {
-  const playlists = await loadPlaylists();
-  const playlistsWithDividers = await loadPlaylistsWithDividers();
-
-  // If no divider data exists, initialize with current playlists
-  if (playlistsWithDividers.length === 0) {
-    const initialItems = playlists.map(p => ({ ...p, type: 'playlist' as const }));
-    await savePlaylistsWithDividers(initialItems);
-    return initialItems;
-  }
-
-  const existingPlaylistIds = playlistsWithDividers.filter(item => !isDivider(item)).map(item => item.id);
-
-  const newPlaylists = playlists.filter(playlist => !existingPlaylistIds.includes(playlist.id));
-  const updatedPlaylists = playlists.filter(playlist => existingPlaylistIds.includes(playlist.id));
-
-  let syncedItems: SidebarItem[] = [];
-
-  for (const item of playlistsWithDividers) {
-    if (isDivider(item)) {
-      syncedItems.push(item);
-    } else {
-      const updatedPlaylist = updatedPlaylists.find(p => p.id === item.id);
-      if (updatedPlaylist) {
-        syncedItems.push({ ...updatedPlaylist, type: 'playlist' });
-      }
-    }
-  }
-
-  // Add new playlists at the end
-  syncedItems.push(...newPlaylists.map(p => ({ ...p, type: 'playlist' as const })));
-
-  await savePlaylistsWithDividers(syncedItems);
-  return syncedItems;
-}
-
-export async function syncChannelsWithDividers() {
-  const channels = await loadChannels();
-  const channelsWithDividers = await loadChannelsWithDividers();
-
-  // If no divider data exists, initialize with current channels
-  if (channelsWithDividers.length === 0) {
-    const initialItems = channels.map(c => ({ ...c, type: 'channel' as const }));
-    await saveChannelsWithDividers(initialItems);
-    return initialItems;
-  }
-
-  const existingChannelIds = channelsWithDividers.filter(item => !isDivider(item)).map(item => item.id);
-
-  const newChannels = channels.filter(channel => !existingChannelIds.includes(channel.id));
-  const updatedChannels = channels.filter(channel => existingChannelIds.includes(channel.id));
-
-  let syncedItems: SidebarItem[] = [];
-
-  for (const item of channelsWithDividers) {
-    if (isDivider(item)) {
-      syncedItems.push(item);
-    } else {
-      const updatedChannel = updatedChannels.find(c => c.id === item.id);
-      if (updatedChannel) {
-        syncedItems.push({ ...updatedChannel, type: 'channel' });
-      }
-    }
-  }
-
-  // Add new channels at the end
-  syncedItems.push(...newChannels.map(c => ({ ...c, type: 'channel' as const })));
-
-  await saveChannelsWithDividers(syncedItems);
-  return syncedItems;
-}
 export async function getVideoDescription(videoId: string): Promise<string> {
   const store = await getStore();
   const cache = (await store.get<Record<string, string>>("videoDescriptions")) || {};

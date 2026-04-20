@@ -48,67 +48,25 @@ import {
   addOrUpdateChannel,
   loadPlaylists,
   loadChannels,
-  enrichBookmarks,
-  savePlaylistsWithDividers,
-  saveChannelsWithDividers,
-  addDividerAfterItem,
-  removeDivider,
-  initializePlaylistsWithDividers,
-  initializeChannelsWithDividers,
-  syncPlaylistsWithDividers,
-  syncChannelsWithDividers,
-  isDivider
+  enrichBookmarks
 } from "@/lib/utils";
-import { PlaylistInfo, ChannelInfo, EnrichedBookmark, SidebarItem } from "@/types";
+import { PlaylistInfo, ChannelInfo, EnrichedBookmark } from "@/types";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { checkAllChannelsForUpdates, parseYouTubeChannel } from "@/lib/channel-parser";
 // Tabs removed
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 
-interface SortablePlaylistItemProps {
+
+interface PlaylistItemProps {
   playlist: PlaylistInfo;
   isActive: boolean;
   onPlaylistClick: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, id: string) => void;
 }
 
-function SortablePlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: SortablePlaylistItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: playlist.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
+function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: PlaylistItemProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onPlaylistClick(playlist.id);
@@ -125,10 +83,6 @@ function SortablePlaylistItem({ playlist, isActive, onPlaylistClick, onContextMe
     <SidebarMenuItem className="list-none w-full">
       <SidebarMenuButton key={playlist.id} asChild>
         <div
-          ref={setNodeRef}
-          style={style}
-          {...attributes}
-          {...listeners}
           className={cn(
             "pr-2 group/playlist w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
             isActive ? "bg-sidebar-accent" : ""
@@ -165,29 +119,14 @@ function SortablePlaylistItem({ playlist, isActive, onPlaylistClick, onContextMe
   );
 }
 
-interface SortableChannelItemProps {
+interface ChannelItemProps {
   channel: ChannelInfo;
   isActive: boolean;
   onChannelClick: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, id: string) => void;
 }
 
-function SortableChannelItem({ channel, isActive, onChannelClick, onContextMenu }: SortableChannelItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: channel.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
+function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: ChannelItemProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChannelClick(channel.id);
@@ -204,10 +143,6 @@ function SortableChannelItem({ channel, isActive, onChannelClick, onContextMenu 
     <SidebarMenuItem className="list-none w-full">
       <SidebarMenuButton key={channel.id} asChild>
         <div
-          ref={setNodeRef}
-          style={style}
-          {...attributes}
-          {...listeners}
           className={cn(
             "pr-2 group/channel w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
             isActive ? "bg-sidebar-accent" : ""
@@ -244,46 +179,13 @@ function SortableChannelItem({ channel, isActive, onChannelClick, onContextMenu 
   );
 }
 
-interface SortableDividerItemProps {
-  dividerId: string;
-  onContextMenu: (e: React.MouseEvent, id: string) => void;
-}
 
-function SortableDividerItem({ dividerId, onContextMenu }: SortableDividerItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: dividerId });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      onContextMenu={(e) => onContextMenu(e, dividerId)}
-      className="pr-2 w-full cursor-default shrink-0 mb-0.5 py-1 flex items-center justify-center group/divider"
-    >
-      <div className="w-full h-px bg-sidebar-border" />
-    </div>
-  );
-}
 
 export default function AppSidebar() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [playlists, setPlaylists] = useState<SidebarItem[]>([]);
-  const [channels, setChannels] = useState<SidebarItem[]>([]);
+  const [playlists, setPlaylists] = useState<PlaylistInfo[]>([]);
+  const [channels, setChannels] = useState<ChannelInfo[]>([]);
   const { theme, setTheme } = useTheme();
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
 
@@ -301,16 +203,7 @@ export default function AppSidebar() {
     await window.electron.setAlwaysOnTop(nextValue);
   };
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+
   const [refreshingPlaylists, setRefreshingPlaylists] = useState(false);
   const [refreshingChannels, setRefreshingChannels] = useState(false);
   const [refreshProgress, setRefreshProgress] = useState<{ current: number, total: number } | null>(null);
@@ -347,7 +240,7 @@ export default function AppSidebar() {
         setRefreshProgress({ current, total: totalCount });
       });
 
-      const playlistsData = await syncPlaylistsWithDividers();
+      const playlistsData = await loadPlaylists();
       setPlaylists(playlistsData);
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingPlaylists(false);
@@ -356,7 +249,7 @@ export default function AppSidebar() {
         setRefreshProgress({ current: actualPlaylists.length + current, total: totalCount });
       });
 
-      const channelsData = await syncChannelsWithDividers();
+      const channelsData = await loadChannels();
       setChannels(channelsData);
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingChannels(false);
@@ -371,17 +264,15 @@ export default function AppSidebar() {
   const refreshSidebarData = async () => {
     try {
       // Load everything and update locally
-      await initializePlaylistsWithDividers();
-      const pData = await syncPlaylistsWithDividers();
+      const pData = await loadPlaylists();
       setPlaylists(pData);
 
-      await initializeChannelsWithDividers();
-      const cData = await syncChannelsWithDividers();
+      const cData = await loadChannels();
       setChannels(cData);
 
       // Pass the already loaded/synced data to avoid redundant store gets
-      const actualP = pData.filter(i => !isDivider(i)) as PlaylistInfo[];
-      const actualC = cData.filter(i => !isDivider(i)) as ChannelInfo[];
+      const actualP = pData;
+      const actualC = cData;
       const bData = await enrichBookmarks(actualP, actualC);
       setBookmarks(bData);
     } catch (e) {
@@ -413,10 +304,10 @@ export default function AppSidebar() {
         });
         if (confirmed) {
           await removePlaylist(playlistId);
-          const updatedPlaylists = await syncPlaylistsWithDividers();
+          const updatedPlaylists = await loadPlaylists();
           setPlaylists(updatedPlaylists);
 
-          const actualPlaylists = updatedPlaylists.filter(item => !isDivider(item)) as PlaylistInfo[];
+          const actualPlaylists = updatedPlaylists;
           if (playlistMatch?.params.playlistId === playlistId && actualPlaylists.length > 0) {
             handlePlaylistClick(actualPlaylists[0].id);
           }
@@ -433,10 +324,10 @@ export default function AppSidebar() {
         });
         if (confirmed) {
           await removeChannel(channelId);
-          const updatedChannels = await syncChannelsWithDividers();
+          const updatedChannels = await loadChannels();
           setChannels(updatedChannels);
 
-          const actualChannels = updatedChannels.filter(item => !isDivider(item)) as ChannelInfo[];
+          const actualChannels = updatedChannels;
           if (channelMatch?.params.channelId === channelId && actualChannels.length > 0) {
             await handleChannelClick(actualChannels[0].id);
           }
@@ -444,24 +335,7 @@ export default function AppSidebar() {
             navigate({ to: '/channel' });
           }
         }
-      } else if (eventId.startsWith("add-divider-playlist-")) {
-        const playlistId = eventId.replace("add-divider-playlist-", "");
-        await addDividerAfterItem(playlistId, 'playlist');
-        await refreshSidebarData();
-      } else if (eventId.startsWith("add-divider-channel-")) {
-        const channelId = eventId.replace("add-divider-channel-", "");
-        await addDividerAfterItem(channelId, 'channel');
-        await refreshSidebarData();
-      } else if (eventId.startsWith("delete-divider-")) {
-        const dividerId = eventId.replace("delete-divider-", "");
-        const isPlaylistDivider = playlists.some(item => isDivider(item) && item.id === dividerId);
-        if (isPlaylistDivider) {
-          await removeDivider(dividerId, 'playlist');
-          await refreshSidebarData();
-        } else {
-          await removeDivider(dividerId, 'channel');
-          await refreshSidebarData();
-        }
+
       }
     });
 
@@ -494,8 +368,8 @@ export default function AppSidebar() {
     if (hasLoadedRef.current) return;
     if (playlists.length > 0 || channels.length > 0) {
       if (location.pathname === '/' || location.pathname === '/playlist' || location.pathname === '/channel') {
-        const firstPlaylist = playlists.find(item => !isDivider(item)) as PlaylistInfo | undefined;
-        const firstChannel = channels.find(item => !isDivider(item)) as ChannelInfo | undefined;
+        const firstPlaylist = playlists[0];
+        const firstChannel = channels[0];
         if (firstPlaylist) {
           handlePlaylistClick(firstPlaylist.id);
           hasLoadedRef.current = true;
@@ -514,8 +388,6 @@ export default function AppSidebar() {
     try {
       await window.electron.showContextMenu([
         { id: `view-playlist-in-browser-${playlistId}`, label: "View In Browser" },
-        { type: "separator" },
-        { id: `add-divider-playlist-${playlistId}`, label: "Add Divider" },
         { type: "separator" },
         { id: `delete-playlist-${playlistId}`, label: "Delete" }
       ]);
@@ -574,7 +446,7 @@ export default function AppSidebar() {
 
   const handlePlaylistClick = async (playlistId: string, fromBookmarks = false) => {
     await markPlaylistAsRead(playlistId);
-    const newPlaylists = await syncPlaylistsWithDividers();
+    const newPlaylists = await loadPlaylists();
     setPlaylists(newPlaylists);
     navigate({
       to: "/playlist/$playlistId",
@@ -602,7 +474,7 @@ export default function AppSidebar() {
 
   const handleChannelClick = async (channelId: string, fromBookmarks = false) => {
     await markChannelAsRead(channelId);
-    const newChannels = await syncChannelsWithDividers();
+    const newChannels = await loadChannels();
     setChannels(newChannels);
     navigate({
       to: "/channel/$channelId",
@@ -617,8 +489,6 @@ export default function AppSidebar() {
       await window.electron.showContextMenu([
         { id: `view-channel-in-browser-${channelId}`, label: "View In Browser" },
         { type: "separator" },
-        { id: `add-divider-channel-${channelId}`, label: "Add Divider" },
-        { type: "separator" },
         { id: `delete-channel-${channelId}`, label: "Delete" }
       ]);
     } catch (error) {
@@ -627,42 +497,7 @@ export default function AppSidebar() {
   }
 
 
-  async function dividerClickHandler(event: React.MouseEvent, dividerId: string) {
-    event.preventDefault();
-    try {
-      await window.electron.showContextMenu([
-        { id: `delete-divider-${dividerId}`, label: "Delete" }
-      ]);
-    } catch (error) {
-      console.error("Error creating divider context menu:", error);
-    }
-  }
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    if (playlists.some((item) => item.id === active.id)) {
-      const oldIndex = playlists.findIndex((item) => item.id === active.id);
-      const newIndex = playlists.findIndex((item) => item.id === over.id);
-
-      const newPlaylists = arrayMove(playlists, oldIndex, newIndex);
-      setPlaylists(newPlaylists);
-
-      await savePlaylistsWithDividers(newPlaylists);
-    } else if (channels.some((item) => item.id === active.id)) {
-      const oldIndex = channels.findIndex((item) => item.id === active.id);
-      const newIndex = channels.findIndex((item) => item.id === over.id);
-
-      const newChannels = arrayMove(channels, oldIndex, newIndex);
-      setChannels(newChannels);
-
-      await saveChannelsWithDividers(newChannels);
-    }
-  };
 
 
   const handleRemoveBookmark = async (videoId: string) => {
@@ -672,8 +507,8 @@ export default function AppSidebar() {
 
 
   const handleRefreshAll = async () => {
-    const pItemsCount = playlists.filter(p => !isDivider(p)).length;
-    const cItemsCount = channels.filter(c => !isDivider(c)).length;
+    const pItemsCount = playlists.length;
+    const cItemsCount = channels.length;
     const totalCount = pItemsCount + cItemsCount;
 
     setRefreshingPlaylists(true);
@@ -684,7 +519,7 @@ export default function AppSidebar() {
       await checkAllPlaylistsForUpdates((current) => {
         setRefreshProgress({ current, total: totalCount });
       });
-      const newPlaylists = await syncPlaylistsWithDividers();
+      const newPlaylists = await loadPlaylists();
       setPlaylists(newPlaylists);
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingPlaylists(false);
@@ -692,7 +527,7 @@ export default function AppSidebar() {
       await checkAllChannelsForUpdates((current) => {
         setRefreshProgress({ current: pItemsCount + current, total: totalCount });
       });
-      const newChannels = await syncChannelsWithDividers();
+      const newChannels = await loadChannels();
       setChannels(newChannels);
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingChannels(false);
@@ -719,7 +554,7 @@ export default function AppSidebar() {
                   <div className="w-26 shrink-0" />
                 </div>
                 <div className="flex items-center">
-                  {(playlists.filter(item => !isDivider(item)).length > 0 || channels.filter(item => !isDivider(item)).length > 0) ? (
+                  {(playlists.length > 0 || channels.length > 0) ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div
@@ -837,49 +672,24 @@ export default function AppSidebar() {
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="pr-2">
-                      {/* Combined Playlists and Channels */}
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <SortableContext
-                          items={playlists.map(p => p.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          {playlists.map((item) => {
-                            if (isDivider(item)) return <SortableDividerItem key={item.id} dividerId={item.id} onContextMenu={dividerClickHandler} />;
-                            const playlist = item as PlaylistInfo;
-                            return (
-                              <SortablePlaylistItem
-                                key={playlist.id}
-                                playlist={playlist}
-                                isActive={playlistMatch?.params.playlistId === playlist.id}
-                                onPlaylistClick={handlePlaylistClick}
-                                onContextMenu={playlistClickHandler}
-                              />
-                            );
-                          })}
-                        </SortableContext>
-                        <SortableContext
-                          items={channels.map(c => c.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          {channels.map((item) => {
-                            if (isDivider(item)) return <SortableDividerItem key={item.id} dividerId={item.id} onContextMenu={dividerClickHandler} />;
-                            const channel = item as ChannelInfo;
-                            return (
-                              <SortableChannelItem
-                                key={channel.id}
-                                channel={channel}
-                                isActive={channelMatch?.params.channelId === channel.id}
-                                onChannelClick={handleChannelClick}
-                                onContextMenu={channelClickHandler}
-                              />
-                            );
-                          })}
-                        </SortableContext>
-                      </DndContext>
+                      {playlists.map((playlist) => (
+                        <PlaylistItem
+                          key={playlist.id}
+                          playlist={playlist}
+                          isActive={playlistMatch?.params.playlistId === playlist.id}
+                          onPlaylistClick={handlePlaylistClick}
+                          onContextMenu={playlistClickHandler}
+                        />
+                      ))}
+                      {channels.map((channel) => (
+                        <ChannelItem
+                          key={channel.id}
+                          channel={channel}
+                          isActive={channelMatch?.params.channelId === channel.id}
+                          onChannelClick={handleChannelClick}
+                          onContextMenu={channelClickHandler}
+                        />
+                      ))}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
