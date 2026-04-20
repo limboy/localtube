@@ -11,7 +11,8 @@ function Index() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate({ to: "/playlist", replace: true });
+    // We let AppSidebar handle the initial navigation to the first collection.
+    // If no collections exist, it will stay here or we can handle fallback in AppSidebar.
   }, [navigate]);
 
   return (

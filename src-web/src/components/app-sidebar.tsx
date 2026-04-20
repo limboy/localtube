@@ -4,10 +4,12 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail
+  SidebarRail,
+  SidebarSeparator
 } from "@/components/ui/sidebar";
 import {
   Dialog,
@@ -60,12 +62,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 
 import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { checkAllChannelsForUpdates, parseYouTubeChannel } from "@/lib/channel-parser";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
+// Tabs removed
 import {
   DndContext,
   closestCenter,
@@ -123,44 +120,46 @@ function SortablePlaylistItem({ playlist, isActive, onPlaylistClick, onContextMe
   };
 
   return (
-    <SidebarMenuButton key={playlist.id} asChild>
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        className={cn(
-          "pr-2 group/playlist w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-          isActive ? "bg-sidebar-accent" : ""
-        )}
-        onMouseDown={handleMouseDown}
-      >
-        <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
-          <div className="flex items-center flex-1 gap-2">
-            {playlist.thumbnail ? (
-              <img
-                src={playlist.thumbnail}
-                alt=""
-                className="w-5 h-5 rounded object-cover shrink-0"
-              />
-            ) : (
-              <List size={16} className="shrink-0 text-muted-foreground" />
-            )}
-            <span className={cn(
-              "line-clamp-1",
-              playlist.unreadCount > 0 ? "font-bold" : "font-normal"
-            )}>
-              {playlist.title}
-            </span>
+    <SidebarMenuItem className="list-none w-full">
+      <SidebarMenuButton key={playlist.id} asChild>
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "pr-2 group/playlist w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
+            isActive ? "bg-sidebar-accent" : ""
+          )}
+          onMouseDown={handleMouseDown}
+        >
+          <div className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
+            <div className="flex items-center flex-1 gap-2">
+              {playlist.thumbnail ? (
+                <img
+                  src={playlist.thumbnail}
+                  alt=""
+                  className="w-5 h-5 rounded object-cover shrink-0"
+                />
+              ) : (
+                <List size={16} className="shrink-0 text-muted-foreground" />
+              )}
+              <span className={cn(
+                "line-clamp-1",
+                playlist.unreadCount > 0 ? "font-bold" : "font-normal"
+              )}>
+                {playlist.title}
+              </span>
+            </div>
+            <button
+              onClick={handleClick}
+              onContextMenu={(e) => onContextMenu(e, playlist.id)}
+              className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto"
+            />
           </div>
-          <button
-            onClick={handleClick}
-            onContextMenu={(e) => onContextMenu(e, playlist.id)}
-            className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto"
-          />
-        </SidebarMenuItem>
-      </div>
-    </SidebarMenuButton>
+        </div>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }
 
@@ -200,44 +199,46 @@ function SortableChannelItem({ channel, isActive, onChannelClick, onContextMenu 
   };
 
   return (
-    <SidebarMenuButton key={channel.id} asChild>
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        className={cn(
-          "pr-2 group/channel w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-          isActive ? "bg-sidebar-accent" : ""
-        )}
-        onMouseDown={handleMouseDown}
-      >
-        <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
-          <div className="flex items-center flex-1 gap-2">
-            {channel.thumbnail ? (
-              <img
-                src={channel.thumbnail}
-                alt=""
-                className="w-5 h-5 rounded-full object-cover shrink-0"
-              />
-            ) : (
-              <CircleUserRound size={16} className="shrink-0 text-muted-foreground" />
-            )}
-            <span className={cn(
-              "line-clamp-1",
-              channel.unreadCount > 0 ? "font-bold" : "font-normal"
-            )}>
-              {channel.title}
-            </span>
+    <SidebarMenuItem className="list-none w-full">
+      <SidebarMenuButton key={channel.id} asChild>
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "pr-2 group/channel w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
+            isActive ? "bg-sidebar-accent" : ""
+          )}
+          onMouseDown={handleMouseDown}
+        >
+          <div className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
+            <div className="flex items-center flex-1 gap-2">
+              {channel.thumbnail ? (
+                <img
+                  src={channel.thumbnail}
+                  alt=""
+                  className="w-5 h-5 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <CircleUserRound size={16} className="shrink-0 text-muted-foreground" />
+              )}
+              <span className={cn(
+                "line-clamp-1",
+                channel.unreadCount > 0 ? "font-bold" : "font-normal"
+              )}>
+                {channel.title}
+              </span>
+            </div>
+            <button
+              onClick={handleClick}
+              onContextMenu={(e) => onContextMenu(e, channel.id)}
+              className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto"
+            />
           </div>
-          <button
-            onClick={handleClick}
-            onContextMenu={(e) => onContextMenu(e, channel.id)}
-            className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto"
-          />
-        </SidebarMenuItem>
-      </div>
-    </SidebarMenuButton>
+        </div>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }
 
@@ -308,9 +309,6 @@ export default function AppSidebar() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-  const [loadingPlaylists, setLoadingPlaylists] = useState(false);
-  const [loadingChannels, setLoadingChannels] = useState(false);
-  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
   const [refreshingPlaylists, setRefreshingPlaylists] = useState(false);
   const [refreshingChannels, setRefreshingChannels] = useState(false);
   const [playlistProgress, setPlaylistProgress] = useState<{ current: number, total: number } | null>(null);
@@ -318,20 +316,11 @@ export default function AppSidebar() {
   const [playlistOrChannelUrl, setPlaylistOrChannelUrl] = useState("");
   const [addingPlaylistOrChannel, setAddingPlaylistOrChannel] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const lastCheckTimeRef = useRef<number>(0);
-  const [activeTab, setActiveTab] = useState("playlists");
-  const [bookmarks, setBookmarks] = useState<EnrichedBookmark[]>([]);
   const location = useLocation();
+  const [bookmarks, setBookmarks] = useState<EnrichedBookmark[]>([]);
+  const lastCheckTimeRef = useRef<number>(0);
 
-  useEffect(() => {
-    if (location.pathname.startsWith('/playlist')) {
-      setActiveTab('playlists');
-    } else if (location.pathname.startsWith('/channel')) {
-      setActiveTab('channels');
-    } else if (location.pathname.startsWith('/bookmarks')) {
-      setActiveTab('bookmarks');
-    }
-  }, [location.pathname]);
+  // Tabs effect removed
 
   const checkUpdatesIfNeeded = () => {
     const now = Date.now();
@@ -381,35 +370,26 @@ export default function AppSidebar() {
   };
 
   const loadPlaylistsData = async () => {
-    setLoadingPlaylists(true);
     try {
       await initializePlaylistsWithDividers();
       const playlistsData = await syncPlaylistsWithDividers();
       setPlaylists(playlistsData);
-    } finally {
-      setLoadingPlaylists(false);
-    }
+    } catch (e) {}
   };
 
   const loadChannelsData = async () => {
-    setLoadingChannels(true);
     try {
       await initializeChannelsWithDividers();
       const channelsData = await syncChannelsWithDividers();
       setChannels(channelsData);
-    } finally {
-      setLoadingChannels(false);
-    }
+    } catch (e) {}
   };
 
   const loadBookmarksData = async () => {
-    setLoadingBookmarks(true);
     try {
       const bookmarksData = await enrichBookmarks();
       setBookmarks(bookmarksData);
-    } finally {
-      setLoadingBookmarks(false);
-    }
+    } catch (e) {}
   };
 
   useEffect(() => {
@@ -417,13 +397,9 @@ export default function AppSidebar() {
 
     const unlistenFocus = window.electron.onWindowFocus(() => {
       checkUpdatesIfNeeded();
-      if (activeTab === 'playlists') {
-        loadPlaylistsData();
-      } else if (activeTab === 'channels') {
-        loadChannelsData();
-      } else if (activeTab === 'bookmarks') {
-        loadBookmarksData();
-      }
+      loadPlaylistsData();
+      loadChannelsData();
+      loadBookmarksData();
     });
 
     const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
@@ -483,10 +459,11 @@ export default function AppSidebar() {
         await loadChannelsData();
       } else if (eventId.startsWith("delete-divider-")) {
         const dividerId = eventId.replace("delete-divider-", "");
-        if (activeTab === 'playlists') {
+        const isPlaylistDivider = playlists.some(item => isDivider(item) && item.id === dividerId);
+        if (isPlaylistDivider) {
           await removeDivider(dividerId, 'playlist');
           await loadPlaylistsData();
-        } else if (activeTab === 'channels') {
+        } else {
           await removeDivider(dividerId, 'channel');
           await loadChannelsData();
         }
@@ -497,17 +474,31 @@ export default function AppSidebar() {
       unlistenFocus();
       unlistenMenu();
     };
-  }, [activeTab]);
+  }, [playlists]);
 
   useEffect(() => {
-    if (activeTab === 'playlists') {
-      loadPlaylistsData();
-    } else if (activeTab === 'channels') {
-      loadChannelsData();
-    } else if (activeTab === 'bookmarks') {
-      loadBookmarksData();
+    loadPlaylistsData();
+    loadChannelsData();
+    loadBookmarksData();
+  }, []);
+
+  const hasLoadedRef = useRef(false);
+  useEffect(() => {
+    if (hasLoadedRef.current) return;
+    if (playlists.length > 0 || channels.length > 0) {
+      if (location.pathname === '/' || location.pathname === '/playlist' || location.pathname === '/channel') {
+        const firstPlaylist = playlists.find(item => !isDivider(item)) as PlaylistInfo | undefined;
+        const firstChannel = channels.find(item => !isDivider(item)) as ChannelInfo | undefined;
+        if (firstPlaylist) {
+          handlePlaylistClick(firstPlaylist.id);
+          hasLoadedRef.current = true;
+        } else if (firstChannel) {
+          handleChannelClick(firstChannel.id);
+          hasLoadedRef.current = true;
+        }
+      }
     }
-  }, [activeTab]);
+  }, [playlists, channels, location.pathname]);
 
   const handleRefreshPlaylists = () => {
     setRefreshingPlaylists(true);
@@ -683,7 +674,7 @@ export default function AppSidebar() {
       return;
     }
 
-    if (activeTab === 'playlists') {
+    if (playlists.some((item) => item.id === active.id)) {
       const oldIndex = playlists.findIndex((item) => item.id === active.id);
       const newIndex = playlists.findIndex((item) => item.id === over.id);
 
@@ -691,7 +682,7 @@ export default function AppSidebar() {
       setPlaylists(newPlaylists);
 
       await savePlaylistsWithDividers(newPlaylists);
-    } else if (activeTab === 'channels') {
+    } else if (channels.some((item) => item.id === active.id)) {
       const oldIndex = channels.findIndex((item) => item.id === active.id);
       const newIndex = channels.findIndex((item) => item.id === over.id);
 
@@ -716,38 +707,9 @@ export default function AppSidebar() {
   };
 
 
-  const handleTabChange = async (value: string) => {
-    if (value === 'playlists') {
-      const firstPlaylist = playlists.find(item => !isDivider(item)) as PlaylistInfo | undefined;
-      if (firstPlaylist) {
-        await markPlaylistAsRead(firstPlaylist.id);
-        const newPlaylists = await syncPlaylistsWithDividers();
-        setPlaylists(newPlaylists);
-        navigate({
-          to: "/playlist/$playlistId",
-          params: { playlistId: firstPlaylist.id },
-          search: { autoPlay: false }
-        });
-      } else {
-        navigate({ to: '/playlist' });
-      }
-    } else if (value === 'channels') {
-      const firstChannel = channels.find(item => !isDivider(item)) as ChannelInfo | undefined;
-      if (firstChannel) {
-        await markChannelAsRead(firstChannel.id);
-        const newChannels = await syncChannelsWithDividers();
-        setChannels(newChannels);
-        navigate({
-          to: "/channel/$channelId",
-          params: { channelId: firstChannel.id },
-          search: { autoPlay: false }
-        });
-      } else {
-        navigate({ to: '/channel' });
-      }
-    } else if (value === 'bookmarks') {
-      navigate({ to: '/bookmarks' });
-    }
+  const handleRefreshAll = () => {
+    handleRefreshPlaylists();
+    handleRefreshChannels();
   };
 
 
@@ -762,11 +724,11 @@ export default function AppSidebar() {
                   <div className="w-26 shrink-0" />
                 </div>
                 <div className="flex items-center">
-                  {(activeTab === 'playlists' && playlists.filter(item => !isDivider(item)).length > 0) || (activeTab === 'channels' && channels.filter(item => !isDivider(item)).length > 0) ? (
+                  {(playlists.filter(item => !isDivider(item)).length > 0 || channels.filter(item => !isDivider(item)).length > 0) ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
-                          onClick={activeTab === 'playlists' ? handleRefreshPlaylists : handleRefreshChannels}
+                          onClick={handleRefreshAll}
                           disabled={refreshingPlaylists || refreshingChannels}
                           className={cn(
                             "mr-2",
@@ -775,12 +737,12 @@ export default function AppSidebar() {
                               : "btn-icon"
                           )}
                         >
-                          {(activeTab === 'playlists' && refreshingPlaylists) || (activeTab === 'channels' && refreshingChannels) ? (
+                          {(refreshingPlaylists || refreshingChannels) ? (
                             <div className="flex items-center gap-1">
-                              {activeTab === 'playlists' && playlistProgress && (
+                              {playlistProgress && (
                                 <span className="text-xs">{playlistProgress.current}/{playlistProgress.total}</span>
                               )}
-                              {activeTab === 'channels' && channelProgress && (
+                              {channelProgress && (
                                 <span className="text-xs">{channelProgress.current}/{channelProgress.total}</span>
                               )}
                               <Loader size={14} className="animate-spin" />
@@ -792,7 +754,7 @@ export default function AppSidebar() {
                       </TooltipTrigger>
                       {!(refreshingPlaylists || refreshingChannels) && (
                         <TooltipContent>
-                          {activeTab === 'playlists' ? 'Refresh Playlists' : 'Refresh Channels'}
+                          Refresh All
                         </TooltipContent>
                       )}
                     </Tooltip>
@@ -870,122 +832,70 @@ export default function AppSidebar() {
                   </Dialog>
                 </div>
               </div>
-              <div className="mt-1 flex-1 flex flex-col min-h-0 select-none">
-                <SidebarMenu className="mt-1 pr-2 flex-1 overflow-y-auto sidebar-menu">
-                  <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                    <TabsList className="sidebar-tabs-list">
-                      <TabsTrigger
-                        value="playlists"
-                        className="sidebar-tab-trigger"
-                      >
-                        <span><List /></span>
-                        <span>Playlists</span>
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="channels"
-                        className="sidebar-tab-trigger"
-                      >
-                        <span><CircleUserRound /></span>
-                        <span>Channels</span>
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="bookmarks"
-                        className="sidebar-tab-trigger"
-                      >
-                        <span><Bookmark /></span>
-                        <span>Bookmarks</span>
-                      </TabsTrigger>
-                    </TabsList>
+              <div className="mt-1 flex-1 flex flex-col min-h-0 select-none overflow-y-auto sidebar-menu">
+                <SidebarGroup className="py-0">
+                  <SidebarGroupLabel className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    Collections
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu className="pr-2">
+                       {/* Combined Playlists and Channels */}
+                         <DndContext
+                           sensors={sensors}
+                           collisionDetection={closestCenter}
+                           onDragEnd={handleDragEnd}
+                         >
+                           <SortableContext
+                             items={playlists.map(p => p.id)}
+                             strategy={verticalListSortingStrategy}
+                           >
+                             {playlists.map((item) => {
+                               if (isDivider(item)) return <SortableDividerItem key={item.id} dividerId={item.id} onContextMenu={dividerClickHandler} />;
+                               const playlist = item as PlaylistInfo;
+                               return (
+                                 <SortablePlaylistItem
+                                   key={playlist.id}
+                                   playlist={playlist}
+                                   isActive={playlistMatch?.params.playlistId === playlist.id}
+                                   onPlaylistClick={handlePlaylistClick}
+                                   onContextMenu={playlistClickHandler}
+                                 />
+                               );
+                             })}
+                           </SortableContext>
+                           <SortableContext
+                             items={channels.map(c => c.id)}
+                             strategy={verticalListSortingStrategy}
+                           >
+                             {channels.map((item) => {
+                               if (isDivider(item)) return <SortableDividerItem key={item.id} dividerId={item.id} onContextMenu={dividerClickHandler} />;
+                               const channel = item as ChannelInfo;
+                               return (
+                                 <SortableChannelItem
+                                   key={channel.id}
+                                   channel={channel}
+                                   isActive={channelMatch?.params.channelId === channel.id}
+                                   onChannelClick={handleChannelClick}
+                                   onContextMenu={channelClickHandler}
+                                 />
+                               );
+                             })}
+                           </SortableContext>
+                         </DndContext>
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
 
-                    <TabsContent value="playlists" className="m-0">
-                      {loadingPlaylists ? (
-                        <div className="flex items-center justify-center py-2">
-                          {/* <Loader className="h-4 w-4 animate-spin" /> */}
-                        </div>
-                      ) : (
-                        <DndContext
-                          sensors={sensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={handleDragEnd}
-                        >
-                          <SortableContext
-                            items={playlists.map(p => p.id)}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            {playlists.map((item) => {
-                              if (isDivider(item)) {
-                                return (
-                                  <SortableDividerItem
-                                    key={item.id}
-                                    dividerId={item.id}
-                                    onContextMenu={dividerClickHandler}
-                                  />
-                                );
-                              }
-                              const playlist = item as PlaylistInfo;
-                              return (
-                                <SortablePlaylistItem
-                                  key={playlist.id}
-                                  playlist={playlist}
-                                  isActive={playlistMatch?.params.playlistId === playlist.id}
-                                  onPlaylistClick={handlePlaylistClick}
-                                  onContextMenu={playlistClickHandler}
-                                />
-                              );
-                            })}
-                          </SortableContext>
-                        </DndContext>
-                      )}
-                    </TabsContent>
+                <SidebarSeparator className="my-2" />
 
-                    <TabsContent value="channels" className="m-0">
-                      {loadingChannels ? (
-                        <div className="flex items-center justify-center py-2">
-                          {/* <Loader className="h-4 w-4 animate-spin" /> */}
-                        </div>
-                      ) : (
-                        <DndContext
-                          sensors={sensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={handleDragEnd}
-                        >
-                          <SortableContext
-                            items={channels.map(c => c.id)}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            {channels.map((item) => {
-                              if (isDivider(item)) {
-                                return (
-                                  <SortableDividerItem
-                                    key={item.id}
-                                    dividerId={item.id}
-                                    onContextMenu={dividerClickHandler}
-                                  />
-                                );
-                              }
-                              const channel = item as ChannelInfo;
-                              return (
-                                <SortableChannelItem
-                                  key={channel.id}
-                                  channel={channel}
-                                  isActive={channelMatch?.params.channelId === channel.id}
-                                  onChannelClick={handleChannelClick}
-                                  onContextMenu={channelClickHandler}
-                                />
-                              );
-                            })}
-                          </SortableContext>
-                        </DndContext>
-                      )}
-                    </TabsContent>
-
-                    <TabsContent value="bookmarks" className="m-0">
-                      {loadingBookmarks ? (
-                        <div className="flex items-center justify-center py-2">
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-0.5">
-                          {bookmarks.map((bookmark) => {
+                <SidebarGroup className="py-0">
+                  <SidebarGroupLabel className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    Bookmarks
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu className="pr-2">
+                       {/* Bookmarks content ... */}
+                       {bookmarks.map((bookmark) => {
                             const searchParams = new URLSearchParams(location.search);
                             const activeBookmarkVideoId = searchParams.get('videoId');
                             const isActive = bookmarkMatch && activeBookmarkVideoId === bookmark.id;
@@ -1044,18 +954,9 @@ export default function AppSidebar() {
                               </SidebarMenuItem>
                             );
                           })}
-                          {bookmarks.length === 0 && (
-                            <div className="px-2 py-4 text-xs text-center text-sidebar-foreground/50">
-                              No bookmarks yet
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </TabsContent>
-                  </Tabs>
-                </SidebarMenu>
-
-
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
               </div>
             </SidebarGroupContent>
           </SidebarGroup>
