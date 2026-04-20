@@ -135,7 +135,16 @@ function SortablePlaylistItem({ playlist, isActive, onPlaylistClick, onContextMe
         onMouseDown={handleMouseDown}
       >
         <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
-          <div className="flex items-center flex-1">
+          <div className="flex items-center flex-1 gap-2">
+            {playlist.thumbnail ? (
+              <img
+                src={playlist.thumbnail}
+                alt=""
+                className="w-5 h-5 rounded object-cover shrink-0"
+              />
+            ) : (
+              <List size={16} className="shrink-0 text-muted-foreground" />
+            )}
             <span className={cn(
               "line-clamp-1",
               playlist.unreadCount > 0 ? "font-bold" : "font-normal"
@@ -203,7 +212,16 @@ function SortableChannelItem({ channel, isActive, onChannelClick, onContextMenu 
         onMouseDown={handleMouseDown}
       >
         <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
-          <div className="flex items-center flex-1">
+          <div className="flex items-center flex-1 gap-2">
+            {channel.thumbnail ? (
+              <img
+                src={channel.thumbnail}
+                alt=""
+                className="w-5 h-5 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <CircleUserRound size={16} className="shrink-0 text-muted-foreground" />
+            )}
             <span className={cn(
               "line-clamp-1",
               channel.unreadCount > 0 ? "font-bold" : "font-normal"

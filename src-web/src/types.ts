@@ -10,6 +10,7 @@ export interface VideoListInfo {
   unreadCount: number;
   id: string;
   title: string;
+  thumbnail?: string;
   items: VideoItem[];
 }
 

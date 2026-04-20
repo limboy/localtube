@@ -197,6 +197,7 @@ export async function parseYouTubeChannel(channelUrl: string): Promise<ChannelIn
       unreadCount: 0,
       id: channelMetadata.externalId,
       title: channelMetadata.title,
+      thumbnail: channelMetadata.avatar?.thumbnails?.[0]?.url,
       items,
       lastUpdated: Date.now()
     };
@@ -233,19 +234,23 @@ export async function checkAllChannelsForUpdates(progressCallback?: (current: nu
   for (let i = 0; i < channels.length; i++) {
     const channel = channels[i];
     progressCallback?.(i + 1, channels.length);
-    const hasNewVideos = await checkForChannelUpdates(channel.id);
-    if (hasNewVideos) {
+
+    const newResult = await parseYouTubeChannel(
+      `https://www.youtube.com/channel/${channel.id}/videos`
+    );
+
+    const newVideos = newResult.items.filter(
+      (video) => !channel.items.some((v) => v.id === video.id)
+    );
+
+    if (newVideos.length > 0) {
       needsUpdate = true;
-      const newResult = await parseYouTubeChannel(
-        `https://www.youtube.com/channel/${channel.id}/videos`
-      );
-      const newVideos = newResult.items.filter(
-        (video) => !channel.items.some((v) => v.id === video.id)
-      );
-      newResult.unreadCount = newVideos.length;
-      newResult.lastUpdated = Date.now();
-      await addOrUpdateChannel(newResult);
     }
+
+    // Always update to capture metadata like thumbnails/avatars
+    newResult.unreadCount = (channel.unreadCount || 0) + newVideos.length;
+    newResult.lastUpdated = Date.now();
+    await addOrUpdateChannel(newResult);
   }
 
   return needsUpdate;

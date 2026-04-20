@@ -134,6 +134,7 @@ class YouTubePlaylistParser {
       let allVideos: VideoItem[] = [];
       let continuation: string | null = null;
       let playlistTitle = "";
+      let playlistThumbnail = "";
       let retryCount = 0;
 
       do {
@@ -143,7 +144,7 @@ class YouTubePlaylistParser {
 
         const data = await this.fetchPlaylistPage(playlistId, continuation || undefined);
 
-        // Extract playlist title from first request
+        // Extract playlist title and thumbnail from first request
         if (!continuation) {
           const headerRenderer = data.header?.playlistHeaderRenderer;
           if (headerRenderer?.title?.runs?.[0]?.text) {
@@ -151,10 +152,29 @@ class YouTubePlaylistParser {
           } else if (headerRenderer?.title?.simpleText) {
             playlistTitle = headerRenderer.title.simpleText;
           }
+
+          if (headerRenderer?.playlistHeaderBannerRenderer?.heroPlaylistThumbnailRenderer?.thumbnail?.thumbnails) {
+            const thumbnails = headerRenderer.playlistHeaderBannerRenderer.heroPlaylistThumbnailRenderer.thumbnail.thumbnails;
+            playlistThumbnail = thumbnails[thumbnails.length - 1].url;
+          }
         }
 
         if (!playlistTitle && data.metadata?.playlistMetadataRenderer?.title) {
           playlistTitle = data.metadata.playlistMetadataRenderer.title;
+        }
+
+        if (!playlistThumbnail && data.metadata?.playlistMetadataRenderer?.thumbnail?.thumbnails) {
+          const thumbnails = data.metadata.playlistMetadataRenderer.thumbnail.thumbnails;
+          playlistThumbnail = thumbnails[thumbnails.length - 1].url;
+        }
+
+        // Try sidebar renderer
+        if (!playlistThumbnail) {
+          const sidebarItem = data.sidebar?.playlistSidebarRenderer?.items?.[0]?.playlistSidebarPrimaryInfoRenderer;
+          if (sidebarItem?.thumbnail?.thumbnails) {
+            const thumbnails = sidebarItem.thumbnail.thumbnails;
+            playlistThumbnail = thumbnails[thumbnails.length - 1].url;
+          }
         }
 
         const videos = this.extractVideosFromResponse(data);
@@ -168,10 +188,16 @@ class YouTubePlaylistParser {
         retryCount++;
       } while (continuation);
 
+      // Final fallback: use first video's thumbnail
+      if (!playlistThumbnail && allVideos.length > 0) {
+        playlistThumbnail = allVideos[0].thumbnail;
+      }
+
       return {
         unreadCount: 0,
         id: playlistId,
         title: playlistTitle,
+        thumbnail: playlistThumbnail,
         items: allVideos,
         lastUpdated: Date.now()
       };
@@ -217,10 +243,14 @@ export async function parseYouTubePlaylist(playlistUrl: string): Promise<Playlis
   } else if (page.ytInitialData) {
     const items = parseVideosFromInitialData(page.ytInitialData);
 
+    const metadata = page.ytInitialData.metadata?.playlistMetadataRenderer;
+    const playlistThumbnail = metadata?.thumbnail?.thumbnails?.[0]?.url || items[0]?.thumbnail;
+
     return {
-      title: page.ytInitialData.metadata.playlistMetadataRenderer.title,
-      id: playlistUrl.split("list=")[1],
+      title: metadata?.title || "Unknown Playlist",
+      id: playlistId,
       unreadCount: 0,
+      thumbnail: playlistThumbnail,
       items,
       lastUpdated: Date.now()
     };
@@ -251,24 +281,28 @@ export async function checkAllPlaylistsForUpdates(progressCallback?: (current: n
   for (let i = 0; i < playlists.length; i++) {
     const playlist = playlists[i];
     progressCallback?.(i + 1, playlists.length);
-    const hasNewVideos = await checkForPlaylistUpdates(playlist.id);
-    if (hasNewVideos) {
+
+    const newResult = await parseYouTubePlaylist(
+      `https://www.youtube.com/playlist?list=${playlist.id}`
+    );
+
+    const newVideos = newResult.items.filter(
+      (video) => !playlist.items.some((v) => v.id === video.id)
+    );
+
+    if (newVideos.length > 0) {
       needsUpdate = true;
-      const newResult = await parseYouTubePlaylist(
-        `https://www.youtube.com/playlist?list=${playlist.id}`
-      );
-      const newVideos = newResult.items.filter(
-        (video) => !playlist.items.some((v) => v.id === video.id)
-      );
-      // Only update specific fields while keeping all existing properties
-      const updatedPlaylist = {
-        ...playlist,           // Keep all existing properties
-        items: newResult.items,
-        unreadCount: (playlist.unreadCount || 0) + newVideos.length,
-        lastUpdated: Date.now(),
-      };
-      await addOrUpdatePlaylist(updatedPlaylist);
     }
+
+    // Always update to capture metadata like thumbnails, even if no new videos
+    const updatedPlaylist = {
+      ...playlist,
+      items: newResult.items,
+      thumbnail: newResult.thumbnail,
+      unreadCount: (playlist.unreadCount || 0) + newVideos.length,
+      lastUpdated: Date.now(),
+    };
+    await addOrUpdatePlaylist(updatedPlaylist);
   }
   return needsUpdate;
 }

@@ -351,7 +351,17 @@ export default function VideoListPlayer({
   return (
     <div className="flex flex-col h-screen items-center bg-background">
       <Nav>
-        <div>
+        <div className="flex items-center gap-2">
+          {videolist?.thumbnail && (
+            <img
+              src={videolist.thumbnail}
+              alt=""
+              className={cn(
+                "w-6 h-6 object-cover shadow-sm",
+                channelId ? "rounded-full" : "rounded"
+              )}
+            />
+          )}
           <h1 className="font-semibold line-clamp-1 select-none cursor-default">
             {videolist!.title}
           </h1>
