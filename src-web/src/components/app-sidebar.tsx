@@ -6,7 +6,8 @@ import {
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  SidebarRail
 } from "@/components/ui/sidebar";
 import {
   Dialog,
@@ -1047,6 +1048,7 @@ export default function AppSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
     </>
   );
