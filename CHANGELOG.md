@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.0.2](https://github.com/limboy/localtube/compare/v1.0.1...v1.0.2) - 2026-04-20
+
+### Bug Fixes
+
+- serve production build from localhost HTTP server to fix YouTube Error 152-4 ([8128301](https://github.com/limboy/localtube/commit/81283019378dd359b6b2ceeeb64b4c1f8e19041d))
+
+### Documentation
+
+- update CHANGELOG for v1.0.1 ([720348c](https://github.com/limboy/localtube/commit/720348cd303d7d359bc642f0928e295ebc3f7a7a))
+
 ## [v1.0.1](https://github.com/limboy/localtube/compare/v1.0.0...v1.0.1) - 2026-04-20
 
 ### Bug Fixes
