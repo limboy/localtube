@@ -664,15 +664,8 @@ export default function AppSidebar() {
 
 
   const handleRemoveBookmark = async (videoId: string) => {
-    const confirmed = await window.electron.confirm("Are you sure to remove this bookmark?", {
-      title: "Remove Bookmark",
-      kind: "warning",
-      okLabel: "Remove"
-    });
-    if (confirmed) {
-      await removeBookmark(videoId);
-      await refreshSidebarData();
-    }
+    await removeBookmark(videoId);
+    await refreshSidebarData();
   };
 
 

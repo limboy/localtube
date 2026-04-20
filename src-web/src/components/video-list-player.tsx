@@ -76,15 +76,7 @@ export default function VideoListPlayer({
       bookmarkedAt: bookmarks.get(video.id)?.createdAt,
       originalIndex: videolist?.items.findIndex(v => v.id === video.id) || 0
     }))
-      .filter(video => !showBookmarkedOnly || video.isBookmarked)
-      .sort((a, b) => {
-        if (a.isBookmarked && !b.isBookmarked) return -1;
-        if (!a.isBookmarked && b.isBookmarked) return 1;
-        if (!a.isBookmarked && !b.isBookmarked) {
-          return a.originalIndex - b.originalIndex;
-        }
-        return 0;
-      });
+      .filter(video => !showBookmarkedOnly || video.isBookmarked);
 
     return processedVideos;
   };
