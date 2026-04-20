@@ -10,6 +10,15 @@ LocalTube is a modern, high-performance desktop application for browsing YouTube
 - **🔖 Bookmarking**: Save your favorite videos or playlists for quick access later.
 - **🎨 Premium UI/UX**: Built with a modern design system, featuring glassmorphism, smooth animations, and a responsive layout.
 
+## ⬇️ Download
+
+You can download the latest version of LocalTube for macOS from the [Releases page](https://github.com/limboy/localtube/releases).
+
+1. Go to [Releases](https://github.com/limboy/localtube/releases).
+2. Download the latest `.dmg` or `.zip` file for your architecture (Intel or Apple Silicon).
+3. Install by dragging LocalTube to your Applications folder.
+
+
 ## 🛠 Tech Stack
 
 ### Core
@@ -46,7 +55,7 @@ LocalTube is a modern, high-performance desktop application for browsing YouTube
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/your-username/LocalTube.git
+   git clone https://github.com/limboy/localtube.git
    cd LocalTube
    ```
 
