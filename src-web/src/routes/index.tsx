@@ -1,12 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import Nav from "@/components/nav";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index
 });
 
 function Index() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate({ to: "/playlist", replace: true });
+  }, [navigate]);
+
   return (
     <div className={cn("flex flex-col h-screen items-center")}>
       <Nav>

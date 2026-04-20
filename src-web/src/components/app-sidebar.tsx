@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useNavigate, useMatch } from "@tanstack/react-router";
+import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
 import { Plus, Loader, RefreshCw, List, CircleUserRound, Bookmark } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -273,6 +273,17 @@ export default function AppSidebar() {
   const lastCheckTimeRef = useRef<number>(0);
   const [activeTab, setActiveTab] = useState("playlists");
   const [bookmarks, setBookmarks] = useState<EnrichedBookmark[]>([]);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/playlist')) {
+      setActiveTab('playlists');
+    } else if (location.pathname.startsWith('/channel')) {
+      setActiveTab('channels');
+    } else if (location.pathname.startsWith('/bookmarks')) {
+      setActiveTab('bookmarks');
+    }
+  }, [location.pathname]);
 
   const checkUpdatesIfNeeded = () => {
     const now = Date.now();
@@ -443,8 +454,12 @@ export default function AppSidebar() {
   useEffect(() => {
     if (activeTab === 'playlists') {
       loadPlaylistsData();
+    } else if (activeTab === 'channels') {
+      loadChannelsData();
+    } else if (activeTab === 'bookmarks') {
+      loadBookmarksData();
     }
-  }, []);
+  }, [activeTab]);
 
   const handleRefreshPlaylists = () => {
     setRefreshingPlaylists(true);
@@ -516,12 +531,9 @@ export default function AppSidebar() {
       if (isPlaylist) {
         const playlist = await parseYouTubePlaylist(playlistOrChannelUrl);
         await addOrUpdatePlaylist(playlist);
-        if (activeTab !== 'playlists') {
-          await handleTabChange('playlists');
-        } else {
-          const newPlaylists = await syncPlaylistsWithDividers();
-          setPlaylists(newPlaylists);
-        }
+        
+        await loadPlaylistsData();
+        
         setOpen(false);
         setPlaylistOrChannelUrl("");
         setAddingPlaylistOrChannel(false);
@@ -532,12 +544,9 @@ export default function AppSidebar() {
       } else {
         const channel = await parseYouTubeChannel(playlistOrChannelUrl);
         await addOrUpdateChannel(channel);
-        if (activeTab !== 'channels') {
-          await handleTabChange('channels');
-        } else {
-          const newChannels = await syncChannelsWithDividers();
-          setChannels(newChannels);
-        }
+
+        await loadChannelsData();
+
         setOpen(false);
         setPlaylistOrChannelUrl("");
         setAddingPlaylistOrChannel(false);
@@ -579,11 +588,7 @@ export default function AppSidebar() {
     shouldThrow: false
   });
 
-  useEffect(() => {
-    if (bookmarkMatch) {
-      loadBookmarksData();
-    }
-  }, [bookmarkMatch]);
+  // Redundant bookmarkMatch effect removed
 
   const handleChannelClick = async (channelId: string, fromBookmarks = false) => {
     await markChannelAsRead(channelId);
@@ -651,23 +656,11 @@ export default function AppSidebar() {
 
 
   const handleTabChange = async (value: string) => {
-    setActiveTab(value);
     if (value === 'playlists') {
-      await loadPlaylistsData();
-      const actualPlaylists = playlists.filter(item => !isDivider(item)) as PlaylistInfo[];
-      if (actualPlaylists.length > 0) {
-        // disable auto-selecting the first playlist
-      }
       navigate({ to: '/playlist' });
     } else if (value === 'channels') {
-      await loadChannelsData();
-      const actualChannels = channels.filter(item => !isDivider(item)) as ChannelInfo[];
-      if (actualChannels.length > 0) {
-        // disable auto-selecting the first channel
-      }
       navigate({ to: '/channel' });
     } else if (value === 'bookmarks') {
-      await loadBookmarksData();
       navigate({ to: '/bookmarks' });
     }
   };
