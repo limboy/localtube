@@ -21,7 +21,7 @@ export default function Nav({
       {state === "collapsed" && (
         <div className="w-26 shrink-0" />
       )}
-      <div className="flex flex-1 items-center justify-between min-w-0 mr-2">
+      <div className="flex flex-1 items-center justify-between min-w-0 mx-2">
         {children}
       </div>
       <UpdateIndicator />

@@ -15,8 +15,8 @@ import {
   getVideoDescription
 } from "@/lib/utils";
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { PinOff, Pin, Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
+
+import { Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import YTPlayer from "./yt-player";
@@ -46,7 +46,7 @@ export default function VideoListPlayer({
   const [description, setDescription] = useState<string>("");
   const [isLoadingDescription, setIsLoadingDescription] = useState(false);
 
-  const [isPinned, setIsPinned] = useState(false);
+
   const [bookmarkedVideos, setBookmarkedVideos] = useState<Map<string, BookmarkData>>(new Map());
   const [skippedVideos, setSkippedVideos] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
@@ -235,10 +235,7 @@ export default function VideoListPlayer({
 
 
 
-  async function handlePinWindow() {
-    await window.electron.setAlwaysOnTop(!isPinned);
-    setIsPinned((prev) => !prev);
-  }
+
 
   useEffect(() => {
     playNextVideoRef.current = () => {
@@ -361,25 +358,6 @@ export default function VideoListPlayer({
         </div>
 
         <div className="flex flex-row gap-1">
-          <TooltipProvider disableHoverableContent={true}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={handlePinWindow} className="btn-icon">
-                  {isPinned ? (
-                    <PinOff size={16} strokeWidth={1.5} />
-                  ) : (
-                    <Pin size={16} strokeWidth={1.5} />
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isPinned ? "Unpin Window" : "Pin Window"}</p>
-              </TooltipContent>
-            </Tooltip>
-
-
-          </TooltipProvider>
-
         </div>
       </Nav>
       <div className="p-4 w-full max-w-200 bg-background">
