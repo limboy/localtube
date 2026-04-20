@@ -1,7 +1,7 @@
 {
   "name": "localtube",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "LocalTube",
   "main": "electron/dist/main.js",
   "type": "commonjs",
