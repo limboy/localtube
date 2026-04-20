@@ -7,14 +7,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useSidebar } from "./ui/sidebar";
 import { ArrowUpCircle, Loader2 } from "lucide-react";
 
 export function UpdateIndicator() {
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [isInstalling, setIsInstalling] = useState(false);
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
 
   useEffect(() => {
     const unlisten = window.electron.onUpdateReady((info: { version: string }) => {
@@ -28,7 +25,6 @@ export function UpdateIndicator() {
     }
 
     return unlisten;
-
   }, []);
 
   if (!updateVersion) return null;
@@ -51,8 +47,7 @@ export function UpdateIndicator() {
             size="sm"
             variant="outline"
             className={cn(
-              "h-8 text-xs shrink-0 rounded-md border-amber-600/50 text-amber-600 transition-all hover:bg-amber-600/10 hover:text-amber-600 hover:border-amber-600",
-              isCollapsed ? "w-8 p-0" : "w-full px-3 justify-start gap-2",
+              "h-8 px-3 text-xs shrink-0 rounded-md border-amber-600/50 text-amber-600 transition-all hover:bg-amber-600/10 hover:text-amber-600 hover:border-amber-600 shadow-none",
               isInstalling && "opacity-50 cursor-default"
             )}
             disabled={isInstalling}
@@ -63,11 +58,14 @@ export function UpdateIndicator() {
             ) : (
               <ArrowUpCircle className="h-4 w-4" />
             )}
-            {!isCollapsed && (
-              <span>{isInstalling ? "Restarting..." : "Update Available"}</span>
-            )}
+            <span className="">
+              {isInstalling ? "Restarting..." : "Update Available"}
+            </span>
           </Button>
         </TooltipTrigger>
+        <TooltipContent>
+          <p>Version {updateVersion} is ready to install</p>
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

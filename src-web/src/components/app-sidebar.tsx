@@ -71,7 +71,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { UpdateIndicator } from "./update-indicator";
+
 
 interface SortablePlaylistItemProps {
   playlist: PlaylistInfo;
@@ -975,9 +975,7 @@ export default function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-2 border-t border-sidebar-border">
-          <UpdateIndicator />
-        </SidebarFooter>
+        <SidebarFooter className="p-2 border-t border-sidebar-border" />
       </Sidebar>
     </>
   );

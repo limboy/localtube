@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { SidebarTrigger, useSidebar } from "./ui/sidebar";
+import { UpdateIndicator } from "./update-indicator";
 
 export default function Nav({
   children,
@@ -21,9 +22,10 @@ export default function Nav({
         <div className="w-18 shrink-0" />
       )}
       <SidebarTrigger className="btn-icon text-sidebar-foreground shrink-0" />
-      <div className="flex flex-1 items-center justify-between min-w-0">
+      <div className="flex flex-1 items-center justify-between min-w-0 mr-2">
         {children}
       </div>
+      <UpdateIndicator />
     </nav>
   );
 }
