@@ -555,7 +555,7 @@ export default function AppSidebar() {
                 </div>
                 <div className="flex items-center">
                   {(playlists.length > 0 || channels.length > 0) ? (
-                    <Tooltip>
+                    <Tooltip open={(refreshingPlaylists || refreshingChannels) ? false : undefined}>
                       <TooltipTrigger asChild>
                         <div
                           className={cn(
