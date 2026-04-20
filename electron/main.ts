@@ -15,7 +15,7 @@ function createMainWindow() {
     height: 800,
   };
 
-  const theme = store.get("theme") || "light";
+  const theme = (store.get("theme") as string) || "light";
   let backgroundColor = "#ffffff";
 
   if (theme === "dark") {
@@ -42,6 +42,7 @@ function createMainWindow() {
       nodeIntegration: false,
       sandbox: false,
     },
+    alwaysOnTop: store.get("alwaysOnTop") === true,
   });
 
   if (lastState.isMaximized) {

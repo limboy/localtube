@@ -103,5 +103,6 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
   ipcMain.handle("window:setAlwaysOnTop", (_e, flag: boolean) => {
     const win = getWindow();
     win?.setAlwaysOnTop(flag);
+    store.set("alwaysOnTop", flag);
   });
 }

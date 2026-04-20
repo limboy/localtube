@@ -20,30 +20,51 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  const [theme, _setTheme] = useState<Theme>("system");
+export function ThemeProvider({ children, defaultTheme = "system", storageKey = "vite-ui-theme", ...props }: ThemeProviderProps) {
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Try to get from electron store first (synced)
+    const storedTheme = window.electron.store.getSync<Theme>("theme");
+    if (storedTheme) return storedTheme;
+    // Fallback to localStorage
+    return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
 
-    const applyTheme = (isDark: boolean) => {
+    const applyTheme = (currentTheme: Theme) => {
       root.classList.remove("light", "dark");
-      root.classList.add(isDark ? "dark" : "light");
+
+      if (currentTheme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+        root.classList.add(systemTheme);
+      } else {
+        root.classList.add(currentTheme);
+      }
     };
 
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    applyTheme(mediaQuery.matches);
+    applyTheme(theme);
 
-    const listener = (e: MediaQueryListEvent) => applyTheme(e.matches);
+    // Watch for system theme changes if in system mode
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const listener = () => {
+      if (theme === "system") {
+        applyTheme("system");
+      }
+    };
     mediaQuery.addEventListener("change", listener);
 
     return () => mediaQuery.removeEventListener("change", listener);
-  }, []);
+  }, [theme]);
 
   const value = {
-    theme: "system" as Theme,
-    setTheme: () => {
-      console.warn("Manual theme switching is disabled. Following system theme.");
+    theme,
+    setTheme: (theme: Theme) => {
+      localStorage.setItem(storageKey, theme);
+      window.electron.store.set("theme", theme);
+      setTheme(theme);
     }
   };
 

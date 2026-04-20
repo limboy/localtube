@@ -18,8 +18,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Bookmark } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Bookmark, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/components/theme-provider";
 import {
   cn,
   addOrUpdatePlaylist,
@@ -249,6 +261,22 @@ export default function AppSidebar() {
   const [open, setOpen] = useState(false);
   const [playlists, setPlaylists] = useState<SidebarItem[]>([]);
   const [channels, setChannels] = useState<SidebarItem[]>([]);
+  const { theme, setTheme } = useTheme();
+  const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      const alwaysOnTop = await window.electron.store.get<boolean>("alwaysOnTop");
+      setIsAlwaysOnTop(!!alwaysOnTop);
+    };
+    loadSettings();
+  }, []);
+
+  const toggleAlwaysOnTop = async () => {
+    const nextValue = !isAlwaysOnTop;
+    setIsAlwaysOnTop(nextValue);
+    await window.electron.setAlwaysOnTop(nextValue);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -975,7 +1003,61 @@ export default function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-2 border-t border-sidebar-border" />
+        <SidebarFooter className="p-2 border-t border-sidebar-border">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton className="w-full justify-start hover:bg-sidebar-accent text-sidebar-foreground">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" align="start" sideOffset={4} className="w-56">
+                  <DropdownMenuItem onClick={toggleAlwaysOnTop} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      {isAlwaysOnTop ? <PinOff className="mr-2 h-4 w-4" /> : <Pin className="mr-2 h-4 w-4" />}
+                      <span>{isAlwaysOnTop ? "Unpin from Top" : "Pin to Top"}</span>
+                    </div>
+                    {isAlwaysOnTop && <Check className="h-4 w-4" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="flex items-center">
+                      <SunMoon className="mr-2 h-4 w-4" />
+                      <span>Switch theme</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onClick={() => setTheme("system")} className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Monitor className="mr-2 h-4 w-4" />
+                            <span>System</span>
+                          </div>
+                          {theme === "system" && <Check className="h-4 w-4" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Sun className="mr-2 h-4 w-4" />
+                            <span>Light</span>
+                          </div>
+                          {theme === "light" && <Check className="h-4 w-4" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Moon className="mr-2 h-4 w-4" />
+                            <span>Dark</span>
+                          </div>
+                          {theme === "dark" && <Check className="h-4 w-4" />}
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
     </>
   );
