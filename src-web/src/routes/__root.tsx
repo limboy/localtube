@@ -43,7 +43,7 @@ function Layout() {
         <main className="flex-1 bg-background text-foreground overflow-hidden">
           <Outlet />
         </main>
-        <SidebarTrigger className="fixed top-2 left-20 z-25 btn-icon text-sidebar-foreground pointer-events-auto cursor-pointer" />
+        <SidebarTrigger className="fixed top-2 left-20 z-25 btn-icon text-sidebar-foreground pointer-events-auto" />
         <Toaster />
       </SidebarProvider>
     </ThemeProvider>
