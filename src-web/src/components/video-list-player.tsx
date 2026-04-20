@@ -459,7 +459,7 @@ export default function VideoListPlayer({
           </div>
 
           <div className="flex-1 overflow-auto px-4 pb-4 max-w-200 w-full bg-background">
-            <div className="grid gap-4">
+            <div className="grid gap-1">
               {processedVideos.map((video) => (
                 <div
                   key={video.id}
@@ -474,10 +474,6 @@ export default function VideoListPlayer({
                     setShouldAutoPlay(true);
                   }}
                 >
-                  <div className="w-6 flex items-center justify-center text-sm text-muted-foreground shrink-0">
-                    {processedVideos.findIndex(v => v.id === video.id) + 1}
-                  </div>
-                  {/* Modified thumbnail container */}
                   <div className="w-24 h-16 flex-none">
                     <img
                       src={video.thumbnail}
