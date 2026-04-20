@@ -3,6 +3,72 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.0.0](https://github.com/limboy/localtube/compare/v0.7.2...v1.0.0) - 2026-04-20
+
+### Features
+
+- maintain visual order in sidebar when shuffled and increase channel video limit ([ffd5f74](https://github.com/limboy/localtube/commit/ffd5f7435c95eb6e15a42beecc0ac8681746bc94))
+- implement custom left sidebar provider and add toggle trigger to navigation bar ([bccddd8](https://github.com/limboy/localtube/commit/bccddd8b28fa25c4b07af1fc950ab6396da40ea3))
+- disable autoPlay by default when navigating to playlists and channels ([6be6931](https://github.com/limboy/localtube/commit/6be69318f33843d040c5c3450554a67e06239f75))
+- add configurable sidebar dimensions, storage keys, and right-side support to Sidebar component and integrate into VideoListPlayer ([4463111](https://github.com/limboy/localtube/commit/446311140c09f5913be704ffd5c30c1f0a66616a))
+- disable auto-refresh on startup and ensure store updates trigger UI refreshes ([359c9a8](https://github.com/limboy/localtube/commit/359c9a8c00dd24f299ac2de2d2af1ae17626434d))
+- implement cross-component state synchronization using custom store-updated events and unified refresh progress tracking ([1cdfc9a](https://github.com/limboy/localtube/commit/1cdfc9a7a587b2dbb6461a0e590f52e3512329a0))
+- make video title clickable to open in external browser ([14199ae](https://github.com/limboy/localtube/commit/14199aeb6ede633fef83eb2b1bd685312276b896))
+- implement auto-play control for playlists and channels with an optional description toggle in the video player ([341aeb5](https://github.com/limboy/localtube/commit/341aeb577b18f93023cd7c61f63ea2bce9844df1))
+- implement grid-based channel and playlist browsing with thumbnail support ([6114886](https://github.com/limboy/localtube/commit/611488637ca78e6467a58bfe7ff9372255f4a861))
+- add resizable sidebar functionality with persistent width storage and update SidebarRail to support dragging ([8567084](https://github.com/limboy/localtube/commit/8567084892871f335e3b4581048867f571456426))
+- add settings menu for always-on-top toggle and persistent theme switching ([d9709cd](https://github.com/limboy/localtube/commit/d9709cdc74dadf2417146cd96aadc5fdd472fa1a))
+- move update indicator from sidebar footer to top navigation bar ([dce57f5](https://github.com/limboy/localtube/commit/dce57f58c671325ac059f1fde355b2ec69c78d9e))
+- sync sidebar active tab with route location and redirect index to playlist view ([1f38a29](https://github.com/limboy/localtube/commit/1f38a293e59dcfe371dfc1e0da076359ba721d23))
+- move update indicator to sidebar footer with responsive collapsed state ([3687317](https://github.com/limboy/localtube/commit/3687317ddc35250ca262a48592b063ad05c75d57))
+- implement synchronous theme retrieval to prevent flash of unstyled content on startup ([ff38a76](https://github.com/limboy/localtube/commit/ff38a76f5a4c10762b27ee718b1e5ec4d164f6a5))
+
+### Bug Fixes
+
+- hide tooltip during playlist or channel refresh in app sidebar ([ce88f95](https://github.com/limboy/localtube/commit/ce88f95546649f58e19bd8b3dad477341dc57f57))
+- remove redundant cursor-pointer styles from SidebarTrigger and btn-icon utility class ([7e15269](https://github.com/limboy/localtube/commit/7e152692e502705a445d666ab6fe3c0e820701d1))
+- prevent main area flash during refresh by only resetting state on source change ([8162446](https://github.com/limboy/localtube/commit/8162446c642486d4b3ea01da14e123c775ed9f02))
+
+### Refactoring
+
+- update sidebar width CSS variables to modern syntax ([6d2b612](https://github.com/limboy/localtube/commit/6d2b612db4c4acdf4d02aa85f97238a4d1718405))
+- remove sidebar divider functionality and associated drag-and-drop logic ([3d3cd1c](https://github.com/limboy/localtube/commit/3d3cd1c889348f9f4021bab5051fd32c5d7e09d2))
+- replace BookmarkOff with filled BookmarkIcon in sidebar playlist items ([ef27164](https://github.com/limboy/localtube/commit/ef27164f58b575d0f6aa3990ca15bd3d7f8e1fc6))
+- fix indentation in sidebar and update bookmark remove button styling ([6ff1e62](https://github.com/limboy/localtube/commit/6ff1e62f6010150c46c44e3c0e1d04d456cf73e0))
+- remove video bookmark sorting logic and confirmation dialog for bookmark deletion ([da4f00f](https://github.com/limboy/localtube/commit/da4f00fe4e26f0d287a786266eef18687fbe8076))
+- consolidate sidebar data loading and optimize bookmark enrichment with debounced store updates ([8081e40](https://github.com/limboy/localtube/commit/8081e409631ad82346026ec443d5fade5fa581e2))
+- wrap refresh button in container and prevent default pointer events to improve interaction stability ([79108ee](https://github.com/limboy/localtube/commit/79108eecd249b2e01288d60d960185b8ac9cba36))
+- optimize channel and playlist updates by fetching only the first page and update TS configuration to Node16 ([6699883](https://github.com/limboy/localtube/commit/6699883ba1b52bd0a86863c647023311ec0ff3be))
+- remove tab-based navigation and simplify sidebar structure ([76a5962](https://github.com/limboy/localtube/commit/76a5962d3e99450a6f4d4619a29a850fe4416631))
+- replace hand-rolled YouTube scraping with youtubei.js ([5aebd34](https://github.com/limboy/localtube/commit/5aebd3486afdf1573ba92482513880f3539b9ff8))
+- reduce grid gap and remove index labels from video list player items ([2004f41](https://github.com/limboy/localtube/commit/2004f41997302d4cb822fdd3f93aa7c85f2bc9eb))
+- update bookmark item styling and text truncation in sidebar ([05cb539](https://github.com/limboy/localtube/commit/05cb5399749bfac81b8e13d80ba9fd57bbb302e7))
+- remove window pinning functionality and adjust navigation layout spacing ([89a4dfb](https://github.com/limboy/localtube/commit/89a4dfbfa6a063f318c9b7f70f561148eaa713fb))
+- update bookmark UI to display thumbnails and metadata while enabling direct navigation to bookmarked videos ([c7f58b4](https://github.com/limboy/localtube/commit/c7f58b4c98fbadeb1e079e1ffd2cef194da59ec2))
+- move SidebarTrigger to root layout and adjust sidebar header spacing ([b86ade9](https://github.com/limboy/localtube/commit/b86ade9a8a75e6930b9c6c653ebee5c56dbafb7f))
+- replace electron-window-state with custom window state management using electron-store ([1401a14](https://github.com/limboy/localtube/commit/1401a1491a9545b4ff3a550fecece665a8055355))
+- remove refresh functionality and associated UI elements from video player ([7acaa80](https://github.com/limboy/localtube/commit/7acaa80b715a1f7823a5ffac9618fc3ddf0c63e5))
+- remove manual theme switcher and enforce system theme preference globally ([d79227c](https://github.com/limboy/localtube/commit/d79227cdde5ee15681b33e1c69c403c47c2a4fab))
+- simplify layout headers and update sidebar button styling to improve consistency ([e9f2db3](https://github.com/limboy/localtube/commit/e9f2db3d342b6bdd177dde4402c05d76024f9457))
+
+### Documentation
+
+- update CHANGELOG for v0.7.2 ([92403a2](https://github.com/limboy/localtube/commit/92403a2c2765eccfc70b0ffad2a442d232cbff2d))
+
+### Styles
+
+- reduce icon size for shuffle and repeat buttons in video player ([9242fcd](https://github.com/limboy/localtube/commit/9242fcde1db9a9d2938d15b8998af173363ae056))
+- darken secondary, muted, and accent colors in global CSS variables ([ff131c9](https://github.com/limboy/localtube/commit/ff131c90061e442c03cb440c576fac03b269ab05))
+
+### Chores
+
+- upgrade dependencies, refactor sidebar bookmark removal, and add utility function for bookmark deletion ([0e2c2e3](https://github.com/limboy/localtube/commit/0e2c2e30b693f14ae7a38265a1eaabac25307273))
+
+### Other Changes
+
+- rename Playlist header to Videos in video list player ([49ac437](https://github.com/limboy/localtube/commit/49ac437ecedba6c2595733161f50742b0d65f29a))
+- adjust video description rendering and fix main area scrolling ([14c01a6](https://github.com/limboy/localtube/commit/14c01a6829da01ca9dcc15171116a35e2deb029f))
+
 ## [v0.7.2](https://github.com/limboy/localtube/compare/v0.7.1...v0.7.2) - 2026-04-20
 
 ### Refactoring
