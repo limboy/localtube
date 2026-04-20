@@ -12,12 +12,17 @@ LocalTube is a modern, high-performance desktop application for browsing YouTube
 - **🔖 Bookmarking**: Save your favorite videos or playlists for quick access later.
 - **🎨 Premium UI/UX**: Built with a modern design system, featuring glassmorphism, smooth animations, and a responsive layout.
 
+## 🖥️ System Requirements
+
+- **OS**: macOS 13.0 or later
+- **Architecture**: Apple Silicon (M1/M2/M3/M4)
+
 ## ⬇️ Download
 
 You can download the latest version of LocalTube for macOS from the [Releases page](https://github.com/limboy/localtube/releases).
 
 1. Go to [Releases](https://github.com/limboy/localtube/releases).
-2. Download the latest `.dmg` or `.zip` file for your architecture (Intel or Apple Silicon).
+2. Download the latest `.dmg` or `.zip` file.
 3. Install by dragging LocalTube to your Applications folder.
 
 
@@ -88,7 +93,7 @@ To package the application for production:
 npm run build
 ```
 
-The build artifacts will be available in the `dist/` and `electron/dist/` directories (specific output location depends on `electron-builder.yml` configuration). By default, it targets macOS (arm64/x64).
+The build artifacts will be available in the `dist/` and `electron/dist/` directories (specific output location depends on `electron-builder.yml` configuration). By default, it targets macOS (arm64).
 
 ## 📄 License
 
