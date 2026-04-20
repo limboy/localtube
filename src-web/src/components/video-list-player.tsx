@@ -368,7 +368,7 @@ export default function VideoListPlayer({
   }
 
   return (
-    <SidebarProvider defaultOpen={true} storageKey="right-sidebar" className="min-h-full h-full relative" defaultWidth={400} minWidth={400} maxWidth={500}>
+    <SidebarProvider defaultOpen={true} storageKey="right-sidebar" className="min-h-full h-full relative">
       <div className="flex flex-col flex-1 h-screen items-center bg-background min-w-0 overflow-y-auto">
         <Nav>
           <div />
@@ -419,12 +419,12 @@ export default function VideoListPlayer({
 
       {!showBookmarkedOnly && (
         <Sidebar side="right" className="border-l">
-          <SidebarContent className="bg-background gap-0">
+          <SidebarContent className="bg-background gap-0 overflow-x-hidden">
             <div className="h-11 flex items-center justify-between sticky top-0 bg-background z-10 w-full border-b shrink-0">
-              <div className="flex flex-row justify-between w-full px-4 items-center">
-                <h2 className="font-semibold">
+              <div className="flex flex-row justify-between w-full px-4 items-center gap-2">
+                <h2 className="font-semibold truncate min-w-0">
                   Videos
-                  <span className="text-sm text-muted-foreground ml-2 font-normal">
+                  <span className="text-sm text-muted-foreground ml-2 font-normal truncate">
                     {currentVideoId
                       ? `${processedVideos.findIndex((v) => v.id === currentVideoId) + 1} / ${processedVideos.length}`
                       : `0 / ${processedVideos.length}`}
@@ -451,7 +451,7 @@ export default function VideoListPlayer({
               </div>
             </div>
 
-            <div className="flex-1 overflow-auto px-4 py-4 w-full bg-background">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 w-full bg-background">
               <div className="grid gap-0.5">
                 {processedVideos.map((video) => (
                   <div
@@ -476,11 +476,11 @@ export default function VideoListPlayer({
                     </div>
                     <div className="flex-1 min-w-0 user-select-none" style={{ WebkitUserSelect: "none" }}>
                       <span className="line-clamp-1 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
-                      <div className="flex items-center justify-between opacity-50 text-sm font-normal mt-0.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span>{video.duration}</span>
+                      <div className="flex items-center justify-between opacity-50 text-sm font-normal mt-0.5 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0 mr-2 flex-1">
+                          <span className="truncate">{video.duration}</span>
                         </div>
-                        <div className="flex items-center gap-0.5 ml-1">
+                        <div className="flex items-center gap-0.5 shrink-0">
                           {video.isSkipped ? (
                             <button
                               onClick={(e) => handleUnskipVideo(video.id, e)}
