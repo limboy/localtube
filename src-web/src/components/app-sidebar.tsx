@@ -695,7 +695,7 @@ export default function AppSidebar() {
                           onClick={activeTab === 'playlists' ? handleRefreshPlaylists : handleRefreshChannels}
                           disabled={refreshingPlaylists || refreshingChannels}
                           className={cn(
-                            "-mt-2 mr-1",
+                            "mr-1",
                             (refreshingPlaylists || refreshingChannels)
                               ? "cursor-default opacity-50"
                               : "btn-icon"
@@ -733,7 +733,7 @@ export default function AppSidebar() {
                     <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-2">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className={cn("-mt-2 btn-icon")}>
+                          <span className={cn("btn-icon")}>
                             <Plus size={18} strokeWidth={1.5} />
                           </span>
                         </TooltipTrigger>
