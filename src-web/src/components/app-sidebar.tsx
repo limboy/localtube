@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkOff } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import {
   DropdownMenu,
@@ -945,7 +945,7 @@ export default function AppSidebar() {
                                           }}
                                           className="p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity"
                                         >
-                                          <BookmarkOff size={14} className="" />
+                                          <BookmarkIcon size={14} fill="currentColor" strokeWidth={1.5} />
                                         </button>
                                       </div>
                                     </div>
