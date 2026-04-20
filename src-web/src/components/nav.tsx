@@ -14,7 +14,7 @@ export default function Nav({
     <nav
       data-tauri-drag-region
       className={cn(
-        "border-b pl-2 pr-2 h-11 shrink-0 flex items-center sticky top-0 w-full border-sidebar-border text-foreground bg-background gap-1",
+        "border-b pl-2 pr-2 h-11 shrink-0 flex items-center sticky top-0 z-10 w-full border-sidebar-border text-foreground bg-background gap-1",
         className ? className : ""
       )}
     >

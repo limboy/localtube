@@ -44,7 +44,6 @@ export default function VideoListPlayer({
   const [forceReplay, setForceReplay] = useState(false);
   const [description, setDescription] = useState<string>("");
   const [isLoadingDescription, setIsLoadingDescription] = useState(false);
-  const [showDescription, setShowDescription] = useState(false);
 
 
   const [bookmarkedVideos, setBookmarkedVideos] = useState<Map<string, BookmarkData>>(new Map());
@@ -304,7 +303,6 @@ export default function VideoListPlayer({
       // Fetch description
       setDescription("");
       setIsLoadingDescription(true);
-      setShowDescription(false);
       getVideoDescription(currentVideoId).then(desc => {
         setDescription(desc);
         setIsLoadingDescription(false);
@@ -371,21 +369,7 @@ export default function VideoListPlayer({
     <SidebarProvider defaultOpen={true} storageKey="right-sidebar" className="min-h-full h-full relative" defaultWidth={400} minWidth={400} maxWidth={500}>
       <div className="flex flex-col flex-1 h-screen items-center bg-background min-w-0 overflow-y-auto">
         <Nav>
-          <div className="flex items-center gap-2">
-            {videolist?.thumbnail && (
-              <img
-                src={videolist.thumbnail}
-                alt=""
-                className={cn(
-                  "w-6 h-6 object-cover shadow-sm",
-                  channelId ? "rounded-full" : "rounded"
-                )}
-              />
-            )}
-            <h1 className="font-semibold line-clamp-1 select-none cursor-default">
-              {videolist!.title}
-            </h1>
-          </div>
+          <div />
 
           <div className="flex flex-row gap-1 items-center">
             {/* The right sidebar trigger */}
@@ -406,44 +390,25 @@ export default function VideoListPlayer({
             />
           </div>
           {currentVideoId && (
-            <div className="mt-4 pb-4 border-b">
+            <div className="mt-4 pb-4">
               <h1
                 className="underline text-xl font-bold line-clamp-2 cursor-pointer hover:text-primary transition-colors block"
                 onClick={() => window.electron.openUrl(`https://www.youtube.com/watch?v=${currentVideoId}`)}
               >
                 {processedVideos.find(v => v.id === currentVideoId)?.title}
               </h1>
-              {!showDescription ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowDescription(true)}
-                  className="mt-2"
-                >
-                  Show Description
-                </Button>
-              ) : (
-                <div className="mt-2">
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-80 overflow-y-auto pr-2">
-                    {isLoadingDescription ? (
-                      <div className="flex items-center gap-2">
-                        <Loader size={12} className="animate-spin" />
-                        <span>Loading...</span>
-                      </div>
-                    ) : (
-                      description || "No description available"
-                    )}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowDescription(false)}
-                    className="mt-2"
-                  >
-                    Hide Description
-                  </Button>
+              <div className="mt-2">
+                <div className="text-sm text-muted-foreground whitespace-pre-wrap pr-2">
+                  {isLoadingDescription ? (
+                    <div className="flex items-center gap-2">
+                      <Loader size={12} className="animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    description || "No description available"
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
@@ -484,13 +449,13 @@ export default function VideoListPlayer({
             </div>
 
             <div className="flex-1 overflow-auto px-4 py-4 w-full bg-background">
-              <div className="grid gap-1">
+              <div className="grid gap-0.5">
                 {processedVideos.map((video) => (
                   <div
                     key={video.id}
                     id={`video-item-${video.id}`}
                     className={cn(
-                      "flex gap-4 items-center hover:bg-accent p-2 rounded group/video",
+                      "flex items-start gap-2 w-full hover:bg-accent p-2 rounded group/video cursor-default",
                       currentVideoId === video.id && "bg-accent",
                       video.isSkipped && "opacity-50"
                     )}
@@ -499,49 +464,51 @@ export default function VideoListPlayer({
                       setShouldAutoPlay(true);
                     }}
                   >
-                    <div className="w-24 h-16 flex-none">
+                    <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
                       <img
                         src={video.thumbnail}
                         alt={video.title}
-                        className="w-full h-full object-cover rounded"
+                        className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="user-select-none cursor-default" style={{ WebkitUserSelect: "none" }}>
-                      <h2 className="line-clamp-2 leading-5">{video.title}</h2>
-                      <div className="flex flex-row gap-1">
-                        <span className="text-sm text-gray-500">{video.duration}</span>
+                    <div className="flex-1 min-w-0 user-select-none" style={{ WebkitUserSelect: "none" }}>
+                      <span className="line-clamp-1 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
+                      <div className="flex items-center justify-between opacity-50 text-sm font-normal mt-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span>{video.duration}</span>
+                        </div>
+                        <div className="flex items-center gap-0.5 ml-1">
+                          {video.isSkipped ? (
+                            <button
+                              onClick={(e) => handleUnskipVideo(video.id, e)}
+                              className="p-0.5 rounded hover:bg-accent-foreground/20 opacity-80"
+                            >
+                              <Eye size={14} strokeWidth={1.5} />
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={(e) => handleSkipVideo(video.id, e)}
+                                className={cn(
+                                  "p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity",
+                                  "opacity-0 group-hover/video:opacity-80"
+                                )}
+                              >
+                                <EyeOff size={14} strokeWidth={1.5} />
+                              </button>
+                              <button
+                                onClick={(e) => toggleBookmark(video.id, e)}
+                                className={cn(
+                                  "p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity",
+                                  bookmarkedVideos.has(video.id) ? "" : "opacity-0 group-hover/video:opacity-100"
+                                )}
+                              >
+                                <BookmarkIcon size={14} fill={bookmarkedVideos.has(video.id) ? "currentColor" : "none"} strokeWidth={1.5} />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-auto flex gap-1">
-                      {video.isSkipped ? (
-                        <button
-                          onClick={(e) => handleUnskipVideo(video.id, e)}
-                          className="p-1 rounded hover:bg-accent-foreground/10 opacity-80"
-                        >
-                          <Eye size={20} strokeWidth={1.5} />
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={(e) => handleSkipVideo(video.id, e)}
-                            className={cn(
-                              "p-1 rounded hover:bg-accent-foreground/10",
-                              "opacity-0 group-hover/video:opacity-80"
-                            )}
-                          >
-                            <EyeOff size={20} strokeWidth={1.5} />
-                          </button>
-                          <button
-                            onClick={(e) => toggleBookmark(video.id, e)}
-                            className={cn(
-                              "p-1 rounded hover:bg-accent-foreground/10",
-                              bookmarkedVideos.has(video.id) ? "" : "opacity-0 group-hover/video:opacity-100"
-                            )}
-                          >
-                            <BookmarkIcon size={20} fill={bookmarkedVideos.has(video.id) ? "#ccc" : "none"} strokeWidth={bookmarkedVideos.has(video.id) ? 1 : 1} />
-                          </button>
-                        </>
-                      )}
                     </div>
                   </div>
                 ))}
