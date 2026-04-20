@@ -13,6 +13,7 @@ import {
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 
 import { Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
+import { Button } from "./ui/button";
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import YTPlayer from "./yt-player";
@@ -22,12 +23,14 @@ export default function VideoListPlayer({
   playlistId,
   channelId,
   showBookmarkedOnly = false,
-  initialVideoId
+  initialVideoId,
+  autoPlay = true
 }: {
   playlistId?: string;
   channelId?: string;
   showBookmarkedOnly?: boolean;
   initialVideoId?: string;
+  autoPlay?: boolean;
 }) {
   const [videolist, setVideoList] = useState<VideoListInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,10 +42,12 @@ export default function VideoListPlayer({
   const [forceReplay, setForceReplay] = useState(false);
   const [description, setDescription] = useState<string>("");
   const [isLoadingDescription, setIsLoadingDescription] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
 
 
   const [bookmarkedVideos, setBookmarkedVideos] = useState<Map<string, BookmarkData>>(new Map());
   const [skippedVideos, setSkippedVideos] = useState<Set<string>>(new Set());
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(autoPlay);
   const navigate = useNavigate();
 
   const playNextVideoRef = useRef<() => void>(() => { });
@@ -76,6 +81,7 @@ export default function VideoListPlayer({
       setIsShuffled(false);
       setLoopMode("none");
       setShuffledItems([]);
+      setShouldAutoPlay(autoPlay);
       setIsLoading(true);
 
       try {
@@ -235,10 +241,12 @@ export default function VideoListPlayer({
     playNextVideoRef.current = () => {
       if (!videolist) return;
       if (loopMode === "one" && currentVideoId) {
+        setShouldAutoPlay(true);
         setForceReplay((prev) => !prev);
         return;
       }
 
+      setShouldAutoPlay(true);
       if (isShuffled && shuffledItems.length) {
         const idx = currentVideoId ? shuffledItems.findIndex((v) => v.id === currentVideoId) : -1;
         let nextIdx = idx + 1;
@@ -280,6 +288,7 @@ export default function VideoListPlayer({
       // Fetch description
       setDescription("");
       setIsLoadingDescription(true);
+      setShowDescription(false);
       getVideoDescription(currentVideoId).then(desc => {
         setDescription(desc);
         setIsLoadingDescription(false);
@@ -370,6 +379,7 @@ export default function VideoListPlayer({
             videoId={currentVideoId || ""}
             onVideoEnd={() => playNextVideoRef.current()}
             forceReplay={forceReplay}
+            autoPlay={shouldAutoPlay}
           />
         </div>
         {currentVideoId && (
@@ -377,16 +387,37 @@ export default function VideoListPlayer({
             <h1 className="text-xl font-bold line-clamp-2">
               {processedVideos.find(v => v.id === currentVideoId)?.title}
             </h1>
-            <div className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap max-h-40 overflow-y-auto">
-              {isLoadingDescription ? (
-                <div className="flex items-center gap-2">
-                  <Loader size={14} className="animate-spin" />
-                  <span>Loading description...</span>
+            {!showDescription ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDescription(true)}
+                className="mt-2"
+              >
+                Show Description
+              </Button>
+            ) : (
+              <div className="mt-2">
+                <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-80 overflow-y-auto pr-2">
+                  {isLoadingDescription ? (
+                    <div className="flex items-center gap-2">
+                      <Loader size={12} className="animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    description || "No description available"
+                  )}
                 </div>
-              ) : (
-                description || "No description available"
-              )}
-            </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDescription(false)}
+                  className="mt-2"
+                >
+                  Hide Description
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -435,7 +466,10 @@ export default function VideoListPlayer({
                     currentVideoId === video.id && "bg-accent",
                     video.isSkipped && "opacity-50"
                   )}
-                  onClick={() => setCurrentVideoId(video.id)}
+                  onClick={() => {
+                    setCurrentVideoId(video.id);
+                    setShouldAutoPlay(true);
+                  }}
                 >
                   <div className="w-6 flex items-center justify-center text-sm text-muted-foreground shrink-0">
                     {processedVideos.findIndex(v => v.id === video.id) + 1}

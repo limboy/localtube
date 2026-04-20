@@ -718,9 +718,33 @@ export default function AppSidebar() {
 
   const handleTabChange = async (value: string) => {
     if (value === 'playlists') {
-      navigate({ to: '/playlist' });
+      const firstPlaylist = playlists.find(item => !isDivider(item)) as PlaylistInfo | undefined;
+      if (firstPlaylist) {
+        await markPlaylistAsRead(firstPlaylist.id);
+        const newPlaylists = await syncPlaylistsWithDividers();
+        setPlaylists(newPlaylists);
+        navigate({
+          to: "/playlist/$playlistId",
+          params: { playlistId: firstPlaylist.id },
+          search: { autoPlay: false }
+        });
+      } else {
+        navigate({ to: '/playlist' });
+      }
     } else if (value === 'channels') {
-      navigate({ to: '/channel' });
+      const firstChannel = channels.find(item => !isDivider(item)) as ChannelInfo | undefined;
+      if (firstChannel) {
+        await markChannelAsRead(firstChannel.id);
+        const newChannels = await syncChannelsWithDividers();
+        setChannels(newChannels);
+        navigate({
+          to: "/channel/$channelId",
+          params: { channelId: firstChannel.id },
+          search: { autoPlay: false }
+        });
+      } else {
+        navigate({ to: '/channel' });
+      }
     } else if (value === 'bookmarks') {
       navigate({ to: '/bookmarks' });
     }

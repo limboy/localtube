@@ -13,11 +13,13 @@ interface IFramePlayer {
 export default function YTPlayer({
   videoId,
   onVideoEnd,
-  forceReplay = false
+  forceReplay = false,
+  autoPlay = true
 }: {
   videoId: string;
   onVideoEnd?: () => void;
   forceReplay?: boolean;
+  autoPlay?: boolean;
 }) {
   const playerRef = useRef<IFramePlayer | null>(null);
   const [isAPIReady, setIsAPIReady] = useState(false);
@@ -92,16 +94,24 @@ export default function YTPlayer({
       if (forceReplay) {
         playerRef.current.seekTo(0, true);
       } else {
-        playerRef.current.loadVideoById({ videoId });
+        if (autoPlay) {
+          playerRef.current.loadVideoById({ videoId });
+        } else {
+          (playerRef.current as any).cueVideoById({ videoId });
+        }
       }
     }
-  }, [videoId, forceReplay, isPlayerReady]);
+  }, [videoId, forceReplay, isPlayerReady, autoPlay]);
 
   const onPlayerReady = () => {
     console.log('Player ready:', playerRef.current);
     setIsPlayerReady(true);
     if (videoId && playerRef.current) {
-      playerRef.current.loadVideoById({ videoId });
+      if (autoPlay) {
+        playerRef.current.loadVideoById({ videoId });
+      } else {
+        (playerRef.current as any).cueVideoById({ videoId });
+      }
     }
   };
 
