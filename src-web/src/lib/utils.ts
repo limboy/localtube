@@ -216,43 +216,54 @@ export function isChannelUrl(url: string): boolean {
   );
 }
 
-export async function enrichBookmarks(): Promise<EnrichedBookmark[]> {
+export async function enrichBookmarks(
+  providedPlaylists?: PlaylistInfo[],
+  providedChannels?: ChannelInfo[]
+): Promise<EnrichedBookmark[]> {
   const bookmarks = await loadBookmarks();
-  const playlists = await loadPlaylists();
-  const channels = await loadChannels();
+  if (bookmarks.size === 0) return [];
+
+  const playlists = providedPlaylists || await loadPlaylists();
+  const channels = providedChannels || await loadChannels();
+
+  const videoLookup = new Map<string, {
+    video: VideoItem,
+    owner: PlaylistInfo | ChannelInfo,
+    type: 'playlist' | 'channel'
+  }>();
+
+  for (const playlist of playlists) {
+    if (isDivider(playlist)) continue;
+    for (const item of playlist.items) {
+      if (!videoLookup.has(item.id)) {
+        videoLookup.set(item.id, { video: item, owner: playlist, type: 'playlist' });
+      }
+    }
+  }
+
+  for (const channel of channels) {
+    if (isDivider(channel)) continue;
+    for (const item of channel.items) {
+      if (!videoLookup.has(item.id)) {
+        videoLookup.set(item.id, { video: item, owner: channel, type: 'channel' });
+      }
+    }
+  }
 
   const enriched: EnrichedBookmark[] = [];
 
   for (const [id, bookmark] of bookmarks) {
-    const playlist = playlists.find(playlist => playlist.items.some(item => item.id === id));
-    const channel = channels.find(channel => channel.items.some(item => item.id === id));
-
-    if (playlist) {
-      const video = playlist.items.find(item => item.id === id);
-      if (video) {
-        enriched.push({
-          id,
-          title: video.title,
-          thumbnail: video.thumbnail,
-          duration: video.duration,
-          type: 'playlist',
-          bookmarkedAt: bookmark.createdAt,
-          data: playlist
-        });
-      }
-    } else if (channel) {
-      const video = channel.items.find(item => item.id === id);
-      if (video) {
-        enriched.push({
-          id,
-          title: video.title,
-          thumbnail: video.thumbnail,
-          duration: video.duration,
-          type: 'channel',
-          bookmarkedAt: bookmark.createdAt,
-          data: channel
-        });
-      }
+    const info = videoLookup.get(id);
+    if (info) {
+      enriched.push({
+        id,
+        title: info.video.title,
+        thumbnail: info.video.thumbnail,
+        duration: info.video.duration,
+        type: info.type,
+        bookmarkedAt: bookmark.createdAt,
+        data: info.owner
+      });
     }
   }
 

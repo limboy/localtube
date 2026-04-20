@@ -368,36 +368,34 @@ export default function AppSidebar() {
     }
   };
 
-  const loadPlaylistsData = async () => {
+  const refreshSidebarData = async () => {
     try {
+      // Load everything and update locally
       await initializePlaylistsWithDividers();
-      const playlistsData = await syncPlaylistsWithDividers();
-      setPlaylists(playlistsData);
-    } catch (e) {}
-  };
+      const pData = await syncPlaylistsWithDividers();
+      setPlaylists(pData);
 
-  const loadChannelsData = async () => {
-    try {
       await initializeChannelsWithDividers();
-      const channelsData = await syncChannelsWithDividers();
-      setChannels(channelsData);
-    } catch (e) {}
-  };
+      const cData = await syncChannelsWithDividers();
+      setChannels(cData);
 
-  const loadBookmarksData = async () => {
-    try {
-      const bookmarksData = await enrichBookmarks();
-      setBookmarks(bookmarksData);
-    } catch (e) {}
+      // Pass the already loaded/synced data to avoid redundant store gets
+      const actualP = pData.filter(i => !isDivider(i)) as PlaylistInfo[];
+      const actualC = cData.filter(i => !isDivider(i)) as ChannelInfo[];
+      const bData = await enrichBookmarks(actualP, actualC);
+      setBookmarks(bData);
+    } catch (e) {
+      console.error("Failed to refresh sidebar data:", e);
+    }
   };
 
   useEffect(() => {
-    const unlistenFocus = window.electron.onWindowFocus(() => {
+    const focusHandler = () => {
       checkUpdatesIfNeeded();
-      loadPlaylistsData();
-      loadChannelsData();
-      loadBookmarksData();
-    });
+      refreshSidebarData();
+    };
+
+    const unlistenFocus = window.electron.onWindowFocus(focusHandler);
 
     const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
       if (eventId.startsWith("view-playlist-in-browser-")) {
@@ -449,20 +447,20 @@ export default function AppSidebar() {
       } else if (eventId.startsWith("add-divider-playlist-")) {
         const playlistId = eventId.replace("add-divider-playlist-", "");
         await addDividerAfterItem(playlistId, 'playlist');
-        await loadPlaylistsData();
+        await refreshSidebarData();
       } else if (eventId.startsWith("add-divider-channel-")) {
         const channelId = eventId.replace("add-divider-channel-", "");
         await addDividerAfterItem(channelId, 'channel');
-        await loadChannelsData();
+        await refreshSidebarData();
       } else if (eventId.startsWith("delete-divider-")) {
         const dividerId = eventId.replace("delete-divider-", "");
         const isPlaylistDivider = playlists.some(item => isDivider(item) && item.id === dividerId);
         if (isPlaylistDivider) {
           await removeDivider(dividerId, 'playlist');
-          await loadPlaylistsData();
+          await refreshSidebarData();
         } else {
           await removeDivider(dividerId, 'channel');
-          await loadChannelsData();
+          await refreshSidebarData();
         }
       }
     });
@@ -474,17 +472,21 @@ export default function AppSidebar() {
   }, [playlists]);
 
   useEffect(() => {
-    loadPlaylistsData();
-    loadChannelsData();
-    loadBookmarksData();
+    refreshSidebarData();
 
+    let timeoutId: NodeJS.Timeout;
     const handleUpdate = () => {
-      loadPlaylistsData();
-      loadChannelsData();
-      loadBookmarksData();
+      // Debounce updates to avoid rapid re-renders during batch sync
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        refreshSidebarData();
+      }, 50);
     };
     window.addEventListener('store-updated', handleUpdate);
-    return () => window.removeEventListener('store-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('store-updated', handleUpdate);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const hasLoadedRef = useRef(false);
@@ -538,7 +540,7 @@ export default function AppSidebar() {
         const playlist = await parseYouTubePlaylist(playlistOrChannelUrl);
         await addOrUpdatePlaylist(playlist);
 
-        await loadPlaylistsData();
+        await refreshSidebarData();
 
         setOpen(false);
         setPlaylistOrChannelUrl("");
@@ -551,7 +553,7 @@ export default function AppSidebar() {
         const channel = await parseYouTubeChannel(playlistOrChannelUrl);
         await addOrUpdateChannel(channel);
 
-        await loadChannelsData();
+        await refreshSidebarData();
 
         setOpen(false);
         setPlaylistOrChannelUrl("");
@@ -669,7 +671,7 @@ export default function AppSidebar() {
     });
     if (confirmed) {
       await removeBookmark(videoId);
-      await loadBookmarksData();
+      await refreshSidebarData();
     }
   };
 
@@ -700,7 +702,7 @@ export default function AppSidebar() {
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingChannels(false);
 
-      await loadBookmarksData();
+      await refreshSidebarData();
     } catch (e) {
       console.error("Refresh all failed", e);
       setRefreshingPlaylists(false);

@@ -52,11 +52,18 @@ export default function VideoListPlayer({
   const navigate = useNavigate();
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     const handleUpdate = () => {
-      setRefreshKey(prev => prev + 1);
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setRefreshKey(prev => prev + 1);
+      }, 50);
     };
     window.addEventListener('store-updated', handleUpdate);
-    return () => window.removeEventListener('store-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('store-updated', handleUpdate);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const playNextVideoRef = useRef<() => void>(() => { });
