@@ -420,7 +420,7 @@ export default function VideoListPlayer({
             <div className="h-11 flex items-center justify-between sticky top-0 bg-background z-10 w-full border-b shrink-0">
               <div className="flex flex-row justify-between w-full px-4 items-center">
                 <h2 className="font-semibold">
-                  Playlist
+                  Videos
                   <span className="text-sm text-muted-foreground ml-2 font-normal">
                     {currentVideoId
                       ? `${processedVideos.findIndex((v) => v.id === currentVideoId) + 1} / ${processedVideos.length}`
