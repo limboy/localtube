@@ -45,6 +45,10 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    storageKey?: string;
+    defaultWidth?: number;
+    minWidth?: number;
+    maxWidth?: number;
   }
 >(
   (
@@ -52,6 +56,10 @@ const SidebarProvider = React.forwardRef<
       defaultOpen = true,
       open: openProp,
       onOpenChange: setOpenProp,
+      storageKey = "sidebar",
+      defaultWidth = 250,
+      minWidth = 250,
+      maxWidth = 450,
       className,
       style,
       children,
@@ -62,15 +70,16 @@ const SidebarProvider = React.forwardRef<
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen);
-    const [width, setWidth] = React.useState(250);
+    const [width, setWidth] = React.useState(defaultWidth);
     const [isResizing, setIsResizing] = React.useState(false);
 
     React.useEffect(() => {
-      const savedWidth = localStorage.getItem("sidebar_width");
+      const savedWidth = localStorage.getItem(`${storageKey}_width`);
       if (savedWidth) {
-        setWidth(parseInt(savedWidth, 10));
+        const loadedWidth = parseInt(savedWidth, 10);
+        setWidth(Math.min(Math.max(loadedWidth, minWidth), maxWidth));
       }
-    }, []);
+    }, [storageKey, minWidth, maxWidth]);
 
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
@@ -83,9 +92,9 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        document.cookie = `${storageKey}_state=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
       },
-      [setOpenProp, open]
+      [setOpenProp, open, storageKey]
     );
 
     const toggleSidebar = React.useCallback(() => {
@@ -93,10 +102,10 @@ const SidebarProvider = React.forwardRef<
     }, [setOpen]);
 
     const handleSetWidth = React.useCallback((value: number) => {
-      const newWidth = Math.min(Math.max(value, 250), 450);
+      const newWidth = Math.min(Math.max(value, minWidth), maxWidth);
       setWidth(newWidth);
-      localStorage.setItem("sidebar_width", newWidth.toString());
-    }, []);
+      localStorage.setItem(`${storageKey}_width`, newWidth.toString());
+    }, [storageKey, minWidth, maxWidth]);
 
     // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
@@ -182,7 +191,7 @@ const Sidebar = React.forwardRef<
       return (
         <div
           className={cn(
-            "flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground",
+            "flex h-full w-[var(--sidebar-width)] flex-col bg-sidebar text-sidebar-foreground",
             className
           )}
           ref={ref}
@@ -204,25 +213,25 @@ const Sidebar = React.forwardRef<
       >
         <div
           className={cn(
-            "relative h-svh w-(--sidebar-width) bg-transparent transition-[width] duration-150 ease-in-out",
+            "relative h-svh w-[var(--sidebar-width)] bg-transparent transition-[width] duration-150 ease-in-out",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+              : "group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)]",
             isResizing && "transition-none"
           )}
         />
         <div
           className={cn(
-            "fixed inset-y-0 z-10 h-svh w-(--sidebar-width) transition-[left,right,width] duration-150 ease-in-out flex",
+            "fixed inset-y-0 z-10 h-svh w-[var(--sidebar-width)] transition-[left,right,width] duration-150 ease-in-out flex",
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
             // Adjust the padding for floating and inset variants.
             variant === "floating" || variant === "inset"
               ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l border-sidebar-border!",
+              : "group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] group-data-[side=left]:border-r group-data-[side=right]:border-l border-sidebar-border!",
             isResizing && "transition-none",
             className
           )}
@@ -260,7 +269,7 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <PanelLeft />
+      {props.children || <PanelLeft />}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
@@ -276,9 +285,14 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"bu
         if (!open) return;
         event.preventDefault();
         setIsResizing(true);
+        const isRight = (event.currentTarget as HTMLElement).closest('[data-side="right"]');
 
         const onMouseMove = (event: MouseEvent) => {
-          setWidth(event.clientX);
+          if (isRight) {
+            setWidth(window.innerWidth - event.clientX);
+          } else {
+            setWidth(event.clientX);
+          }
         };
 
         const onMouseUp = () => {
