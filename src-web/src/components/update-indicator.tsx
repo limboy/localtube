@@ -13,7 +13,7 @@ export function UpdateIndicator() {
   const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
-    const unlisten = window.electron.onUpdateReady((info) => {
+    const unlisten = window.electron.onUpdateReady((info: { version: string }) => {
       setUpdateVersion(info.version);
     });
 

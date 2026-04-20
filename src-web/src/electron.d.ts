@@ -38,13 +38,11 @@ export interface ElectronAPI {
   showContextMenu(items: ContextMenuItem[]): Promise<string | null>;
   setAlwaysOnTop(flag: boolean): Promise<void>;
   updater: {
-    check(): Promise<{ hasUpdate: boolean; version?: string }>;
-    download(): Promise<void>;
     install(): Promise<void>;
   };
   onWindowFocus(cb: () => void): () => void;
   onMenuEvent(cb: (eventName: string, payload?: string) => void): () => void;
-  onUpdateDownloaded(cb: () => void): () => void;
+  onUpdateReady(cb: (info: { version: string }) => void): () => void;
 }
 
 declare global {
