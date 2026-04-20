@@ -23,8 +23,6 @@ const api = {
     ipcRenderer.invoke("window:setAlwaysOnTop", flag) as Promise<void>,
 
   updater: {
-    check: () => ipcRenderer.invoke("updater:check") as Promise<{ hasUpdate: boolean; version?: string }>,
-    download: () => ipcRenderer.invoke("updater:download") as Promise<void>,
     install: () => ipcRenderer.invoke("updater:install") as Promise<void>,
   },
 
@@ -40,12 +38,14 @@ const api = {
     return () => ipcRenderer.removeListener("menu:event", handler);
   },
 
-  onUpdateDownloaded: (cb: () => void) => {
-    const handler = () => cb();
-    ipcRenderer.on("updater:downloaded", handler);
-    return () => ipcRenderer.removeListener("updater:downloaded", handler);
+  onUpdateReady: (cb: (info: { version: string }) => void) => {
+    const handler = (_: unknown, info: { version: string }) => cb(info);
+    ipcRenderer.on("updater:ready", handler);
+    return () => ipcRenderer.removeListener("updater:ready", handler);
   },
 };
+
+
 
 contextBridge.exposeInMainWorld("electron", api);
 

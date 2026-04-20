@@ -42,7 +42,7 @@ import {
 } from "@/lib/utils";
 import { PlaylistInfo, ChannelInfo, EnrichedBookmark, SidebarItem } from "@/types";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import UpdateChecker from "./update-checker";
+
 import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { checkAllChannelsForUpdates, parseYouTubeChannel } from "@/lib/channel-parser";
 import {
@@ -975,9 +975,7 @@ export default function AppSidebar() {
                     </Tabs>
                   </SidebarMenu>
 
-                  <div className="flex items-center justify-center">
-                    <UpdateChecker />
-                  </div>
+
                 </div>
               </SidebarGroupContent>
             </SidebarGroup>

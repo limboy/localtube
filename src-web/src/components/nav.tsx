@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { SidebarTrigger, useSidebar } from "./ui/sidebar";
+import { UpdateIndicator } from "./update-indicator";
 
 export default function Nav({
   children,
@@ -13,7 +14,7 @@ export default function Nav({
     <nav
       data-tauri-drag-region
       className={cn(
-        "border-b px-2 h-11 shrink-0 flex items-center sticky top-0 w-full border-sidebar-border text-foreground bg-background",
+        "border-b px-2 h-11 shrink-0 flex items-center sticky top-0 w-full border-sidebar-border text-foreground bg-background gap-4",
         className ? className : ""
       )}
     >
@@ -27,6 +28,10 @@ export default function Nav({
       <div className="flex flex-1 items-center justify-between min-w-0">
         {children}
       </div>
+      <div className="app-no-drag">
+        <UpdateIndicator />
+      </div>
     </nav>
   );
 }
+

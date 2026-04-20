@@ -1,36 +1,31 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { autoUpdater } from "electron-updater";
 
 export function setupAutoUpdater(getWindow: () => BrowserWindow | null) {
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = false;
+  if (!app.isPackaged) return;
 
-  autoUpdater.on("update-downloaded", () => {
-    getWindow()?.webContents.send("updater:downloaded");
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on("update-downloaded", (info) => {
+    getWindow()?.webContents.send("updater:ready", { version: info.version });
   });
 
   autoUpdater.on("error", (err) => {
     console.error("Update error:", err);
   });
 
-  ipcMain.handle("updater:check", async () => {
-    try {
-      const result = await autoUpdater.checkForUpdates();
-      if (result && result.updateInfo.version !== autoUpdater.currentVersion.version) {
-        return { hasUpdate: true, version: result.updateInfo.version };
-      }
-      return { hasUpdate: false };
-    } catch (err) {
-      console.error("checkForUpdates failed:", err);
-      return { hasUpdate: false };
-    }
-  });
+  // Initial check
+  autoUpdater.checkForUpdates().catch(() => {});
 
-  ipcMain.handle("updater:download", async () => {
-    await autoUpdater.downloadUpdate();
-  });
+  // Periodic check every 6 hours
+  setInterval(() => {
+    autoUpdater.checkForUpdates().catch(() => {});
+  }, 6 * 60 * 60 * 1000);
 
   ipcMain.handle("updater:install", () => {
+    if (!app.isPackaged) return;
     autoUpdater.quitAndInstall();
   });
 }
+
