@@ -837,49 +837,49 @@ export default function AppSidebar() {
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="pr-2">
-                       {/* Combined Playlists and Channels */}
-                         <DndContext
-                           sensors={sensors}
-                           collisionDetection={closestCenter}
-                           onDragEnd={handleDragEnd}
-                         >
-                           <SortableContext
-                             items={playlists.map(p => p.id)}
-                             strategy={verticalListSortingStrategy}
-                           >
-                             {playlists.map((item) => {
-                               if (isDivider(item)) return <SortableDividerItem key={item.id} dividerId={item.id} onContextMenu={dividerClickHandler} />;
-                               const playlist = item as PlaylistInfo;
-                               return (
-                                 <SortablePlaylistItem
-                                   key={playlist.id}
-                                   playlist={playlist}
-                                   isActive={playlistMatch?.params.playlistId === playlist.id}
-                                   onPlaylistClick={handlePlaylistClick}
-                                   onContextMenu={playlistClickHandler}
-                                 />
-                               );
-                             })}
-                           </SortableContext>
-                           <SortableContext
-                             items={channels.map(c => c.id)}
-                             strategy={verticalListSortingStrategy}
-                           >
-                             {channels.map((item) => {
-                               if (isDivider(item)) return <SortableDividerItem key={item.id} dividerId={item.id} onContextMenu={dividerClickHandler} />;
-                               const channel = item as ChannelInfo;
-                               return (
-                                 <SortableChannelItem
-                                   key={channel.id}
-                                   channel={channel}
-                                   isActive={channelMatch?.params.channelId === channel.id}
-                                   onChannelClick={handleChannelClick}
-                                   onContextMenu={channelClickHandler}
-                                 />
-                               );
-                             })}
-                           </SortableContext>
-                         </DndContext>
+                      {/* Combined Playlists and Channels */}
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={playlists.map(p => p.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {playlists.map((item) => {
+                            if (isDivider(item)) return <SortableDividerItem key={item.id} dividerId={item.id} onContextMenu={dividerClickHandler} />;
+                            const playlist = item as PlaylistInfo;
+                            return (
+                              <SortablePlaylistItem
+                                key={playlist.id}
+                                playlist={playlist}
+                                isActive={playlistMatch?.params.playlistId === playlist.id}
+                                onPlaylistClick={handlePlaylistClick}
+                                onContextMenu={playlistClickHandler}
+                              />
+                            );
+                          })}
+                        </SortableContext>
+                        <SortableContext
+                          items={channels.map(c => c.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {channels.map((item) => {
+                            if (isDivider(item)) return <SortableDividerItem key={item.id} dividerId={item.id} onContextMenu={dividerClickHandler} />;
+                            const channel = item as ChannelInfo;
+                            return (
+                              <SortableChannelItem
+                                key={channel.id}
+                                channel={channel}
+                                isActive={channelMatch?.params.channelId === channel.id}
+                                onChannelClick={handleChannelClick}
+                                onContextMenu={channelClickHandler}
+                              />
+                            );
+                          })}
+                        </SortableContext>
+                      </DndContext>
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
@@ -943,9 +943,9 @@ export default function AppSidebar() {
                                             e.stopPropagation();
                                             handleRemoveBookmark(bookmark.id);
                                           }}
-                                          className="opacity-0 group-hover/bookmark:opacity-100 p-0.5 hover:bg-sidebar-border rounded flex-none transition-opacity ml-1"
+                                          className="p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity"
                                         >
-                                          <BookmarkOff size={14} className="hover:text-red-500 transition-colors" />
+                                          <BookmarkOff size={14} className="" />
                                         </button>
                                       </div>
                                     </div>
