@@ -1,13 +1,9 @@
-import { check, Update } from "@tauri-apps/plugin-updater";
-import { relaunch } from "@tauri-apps/plugin-process";
 import { useEffect, useRef, useState } from "react";
 import { RefreshCcw, Loader } from "lucide-react";
-import { listen } from "@tauri-apps/api/event";
 
 export default function UpdateChecker() {
   const [downloadComplete, setDownloadComplete] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
-  const updateRef = useRef<Update | null>(null);
   const lastCheckTimeRef = useRef<number>(0);
 
   const checkForUpdate = async () => {
@@ -15,25 +11,15 @@ export default function UpdateChecker() {
       const now = Date.now();
       const oneHour = 60 * 60 * 1000;
 
-      // Only check if it's been at least an hour since the last check
       if (now - lastCheckTimeRef.current < oneHour) {
         return;
       }
 
       lastCheckTimeRef.current = now;
-      const update = await check();
+      const result = await window.electron.updater.check();
 
-      if (update) {
-        updateRef.current = update;
-        await update.download((event) => {
-          switch (event.event) {
-            case "Started":
-              break;
-            case "Finished":
-              setDownloadComplete(true);
-              break;
-          }
-        });
+      if (result.hasUpdate) {
+        await window.electron.updater.download();
       }
     } catch (error) {
       console.error("Update check failed:", error);
@@ -41,29 +27,28 @@ export default function UpdateChecker() {
   };
 
   const installAndRelaunch = async () => {
-    if (updateRef.current) {
-      setIsInstalling(true);
-      try {
-        await updateRef.current.install();
-        await relaunch();
-      } catch (error) {
-        console.error("Update installation failed:", error);
-        setIsInstalling(false);
-      }
+    setIsInstalling(true);
+    try {
+      await window.electron.updater.install();
+    } catch (error) {
+      console.error("Update installation failed:", error);
+      setIsInstalling(false);
     }
   };
 
   useEffect(() => {
-    // Initial check
     checkForUpdate();
 
-    // Set up focus event listener
-    const unlisten = listen("tauri://focus", () => {
+    const unlistenFocus = window.electron.onWindowFocus(() => {
       checkForUpdate();
+    });
+    const unlistenDownloaded = window.electron.onUpdateDownloaded(() => {
+      setDownloadComplete(true);
     });
 
     return () => {
-      unlisten.then((unlistenFn) => unlistenFn());
+      unlistenFocus();
+      unlistenDownloaded();
     };
   }, []);
 

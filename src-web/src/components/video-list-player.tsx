@@ -15,7 +15,6 @@ import {
 } from "@/lib/utils";
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { PinOff, Pin, Loader, RefreshCw, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
@@ -268,7 +267,7 @@ export default function VideoListPlayer({
   }
 
   async function handlePinWindow() {
-    await getCurrentWindow().setAlwaysOnTop(!isPinned);
+    await window.electron.setAlwaysOnTop(!isPinned);
     setIsPinned((prev) => !prev);
   }
 

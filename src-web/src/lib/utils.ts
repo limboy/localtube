@@ -1,55 +1,26 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { load } from "@tauri-apps/plugin-store";
 import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, DividerInfo, SidebarItem } from "@/types";
-import { resolveResource } from "@tauri-apps/api/path";
-import { Command } from "@tauri-apps/plugin-shell";
 import { setupKonamiCode } from "./konami";
-import { fetch } from "@tauri-apps/plugin-http";
+import { fetchViaMain } from "./bridge";
 
-const storePromise = load("app-data.json", { autoSave: true });
+const store = {
+  get<T>(key: string) {
+    return window.electron.store.get<T>(key);
+  },
+  async set(key: string, value: unknown) {
+    await window.electron.store.set(key, value);
+  },
+  async save() {
+    await window.electron.store.save();
+  },
+};
 async function getStore() {
-  return storePromise;
+  return store;
 }
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-export function fetchPlaylist(
-  playlistUrl: string,
-  onResult: ({ playlist, error }: { playlist?: PlaylistInfo; error?: string }) => void
-) {
-  runScript("ytlist-parser.js", [playlistUrl, "--json"], (output) => {
-    const result = JSON.parse(output);
-    const status = result.status;
-    if (status === "error") {
-      onResult({ error: result.message });
-    }
-    if (status === "done") {
-      onResult({ playlist: result.data });
-    }
-  });
-}
-
-export async function runScript(path: string, args?: string[], onOutput?: (line: string) => void) {
-  try {
-    const scriptPath = await resolveResource(`scripts/${path}`);
-    const command = Command.sidecar("binaries/bun", [scriptPath].concat(args || []));
-
-    const outputFunc = onOutput || console.log;
-
-    command.stdout.on("data", (line) => outputFunc(line));
-    command.stderr.on("data", (line) => outputFunc(line));
-    command.on("close", (data) =>
-      console.log(`process closed with code ${JSON.stringify(data, null, 2)}`)
-    );
-
-    const child = await command.spawn();
-    console.log("pid:", child.pid);
-  } catch (error) {
-    console.error("Error running script:", error);
-  }
 }
 
 export async function loadChannels() {
@@ -218,7 +189,7 @@ export async function setTheme(theme: string) {
 
 export async function parseYouTubePage(url: string) {
   // Fetch the HTML content of the playlist page.
-  const response = await fetch(url, {
+  const response = await fetchViaMain(url, {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/237.84.2.178 Safari/537.36"

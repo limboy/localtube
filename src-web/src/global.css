@@ -130,6 +130,17 @@ html {
   overscroll-behavior: none;
 }
 
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] a,
+[data-tauri-drag-region] [role="button"] {
+  -webkit-app-region: no-drag;
+}
+
 @layer utilities {
   .btn-icon {
     @apply block p-1 mr-2 cursor-default rounded hover:bg-sidebar-accent focus:outline-none focus-visible:right-0 text-sidebar-foreground/80;

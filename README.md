@@ -1,7 +1,18 @@
-# Tauri + React + Typescript
+# LocalTube
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+Electron + React + Vite + TypeScript desktop app for browsing YouTube playlists and channels.
 
-## Recommended IDE Setup
+## Develop
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+```sh
+npm install
+npm run dev
+```
+
+## Build
+
+```sh
+npm run build
+```
+
+Artifacts are written to `dist-electron/`.

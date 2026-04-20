@@ -1,28 +1,30 @@
 {
   "name": "localtube",
   "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "packageManager": "bun@1.2.2",
+  "version": "0.7.0",
+  "description": "LocalTube",
+  "main": "electron/dist/main.js",
+  "type": "commonjs",
   "workspaces": [
     "src-web"
   ],
   "scripts": {
-    "app:dev": "bun tauri dev",
-    "app:build": "bun run app:build:arm && bun run app:build:intel",
-    "app:build:intel": "env-cmd -f .env bun tauri build --target x86_64-apple-darwin",
-    "app:build:arm": "env-cmd -f .env bun tauri build --target aarch64-apple-darwin",
-    "dev": "bun --filter src-web dev",
-    "build": "bun --filter src-web build",
-    "preview": "bun --filter src-web preview",
-    "tauri": "tauri",
-    "gen-updates": "bun ./scripts/gen-updates.ts /Users/limboy/Dropbox/R2/releases/localtube https://releases.limstack.com/localtube"
+    "dev": "concurrently -k -n vite,electron -c blue,green \"npm run dev -w src-web\" \"tsc -p electron && wait-on http://localhost:1422 && electron ./electron/dist/main.js\"",
+    "build": "npm run build -w src-web && tsc -p electron && env-cmd -f .env electron-builder --mac --arm64 --x64"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2",
-    "typescript": "~5.6.2"
+    "@types/node": "^20.17.57",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "env-cmd": "^10.1.0",
+    "tsx": "^4.19.2",
+    "typescript": "~5.6.2",
+    "wait-on": "^8.0.1"
   },
   "dependencies": {
-    "env-cmd": "^10.1.0"
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9",
+    "electron-window-state": "^5.0.3"
   }
 }

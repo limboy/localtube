@@ -1,5 +1,5 @@
 import { ChannelInfo, VideoItem } from "@/types";
-import { fetch } from "@tauri-apps/plugin-http";
+import { fetchViaMain } from "./bridge";
 import { addOrUpdateChannel, loadChannel, loadChannels, parseYouTubePage } from "./utils";
 
 interface InnertubeConfig {
@@ -17,56 +17,42 @@ export class YouTubeChannelParser {
   }
 
   private async fetchChannelPage(channelId: string, continuation?: string) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
     const payload = {
       context: this.config.INNERTUBE_CONTEXT,
       ...(continuation ? { continuation } : { browseId: `${channelId}` })
     };
 
-    try {
-      const response = await fetch(
-        // `https://www.youtube.com/youtubei/v1/browse?key=${this.config.INNERTUBE_API_KEY}`,
-        // `https://www.youtube.com/youtubei/v1/browse?prettyPrint=true&alt=json&key=${this.config.INNERTUBE_API_KEY}`,
-        `https://www.youtube.com/youtubei/v1/browse?prettyPrint=false`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Agent": this.config.INNERTUBE_CONTEXT.client.userAgent || this.userAgent,
-            "X-YouTube-Client-Name": "1",
-            "X-YouTube-Client-Version": "2.20250213.05.00",
-            Origin: "https://www.youtube.com"
-          } as HeadersInit,
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        }
-      );
-
-      if (response.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
+    const response = await fetchViaMain(
+      `https://www.youtube.com/youtubei/v1/browse?prettyPrint=false`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": this.config.INNERTUBE_CONTEXT.client.userAgent || this.userAgent,
+          "X-YouTube-Client-Name": "1",
+          "X-YouTube-Client-Version": "2.20250213.05.00",
+          Origin: "https://www.youtube.com"
+        },
+        body: JSON.stringify(payload),
+        timeout: 10000
       }
+    );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data || typeof data !== "object") {
-        throw new Error("Invalid response format");
-      }
-
-      return data;
-    } catch (error) {
-      if ((error as Error).name === "AbortError") {
-        throw new Error("Request timed out");
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeout);
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
     }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data || typeof data !== "object") {
+      throw new Error("Invalid response format");
+    }
+
+    return data;
   }
 
   private extractVideosFromResponse(data: any): VideoItem[] {

@@ -42,14 +42,10 @@ import {
   isDivider
 } from "@/lib/utils";
 import { PlaylistInfo, ChannelInfo, EnrichedBookmark, SidebarItem } from "@/types";
-import { Menu, MenuItem } from "@tauri-apps/api/menu";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import { confirm } from "@tauri-apps/plugin-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import UpdateChecker from "./update-checker";
 import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { checkAllChannelsForUpdates, parseYouTubeChannel } from "@/lib/channel-parser";
-import { listen, Event } from "@tauri-apps/api/event";
 import {
   Tabs,
   TabsList,
@@ -360,7 +356,7 @@ export default function AppSidebar() {
   useEffect(() => {
     checkUpdatesIfNeeded();
 
-    const unlisten = listen("tauri://focus", (_) => {
+    const unlistenFocus = window.electron.onWindowFocus(() => {
       checkUpdatesIfNeeded();
       if (activeTab === 'playlists') {
         loadPlaylistsData();
@@ -371,100 +367,76 @@ export default function AppSidebar() {
       }
     });
 
-    // Listen for delete events from menu
-    const unlistenDeletePlaylist = listen("delete-playlist", async (event: Event<string>) => {
-      const playlistId = event.payload;
+    const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
+      if (eventId.startsWith("view-playlist-in-browser-")) {
+        const playlistId = eventId.replace("view-playlist-in-browser-", "");
+        await window.electron.openUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
+      } else if (eventId.startsWith("view-channel-in-browser-")) {
+        const channelId = eventId.replace("view-channel-in-browser-", "");
+        await window.electron.openUrl(`https://www.youtube.com/channel/${channelId}`);
+      } else if (eventId.startsWith("delete-playlist-")) {
+        const playlistId = eventId.replace("delete-playlist-", "");
+        const confirmed = await window.electron.confirm("Are you sure to delete this playlist?", {
+          title: "Delete Playlist",
+          kind: "warning",
+          okLabel: "Delete"
+        });
+        if (confirmed) {
+          await removePlaylist(playlistId);
+          const updatedPlaylists = await syncPlaylistsWithDividers();
+          setPlaylists(updatedPlaylists);
 
-      const confirmed = await confirm("Are you sure to delete this playlist?", {
-        title: "Delete Playlist",
-        kind: "warning",
-        okLabel: "Delete"
-      });
-
-      if (confirmed) {
-        await removePlaylist(playlistId);
-        const updatedPlaylists = await syncPlaylistsWithDividers();
-        setPlaylists(updatedPlaylists);
-
-        const actualPlaylists = updatedPlaylists.filter(item => !isDivider(item)) as PlaylistInfo[];
-        if (playlistMatch?.params.playlistId === playlistId && actualPlaylists.length > 0) {
-          handlePlaylistClick(actualPlaylists[0].id);
+          const actualPlaylists = updatedPlaylists.filter(item => !isDivider(item)) as PlaylistInfo[];
+          if (playlistMatch?.params.playlistId === playlistId && actualPlaylists.length > 0) {
+            handlePlaylistClick(actualPlaylists[0].id);
+          }
+          if (actualPlaylists.length === 0) {
+            navigate({ to: '/playlist' });
+          }
         }
-        if (actualPlaylists.length === 0) {
-          navigate({ to: '/playlist' });
+      } else if (eventId.startsWith("delete-channel-")) {
+        const channelId = eventId.replace("delete-channel-", "");
+        const confirmed = await window.electron.confirm("Are you sure to delete this channel?", {
+          title: "Delete Channel",
+          kind: "warning",
+          okLabel: "Delete"
+        });
+        if (confirmed) {
+          await removeChannel(channelId);
+          const updatedChannels = await syncChannelsWithDividers();
+          setChannels(updatedChannels);
+
+          const actualChannels = updatedChannels.filter(item => !isDivider(item)) as ChannelInfo[];
+          if (channelMatch?.params.channelId === channelId && actualChannels.length > 0) {
+            await handleChannelClick(actualChannels[0].id);
+          }
+          if (actualChannels.length === 0) {
+            navigate({ to: '/channel' });
+          }
         }
-      }
-    });
-
-    const unlistenDeleteChannel = listen("delete-channel", async (event: Event<string>) => {
-      const channelId = event.payload;
-
-      const confirmed = await confirm("Are you sure to delete this channel?", {
-        title: "Delete Channel",
-        kind: "warning",
-        okLabel: "Delete"
-      });
-
-      if (confirmed) {
-        await removeChannel(channelId);
-        const updatedChannels = await syncChannelsWithDividers();
-        setChannels(updatedChannels);
-
-        const actualChannels = updatedChannels.filter(item => !isDivider(item)) as ChannelInfo[];
-        if (channelMatch?.params.channelId === channelId && actualChannels.length > 0) {
-          await handleChannelClick(actualChannels[0].id);
-        }
-
-        if (actualChannels.length === 0) {
-          navigate({ to: '/channel' });
-        }
-      }
-    });
-
-    // Listen for view-in-browser events
-    const unlistenViewPlaylistInBrowser = listen("view-playlist-in-browser", async (event: Event<string>) => {
-      const playlistId = event.payload;
-      await openUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
-    });
-
-    const unlistenViewChannelInBrowser = listen("view-channel-in-browser", async (event: Event<string>) => {
-      const channelId = event.payload;
-      await openUrl(`https://www.youtube.com/channel/${channelId}`);
-    });
-
-    // Listen for add-divider events
-    const unlistenAddDividerPlaylist = listen("add-divider-playlist", async (event: Event<string>) => {
-      const playlistId = event.payload;
-      await addDividerAfterItem(playlistId, 'playlist');
-      await loadPlaylistsData();
-    });
-
-    const unlistenAddDividerChannel = listen("add-divider-channel", async (event: Event<string>) => {
-      const channelId = event.payload;
-      await addDividerAfterItem(channelId, 'channel');
-      await loadChannelsData();
-    });
-
-    const unlistenDeleteDivider = listen("delete-divider", async (event: Event<string>) => {
-      const dividerId = event.payload;
-      if (activeTab === 'playlists') {
-        await removeDivider(dividerId, 'playlist');
+      } else if (eventId.startsWith("add-divider-playlist-")) {
+        const playlistId = eventId.replace("add-divider-playlist-", "");
+        await addDividerAfterItem(playlistId, 'playlist');
         await loadPlaylistsData();
-      } else if (activeTab === 'channels') {
-        await removeDivider(dividerId, 'channel');
+      } else if (eventId.startsWith("add-divider-channel-")) {
+        const channelId = eventId.replace("add-divider-channel-", "");
+        await addDividerAfterItem(channelId, 'channel');
         await loadChannelsData();
+      } else if (eventId.startsWith("delete-divider-")) {
+        const dividerId = eventId.replace("delete-divider-", "");
+        if (activeTab === 'playlists') {
+          await removeDivider(dividerId, 'playlist');
+          await loadPlaylistsData();
+        } else if (activeTab === 'channels') {
+          await removeDivider(dividerId, 'channel');
+          await loadChannelsData();
+        }
       }
     });
 
     return () => {
-      unlisten.then((unlistenFn) => unlistenFn());
-      unlistenDeletePlaylist.then((unlistenFn) => unlistenFn());
-      unlistenDeleteChannel.then((unlistenFn) => unlistenFn());
-      unlistenViewPlaylistInBrowser.then((unlistenFn) => unlistenFn());
-      unlistenViewChannelInBrowser.then((unlistenFn) => unlistenFn());
-      unlistenAddDividerPlaylist.then((unlistenFn) => unlistenFn());
-      unlistenAddDividerChannel.then((unlistenFn) => unlistenFn());
-      unlistenDeleteDivider.then((unlistenFn) => unlistenFn());
+      unlistenFocus();
+      unlistenMenu();
     };
   }, [activeTab]);
 
@@ -516,30 +488,14 @@ export default function AppSidebar() {
 
   async function playlistClickHandler(event: React.MouseEvent, playlistId: string) {
     event.preventDefault();
-
-    const viewOnBrowserMenuItem = await MenuItem.new({
-      id: `view-playlist-in-browser-${playlistId}`,
-      text: "View In Browser"
-    });
-
-    const addDividerMenuItem = await MenuItem.new({
-      id: `add-divider-playlist-${playlistId}`,
-      text: "Add Divider"
-    });
-
-    const deleteMenuItem = await MenuItem.new({
-      id: `delete-playlist-${playlistId}`,
-      text: "Delete"
-    });
-
     try {
-      const menuOptions = await Menu.new();
-      await menuOptions.append(viewOnBrowserMenuItem);
-      await menuOptions.append({ item: "Separator" });
-      await menuOptions.append(addDividerMenuItem);
-      await menuOptions.append({ item: "Separator" });
-      await menuOptions.append(deleteMenuItem);
-      await menuOptions.popup();
+      await window.electron.showContextMenu([
+        { id: `view-playlist-in-browser-${playlistId}`, label: "View In Browser" },
+        { type: "separator" },
+        { id: `add-divider-playlist-${playlistId}`, label: "Add Divider" },
+        { type: "separator" },
+        { id: `delete-playlist-${playlistId}`, label: "Delete" }
+      ]);
     } catch (error) {
       console.error("Error creating playlist context menu:", error);
     }
@@ -642,30 +598,14 @@ export default function AppSidebar() {
 
   async function channelClickHandler(event: React.MouseEvent, channelId: string) {
     event.preventDefault();
-
-    const viewInBrowserMenuItem = await MenuItem.new({
-      id: `view-channel-in-browser-${channelId}`,
-      text: "View In Browser"
-    });
-
-    const addDividerMenuItem = await MenuItem.new({
-      id: `add-divider-channel-${channelId}`,
-      text: "Add Divider"
-    });
-
-    const deleteMenuItem = await MenuItem.new({
-      id: `delete-channel-${channelId}`,
-      text: "Delete"
-    });
-
     try {
-      const menuOptions = await Menu.new();
-      await menuOptions.append(viewInBrowserMenuItem);
-      await menuOptions.append({ item: "Separator" });
-      await menuOptions.append(addDividerMenuItem);
-      await menuOptions.append({ item: "Separator" });
-      await menuOptions.append(deleteMenuItem);
-      await menuOptions.popup();
+      await window.electron.showContextMenu([
+        { id: `view-channel-in-browser-${channelId}`, label: "View In Browser" },
+        { type: "separator" },
+        { id: `add-divider-channel-${channelId}`, label: "Add Divider" },
+        { type: "separator" },
+        { id: `delete-channel-${channelId}`, label: "Delete" }
+      ]);
     } catch (error) {
       console.error("Error creating channel context menu:", error);
     }
@@ -674,16 +614,10 @@ export default function AppSidebar() {
 
   async function dividerClickHandler(event: React.MouseEvent, dividerId: string) {
     event.preventDefault();
-
-    const deleteMenuItem = await MenuItem.new({
-      id: `delete-divider-${dividerId}`,
-      text: "Delete"
-    });
-
     try {
-      const menuOptions = await Menu.new();
-      await menuOptions.append(deleteMenuItem);
-      await menuOptions.popup();
+      await window.electron.showContextMenu([
+        { id: `delete-divider-${dividerId}`, label: "Delete" }
+      ]);
     } catch (error) {
       console.error("Error creating divider context menu:", error);
     }

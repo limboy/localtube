@@ -8,114 +8,53 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as BookmarksRouteImport } from './routes/bookmarks'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlaylistIndexRouteImport } from './routes/playlist.index'
+import { Route as ChannelIndexRouteImport } from './routes/channel.index'
+import { Route as PlaylistPlaylistIdRouteImport } from './routes/playlist.$playlistId'
+import { Route as ChannelChannelIdRouteImport } from './routes/channel.$channelId'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as BookmarksImport } from './routes/bookmarks'
-import { Route as IndexImport } from './routes/index'
-import { Route as PlaylistIndexImport } from './routes/playlist.index'
-import { Route as ChannelIndexImport } from './routes/channel.index'
-import { Route as PlaylistPlaylistIdImport } from './routes/playlist.$playlistId'
-import { Route as ChannelChannelIdImport } from './routes/channel.$channelId'
-
-// Create/Update Routes
-
-const BookmarksRoute = BookmarksImport.update({
+const BookmarksRoute = BookmarksRouteImport.update({
   id: '/bookmarks',
   path: '/bookmarks',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const PlaylistIndexRoute = PlaylistIndexImport.update({
+const PlaylistIndexRoute = PlaylistIndexRouteImport.update({
   id: '/playlist/',
   path: '/playlist/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ChannelIndexRoute = ChannelIndexImport.update({
+const ChannelIndexRoute = ChannelIndexRouteImport.update({
   id: '/channel/',
   path: '/channel/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const PlaylistPlaylistIdRoute = PlaylistPlaylistIdImport.update({
+const PlaylistPlaylistIdRoute = PlaylistPlaylistIdRouteImport.update({
   id: '/playlist/$playlistId',
   path: '/playlist/$playlistId',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ChannelChannelIdRoute = ChannelChannelIdImport.update({
+const ChannelChannelIdRoute = ChannelChannelIdRouteImport.update({
   id: '/channel/$channelId',
   path: '/channel/$channelId',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/bookmarks': {
-      id: '/bookmarks'
-      path: '/bookmarks'
-      fullPath: '/bookmarks'
-      preLoaderRoute: typeof BookmarksImport
-      parentRoute: typeof rootRoute
-    }
-    '/channel/$channelId': {
-      id: '/channel/$channelId'
-      path: '/channel/$channelId'
-      fullPath: '/channel/$channelId'
-      preLoaderRoute: typeof ChannelChannelIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/playlist/$playlistId': {
-      id: '/playlist/$playlistId'
-      path: '/playlist/$playlistId'
-      fullPath: '/playlist/$playlistId'
-      preLoaderRoute: typeof PlaylistPlaylistIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/channel/': {
-      id: '/channel/'
-      path: '/channel'
-      fullPath: '/channel'
-      preLoaderRoute: typeof ChannelIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/playlist/': {
-      id: '/playlist/'
-      path: '/playlist'
-      fullPath: '/playlist'
-      preLoaderRoute: typeof PlaylistIndexImport
-      parentRoute: typeof rootRoute
-    }
-  }
-}
-
-// Create and export the route tree
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bookmarks': typeof BookmarksRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
-  '/channel': typeof ChannelIndexRoute
-  '/playlist': typeof PlaylistIndexRoute
+  '/channel/': typeof ChannelIndexRoute
+  '/playlist/': typeof PlaylistIndexRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bookmarks': typeof BookmarksRoute
@@ -124,9 +63,8 @@ export interface FileRoutesByTo {
   '/channel': typeof ChannelIndexRoute
   '/playlist': typeof PlaylistIndexRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bookmarks': typeof BookmarksRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
@@ -134,7 +72,6 @@ export interface FileRoutesById {
   '/channel/': typeof ChannelIndexRoute
   '/playlist/': typeof PlaylistIndexRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
@@ -142,8 +79,8 @@ export interface FileRouteTypes {
     | '/bookmarks'
     | '/channel/$channelId'
     | '/playlist/$playlistId'
-    | '/channel'
-    | '/playlist'
+    | '/channel/'
+    | '/playlist/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,7 +99,6 @@ export interface FileRouteTypes {
     | '/playlist/'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BookmarksRoute: typeof BookmarksRoute
@@ -170,6 +106,53 @@ export interface RootRouteChildren {
   PlaylistPlaylistIdRoute: typeof PlaylistPlaylistIdRoute
   ChannelIndexRoute: typeof ChannelIndexRoute
   PlaylistIndexRoute: typeof PlaylistIndexRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/bookmarks': {
+      id: '/bookmarks'
+      path: '/bookmarks'
+      fullPath: '/bookmarks'
+      preLoaderRoute: typeof BookmarksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/playlist/': {
+      id: '/playlist/'
+      path: '/playlist'
+      fullPath: '/playlist/'
+      preLoaderRoute: typeof PlaylistIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/channel/': {
+      id: '/channel/'
+      path: '/channel'
+      fullPath: '/channel/'
+      preLoaderRoute: typeof ChannelIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/playlist/$playlistId': {
+      id: '/playlist/$playlistId'
+      path: '/playlist/$playlistId'
+      fullPath: '/playlist/$playlistId'
+      preLoaderRoute: typeof PlaylistPlaylistIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/channel/$channelId': {
+      id: '/channel/$channelId'
+      path: '/channel/$channelId'
+      fullPath: '/channel/$channelId'
+      preLoaderRoute: typeof ChannelChannelIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -180,43 +163,6 @@ const rootRouteChildren: RootRouteChildren = {
   ChannelIndexRoute: ChannelIndexRoute,
   PlaylistIndexRoute: PlaylistIndexRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/bookmarks",
-        "/channel/$channelId",
-        "/playlist/$playlistId",
-        "/channel/",
-        "/playlist/"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/bookmarks": {
-      "filePath": "bookmarks.tsx"
-    },
-    "/channel/$channelId": {
-      "filePath": "channel.$channelId.tsx"
-    },
-    "/playlist/$playlistId": {
-      "filePath": "playlist.$playlistId.tsx"
-    },
-    "/channel/": {
-      "filePath": "channel.index.tsx"
-    },
-    "/playlist/": {
-      "filePath": "playlist.index.tsx"
-    }
-  }
-}
-ROUTE_MANIFEST_END */

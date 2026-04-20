@@ -25,3 +25,8 @@ dist-ssr
 
 binaries
 .env
+
+# Electron
+electron/dist
+dist-electron
+out
