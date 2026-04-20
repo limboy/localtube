@@ -369,7 +369,7 @@ export default function VideoListPlayer({
 
   return (
     <SidebarProvider defaultOpen={true} storageKey="right-sidebar" className="min-h-full h-full relative">
-      <div className="flex flex-col flex-1 h-screen items-center bg-background min-w-0 overflow-y-auto">
+      <div className="flex flex-col flex-1 h-screen bg-background min-w-0 overflow-hidden">
         <Nav>
           <div />
 
@@ -383,43 +383,45 @@ export default function VideoListPlayer({
             )}
           </div>
         </Nav>
-        <div className="p-4 w-full bg-background flex flex-col max-w-4xl">
-          <div className="aspect-video relative">
-            <YTPlayer
-              videoId={currentVideoId || ""}
-              onVideoEnd={() => playNextVideoRef.current()}
-              forceReplay={forceReplay}
-              autoPlay={shouldAutoPlay}
-            />
-          </div>
-          {currentVideoId && (
-            <div className="mt-4 pb-4">
-              <h1
-                className="underline text-xl font-bold line-clamp-2 cursor-pointer hover:text-primary transition-colors block"
-                onClick={() => window.electron.openUrl(`https://www.youtube.com/watch?v=${currentVideoId}`)}
-              >
-                {processedVideos.find(v => v.id === currentVideoId)?.title}
-              </h1>
-              <div className="mt-2">
-                <div className="text-sm text-muted-foreground whitespace-pre-wrap pr-2">
-                  {isLoadingDescription ? (
-                    <div className="flex items-center gap-2">
-                      <Loader size={12} className="animate-spin" />
-                      <span>Loading...</span>
-                    </div>
-                  ) : (
-                    description || "No description available"
-                  )}
+        <div className="flex-1 overflow-y-auto w-full flex flex-col items-center">
+          <div className="p-4 w-full bg-background flex flex-col max-w-4xl">
+            <div className="aspect-video relative">
+              <YTPlayer
+                videoId={currentVideoId || ""}
+                onVideoEnd={() => playNextVideoRef.current()}
+                forceReplay={forceReplay}
+                autoPlay={shouldAutoPlay}
+              />
+            </div>
+            {currentVideoId && (
+              <div className="mt-4 pb-4">
+                <h1
+                  className="underline text-xl font-bold line-clamp-2 cursor-pointer hover:text-primary transition-colors block"
+                  onClick={() => window.electron.openUrl(`https://www.youtube.com/watch?v=${currentVideoId}`)}
+                >
+                  {processedVideos.find(v => v.id === currentVideoId)?.title}
+                </h1>
+                <div className="mt-2">
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap pr-2">
+                    {isLoadingDescription ? (
+                      <div className="flex items-center gap-2">
+                        <Loader size={12} className="animate-spin" />
+                        <span>Loading...</span>
+                      </div>
+                    ) : (
+                      description || "No description available"
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {!showBookmarkedOnly && (
         <Sidebar side="right" className="border-l">
-          <SidebarContent className="bg-background gap-0 overflow-x-hidden">
+          <SidebarContent className="bg-background gap-0 overflow-hidden">
             <div className="h-11 flex items-center justify-between sticky top-0 bg-background z-10 w-full border-b shrink-0">
               <div className="flex flex-row justify-between w-full px-4 items-center gap-2">
                 <h2 className="font-semibold truncate min-w-0">
