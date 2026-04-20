@@ -951,47 +951,47 @@ export default function AppSidebar() {
                             const searchParams = new URLSearchParams(location.search);
                             const activeBookmarkVideoId = searchParams.get('videoId');
                             const isActive = bookmarkMatch && activeBookmarkVideoId === bookmark.id;
-                            
+
                             return (
-                              <SidebarMenuButton 
-                                key={bookmark.id} 
+                              <SidebarMenuButton
+                                key={bookmark.id}
                                 asChild
                                 className={cn(
                                   "pr-2 group/bookmark h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
                                   isActive ? "bg-sidebar-accent" : ""
                                 )}
                               >
-                              <button
-                                onClick={() => navigate({ to: '/bookmarks', search: { videoId: bookmark.id } })}
-                              >
-                                <SidebarMenuItem className="select-none flex items-start gap-2 w-full flex-1">
-                                  <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
-                                    {bookmark.thumbnail && (
-                                      <img 
-                                        src={bookmark.thumbnail} 
-                                        alt="" 
-                                        className="w-full h-full object-cover"
-                                      />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <span className="line-clamp-2 text-sm leading-tight mb-0.5">
-                                      {bookmark.title}
-                                    </span>
-                                    <div className="flex items-center gap-1.5 opacity-50 text-[10px]">
-                                      <span className="truncate max-w-[80px]">
-                                        {bookmark.data?.title}
-                                      </span>
-                                      {bookmark.duration && (
-                                        <>
-                                          <span>•</span>
-                                          <span>{bookmark.duration}</span>
-                                        </>
+                                <button
+                                  onClick={() => navigate({ to: '/bookmarks', search: { videoId: bookmark.id } })}
+                                >
+                                  <SidebarMenuItem className="select-none flex items-start gap-2 w-full flex-1">
+                                    <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
+                                      {bookmark.thumbnail && (
+                                        <img
+                                          src={bookmark.thumbnail}
+                                          alt=""
+                                          className="w-full h-full object-cover"
+                                        />
                                       )}
                                     </div>
-                                  </div>
-                                </SidebarMenuItem>
-                              </button>
+                                    <div className="flex-1 min-w-0">
+                                      <span className="line-clamp-1 leading-tight mb-0.5">
+                                        {bookmark.title}
+                                      </span>
+                                      <div className="flex items-center gap-1.5 opacity-50 text-sm">
+                                        <span className="truncate max-w-20">
+                                          {bookmark.data?.title}
+                                        </span>
+                                        {bookmark.duration && (
+                                          <>
+                                            <span>•</span>
+                                            <span>{bookmark.duration}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </SidebarMenuItem>
+                                </button>
                               </SidebarMenuButton>
                             );
                           })}
