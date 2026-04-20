@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.0.3](https://github.com/limboy/localtube/compare/v1.0.2...v1.0.3) - 2026-04-20
+
+### Features
+
+- move UpdateIndicator from global Nav to individual route headers and update its styling ([5452dc8](https://github.com/limboy/localtube/commit/5452dc801540164daa2e462e140cad1af0fab2c9))
+
+### Documentation
+
+- update CHANGELOG for v1.0.2 ([51fd907](https://github.com/limboy/localtube/commit/51fd9075d240b17c4ea5154d4d97128d74199483))
+
 ## [v1.0.2](https://github.com/limboy/localtube/compare/v1.0.1...v1.0.2) - 2026-04-20
 
 ### Bug Fixes
