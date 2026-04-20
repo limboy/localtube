@@ -103,6 +103,8 @@ function createMainWindow() {
   });
 }
 
+app.name = "LocalTube";
+
 // Strip "Electron/<version>" from the default UA — YouTube's embed checks
 // treat that token as a non-browser client and refuse playback (Error 152-4).
 app.userAgentFallback = app.userAgentFallback.replace(/ Electron\/\S+/, "");
