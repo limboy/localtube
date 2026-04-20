@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.0.1](https://github.com/limboy/localtube/compare/v1.0.0...v1.0.1) - 2026-04-20
+
+### Bug Fixes
+
+- configure YouTube player host and inject Referer header to resolve playback errors ([70b94f6](https://github.com/limboy/localtube/commit/70b94f653406379d9d33fb244684aeded09168e0))
+
+### Documentation
+
+- update CHANGELOG for v1.0.0 ([8330336](https://github.com/limboy/localtube/commit/83303365f93bc677856c1844f9615147bbdde8cf))
+
 ## [v1.0.0](https://github.com/limboy/localtube/compare/v0.7.2...v1.0.0) - 2026-04-20
 
 ### Features
