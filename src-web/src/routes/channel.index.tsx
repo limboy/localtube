@@ -12,12 +12,7 @@ function RouteComponent() {
   const { state } = useSidebar()
   return <div className="flex flex-col h-screen items-center bg-background">
     <Nav>
-      <div
-        className={cn(
-          state === "collapsed" ? "pl-26" : "pl-2",
-          "transition-all duration-150 ease-in-out"
-        )}
-      >
+      <div>
         <h1 className="font-semibold line-clamp-1 select-none cursor-default">
           Channels
         </h1>

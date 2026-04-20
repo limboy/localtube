@@ -247,7 +247,7 @@ export default function AppSidebar() {
   const [open, setOpen] = useState(false);
   const [playlists, setPlaylists] = useState<SidebarItem[]>([]);
   const [channels, setChannels] = useState<SidebarItem[]>([]);
-  
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -634,7 +634,7 @@ export default function AppSidebar() {
 
       const newPlaylists = arrayMove(playlists, oldIndex, newIndex);
       setPlaylists(newPlaylists);
-      
+
       await savePlaylistsWithDividers(newPlaylists);
     } else if (activeTab === 'channels') {
       const oldIndex = channels.findIndex((item) => item.id === active.id);
@@ -642,7 +642,7 @@ export default function AppSidebar() {
 
       const newChannels = arrayMove(channels, oldIndex, newIndex);
       setChannels(newChannels);
-      
+
       await saveChannelsWithDividers(newChannels);
     }
   };
@@ -682,305 +682,305 @@ export default function AppSidebar() {
 
   return (
     <>
-        <Sidebar className="h-full">
-          <SidebarContent className="h-full">
-            <SidebarGroup className="h-full pr-0">
-              <SidebarGroupContent className="h-full flex flex-col" >
-                <div data-tauri-drag-region className="h-11 -m-2 flex items-center justify-end">
-                  {(activeTab === 'playlists' && playlists.filter(item => !isDivider(item)).length > 0) || (activeTab === 'channels' && channels.filter(item => !isDivider(item)).length > 0) ? (
+      <Sidebar className="h-full">
+        <SidebarContent className="h-full">
+          <SidebarGroup className="h-full pr-0">
+            <SidebarGroupContent className="h-full flex flex-col" >
+              <div data-tauri-drag-region className="-mx-2 flex items-center justify-end">
+                {(activeTab === 'playlists' && playlists.filter(item => !isDivider(item)).length > 0) || (activeTab === 'channels' && channels.filter(item => !isDivider(item)).length > 0) ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={activeTab === 'playlists' ? handleRefreshPlaylists : handleRefreshChannels}
+                        disabled={refreshingPlaylists || refreshingChannels}
+                        className={cn(
+                          "mr-2",
+                          (refreshingPlaylists || refreshingChannels)
+                            ? "cursor-default opacity-50"
+                            : "btn-icon"
+                        )}
+                      >
+                        {(activeTab === 'playlists' && refreshingPlaylists) || (activeTab === 'channels' && refreshingChannels) ? (
+                          <div className="flex items-center gap-1">
+                            {activeTab === 'playlists' && playlistProgress && (
+                              <span className="text-xs">{playlistProgress.current}/{playlistProgress.total}</span>
+                            )}
+                            {activeTab === 'channels' && channelProgress && (
+                              <span className="text-xs">{channelProgress.current}/{channelProgress.total}</span>
+                            )}
+                            <Loader size={14} className="animate-spin" />
+                          </div>
+                        ) : (
+                          <RefreshCw size={18} strokeWidth={1.5} />
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    {!(refreshingPlaylists || refreshingChannels) && (
+                      <TooltipContent>
+                        {activeTab === 'playlists' ? 'Refresh Playlists' : 'Refresh Channels'}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                ) : null}
+                <Dialog
+                  open={open}
+                  onOpenChange={(isOpen) => {
+                    if (addingPlaylistOrChannel) return;
+                    setOpen(isOpen);
+                  }}
+                >
+                  <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-4">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button
-                          onClick={activeTab === 'playlists' ? handleRefreshPlaylists : handleRefreshChannels}
-                          disabled={refreshingPlaylists || refreshingChannels}
-                          className={cn(
-                            "mr-1",
-                            (refreshingPlaylists || refreshingChannels)
-                              ? "cursor-default opacity-50"
-                              : "btn-icon"
-                          )}
-                        >
-                          {(activeTab === 'playlists' && refreshingPlaylists) || (activeTab === 'channels' && refreshingChannels) ? (
-                            <div className="flex items-center gap-1">
-                              {activeTab === 'playlists' && playlistProgress && (
-                                <span className="text-xs">{playlistProgress.current}/{playlistProgress.total}</span>
-                              )}
-                              {activeTab === 'channels' && channelProgress && (
-                                <span className="text-xs">{channelProgress.current}/{channelProgress.total}</span>
-                              )}
-                              <Loader size={14} className="animate-spin" />
-                            </div>
-                          ) : (
-                            <RefreshCw size={18} strokeWidth={1.5} />
-                          )}
-                        </button>
+                        <span className={cn("btn-icon")}>
+                          <Plus size={18} strokeWidth={1.5} />
+                        </span>
                       </TooltipTrigger>
-                      {!(refreshingPlaylists || refreshingChannels) && (
-                        <TooltipContent>
-                          {activeTab === 'playlists' ? 'Refresh Playlists' : 'Refresh Channels'}
-                        </TooltipContent>
-                      )}
+                      <TooltipContent>Add YouTube Playlist or Channel</TooltipContent>
                     </Tooltip>
-                  ) : null}
-                  <Dialog
-                    open={open}
-                    onOpenChange={(isOpen) => {
-                      if (addingPlaylistOrChannel) return;
-                      setOpen(isOpen);
-                    }}
-                  >
-                    <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-2">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className={cn("btn-icon")}>
-                            <Plus size={18} strokeWidth={1.5} />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>Add YouTube Playlist or Channel</TooltipContent>
-                      </Tooltip>
-                    </DialogTrigger>
-                    <DialogContent forceMount showCloseButton={false}>
-                      <DialogHeader>
-                        <DialogTitle className="text-foreground">
-                          Add YouTube Playlist or Channel
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Enter YouTube playlist or channel URL"
-                            className="flex-1 bg-muted focus-visible:ring-0 text-foreground"
-                            value={playlistOrChannelUrl}
-                            onChange={(e) => {
-                              setPlaylistOrChannelUrl(e.target.value);
-                              setError(null);
-                            }}
-                            disabled={addingPlaylistOrChannel}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                if (
-                                  !addingPlaylistOrChannel &&
-                                  playlistOrChannelUrl &&
-                                  (isPlaylistUrl(playlistOrChannelUrl) ||
-                                    isChannelUrl(playlistOrChannelUrl))
-                                ) {
-                                  handleAddPlaylistOrChannel();
-                                }
+                  </DialogTrigger>
+                  <DialogContent forceMount showCloseButton={false}>
+                    <DialogHeader>
+                      <DialogTitle className="text-foreground">
+                        Add YouTube Playlist or Channel
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter YouTube playlist or channel URL"
+                          className="flex-1 bg-muted focus-visible:ring-0 text-foreground"
+                          value={playlistOrChannelUrl}
+                          onChange={(e) => {
+                            setPlaylistOrChannelUrl(e.target.value);
+                            setError(null);
+                          }}
+                          disabled={addingPlaylistOrChannel}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (
+                                !addingPlaylistOrChannel &&
+                                playlistOrChannelUrl &&
+                                (isPlaylistUrl(playlistOrChannelUrl) ||
+                                  isChannelUrl(playlistOrChannelUrl))
+                              ) {
+                                handleAddPlaylistOrChannel();
                               }
-                            }}
-                          />
-                          <Button
-                            className="w-12"
-                            onClick={handleAddPlaylistOrChannel}
-                            disabled={
-                              addingPlaylistOrChannel ||
-                              !playlistOrChannelUrl ||
-                              !(
-                                isPlaylistUrl(playlistOrChannelUrl) ||
-                                isChannelUrl(playlistOrChannelUrl)
-                              )
                             }
-                          >
-                            {addingPlaylistOrChannel ? (
-                              <Loader className="h-4 w-4 animate-spin" />
-                            ) : (
-                              "Add"
-                            )}
-                          </Button>
-                        </div>
-                        {error && <div className="text-sm text-red-500">{error}</div>}
+                          }}
+                        />
+                        <Button
+                          className="w-12"
+                          onClick={handleAddPlaylistOrChannel}
+                          disabled={
+                            addingPlaylistOrChannel ||
+                            !playlistOrChannelUrl ||
+                            !(
+                              isPlaylistUrl(playlistOrChannelUrl) ||
+                              isChannelUrl(playlistOrChannelUrl)
+                            )
+                          }
+                        >
+                          {addingPlaylistOrChannel ? (
+                            <Loader className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Add"
+                          )}
+                        </Button>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                <div className="flex-1 flex flex-col min-h-0 select-none">
-                  <SidebarMenu className="mt-1 pr-2 flex-1 overflow-y-auto sidebar-menu">
-                    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                      <TabsList className="sidebar-tabs-list">
-                        <TabsTrigger
-                          value="playlists"
-                          className="sidebar-tab-trigger"
-                        >
-                          <span><List /></span>
-                          <span>Playlists</span>
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="channels"
-                          className="sidebar-tab-trigger"
-                        >
-                          <span><CircleUserRound /></span>
-                          <span>Channels</span>
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="bookmarks"
-                          className="sidebar-tab-trigger"
-                        >
-                          <span><Bookmark /></span>
-                          <span>Bookmarks</span>
-                        </TabsTrigger>
-                      </TabsList>
+                      {error && <div className="text-sm text-red-500">{error}</div>}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <div className="mt-1 flex-1 flex flex-col min-h-0 select-none">
+                <SidebarMenu className="mt-1 pr-2 flex-1 overflow-y-auto sidebar-menu">
+                  <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                    <TabsList className="sidebar-tabs-list">
+                      <TabsTrigger
+                        value="playlists"
+                        className="sidebar-tab-trigger"
+                      >
+                        <span><List /></span>
+                        <span>Playlists</span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="channels"
+                        className="sidebar-tab-trigger"
+                      >
+                        <span><CircleUserRound /></span>
+                        <span>Channels</span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="bookmarks"
+                        className="sidebar-tab-trigger"
+                      >
+                        <span><Bookmark /></span>
+                        <span>Bookmarks</span>
+                      </TabsTrigger>
+                    </TabsList>
 
-                      <TabsContent value="playlists" className="m-0">
-                        {loadingPlaylists ? (
-                          <div className="flex items-center justify-center py-2">
-                            {/* <Loader className="h-4 w-4 animate-spin" /> */}
-                          </div>
-                        ) : (
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
+                    <TabsContent value="playlists" className="m-0">
+                      {loadingPlaylists ? (
+                        <div className="flex items-center justify-center py-2">
+                          {/* <Loader className="h-4 w-4 animate-spin" /> */}
+                        </div>
+                      ) : (
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <SortableContext
+                            items={playlists.map(p => p.id)}
+                            strategy={verticalListSortingStrategy}
                           >
-                            <SortableContext
-                              items={playlists.map(p => p.id)}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              {playlists.map((item) => {
-                                if (isDivider(item)) {
-                                  return (
-                                    <SortableDividerItem
-                                      key={item.id}
-                                      dividerId={item.id}
-                                      onContextMenu={dividerClickHandler}
-                                    />
-                                  );
-                                }
-                                const playlist = item as PlaylistInfo;
+                            {playlists.map((item) => {
+                              if (isDivider(item)) {
                                 return (
-                                  <SortablePlaylistItem
-                                    key={playlist.id}
-                                    playlist={playlist}
-                                    isActive={playlistMatch?.params.playlistId === playlist.id}
-                                    onPlaylistClick={handlePlaylistClick}
-                                    onContextMenu={playlistClickHandler}
+                                  <SortableDividerItem
+                                    key={item.id}
+                                    dividerId={item.id}
+                                    onContextMenu={dividerClickHandler}
                                   />
                                 );
-                              })}
-                            </SortableContext>
-                          </DndContext>
-                        )}
-                      </TabsContent>
+                              }
+                              const playlist = item as PlaylistInfo;
+                              return (
+                                <SortablePlaylistItem
+                                  key={playlist.id}
+                                  playlist={playlist}
+                                  isActive={playlistMatch?.params.playlistId === playlist.id}
+                                  onPlaylistClick={handlePlaylistClick}
+                                  onContextMenu={playlistClickHandler}
+                                />
+                              );
+                            })}
+                          </SortableContext>
+                        </DndContext>
+                      )}
+                    </TabsContent>
 
-                      <TabsContent value="channels" className="m-0">
-                        {loadingChannels ? (
-                          <div className="flex items-center justify-center py-2">
-                            {/* <Loader className="h-4 w-4 animate-spin" /> */}
-                          </div>
-                        ) : (
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
+                    <TabsContent value="channels" className="m-0">
+                      {loadingChannels ? (
+                        <div className="flex items-center justify-center py-2">
+                          {/* <Loader className="h-4 w-4 animate-spin" /> */}
+                        </div>
+                      ) : (
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <SortableContext
+                            items={channels.map(c => c.id)}
+                            strategy={verticalListSortingStrategy}
                           >
-                            <SortableContext
-                              items={channels.map(c => c.id)}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              {channels.map((item) => {
-                                if (isDivider(item)) {
-                                  return (
-                                    <SortableDividerItem
-                                      key={item.id}
-                                      dividerId={item.id}
-                                      onContextMenu={dividerClickHandler}
-                                    />
-                                  );
-                                }
-                                const channel = item as ChannelInfo;
+                            {channels.map((item) => {
+                              if (isDivider(item)) {
                                 return (
-                                  <SortableChannelItem
-                                    key={channel.id}
-                                    channel={channel}
-                                    isActive={channelMatch?.params.channelId === channel.id}
-                                    onChannelClick={handleChannelClick}
-                                    onContextMenu={channelClickHandler}
+                                  <SortableDividerItem
+                                    key={item.id}
+                                    dividerId={item.id}
+                                    onContextMenu={dividerClickHandler}
                                   />
                                 );
-                              })}
-                            </SortableContext>
-                          </DndContext>
-                        )}
-                      </TabsContent>
+                              }
+                              const channel = item as ChannelInfo;
+                              return (
+                                <SortableChannelItem
+                                  key={channel.id}
+                                  channel={channel}
+                                  isActive={channelMatch?.params.channelId === channel.id}
+                                  onChannelClick={handleChannelClick}
+                                  onContextMenu={channelClickHandler}
+                                />
+                              );
+                            })}
+                          </SortableContext>
+                        </DndContext>
+                      )}
+                    </TabsContent>
 
-                      <TabsContent value="bookmarks" className="m-0">
-                        {loadingBookmarks ? (
-                          <div className="flex items-center justify-center py-2">
-                            {/* <Loader className="h-4 w-4 animate-spin" /> */}
-                          </div>
-                        ) : (
-                          <>
-                            {bookmarks.some(b => b.type === 'playlist') && (
-                              <div className="mb-4">
-                                <div className="text-xs text-sidebar-foreground/50 px-2 mt-1 mb-1">Playlists</div>
-                                {reduceBookmarks(bookmarks)
-                                  .filter(b => b.type === 'playlist')
-                                  .map((bookmark) => (
-                                    <SidebarMenuButton key={bookmark.id} asChild>
-                                      <button
-                                        onClick={() => handlePlaylistClick(bookmark.data!.id, true)}
-                                        className={cn(
-                                          "pr-2 group/bookmark w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-                                          playlistMatch?.params.playlistId === bookmark.data!.id ? "bg-sidebar-accent" : ""
-                                        )}
-                                      >
-                                        <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
-                                          <div className="flex items-center flex-1">
-                                            <span className="line-clamp-1">{bookmark.title}</span>
-                                          </div>
-                                          <div className="flex items-center">
-                                            <span className="text-xs text-sidebar-foreground/50 ml-2">
-                                              {bookmarks.filter(b => b.type === 'playlist' && b.data?.id === bookmark.data!.id).length}
-                                            </span>
-                                          </div>
-                                        </SidebarMenuItem>
-                                      </button>
-                                    </SidebarMenuButton>
-                                  ))}
-                              </div>
-                            )}
+                    <TabsContent value="bookmarks" className="m-0">
+                      {loadingBookmarks ? (
+                        <div className="flex items-center justify-center py-2">
+                          {/* <Loader className="h-4 w-4 animate-spin" /> */}
+                        </div>
+                      ) : (
+                        <>
+                          {bookmarks.some(b => b.type === 'playlist') && (
+                            <div className="mb-4">
+                              <div className="text-xs text-sidebar-foreground/50 px-2 mt-1 mb-1">Playlists</div>
+                              {reduceBookmarks(bookmarks)
+                                .filter(b => b.type === 'playlist')
+                                .map((bookmark) => (
+                                  <SidebarMenuButton key={bookmark.id} asChild>
+                                    <button
+                                      onClick={() => handlePlaylistClick(bookmark.data!.id, true)}
+                                      className={cn(
+                                        "pr-2 group/bookmark w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
+                                        playlistMatch?.params.playlistId === bookmark.data!.id ? "bg-sidebar-accent" : ""
+                                      )}
+                                    >
+                                      <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
+                                        <div className="flex items-center flex-1">
+                                          <span className="line-clamp-1">{bookmark.title}</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <span className="text-xs text-sidebar-foreground/50 ml-2">
+                                            {bookmarks.filter(b => b.type === 'playlist' && b.data?.id === bookmark.data!.id).length}
+                                          </span>
+                                        </div>
+                                      </SidebarMenuItem>
+                                    </button>
+                                  </SidebarMenuButton>
+                                ))}
+                            </div>
+                          )}
 
-                            {bookmarks.some(b => b.type === 'channel') && (
-                              <div>
-                                <div className="text-xs text-sidebar-foreground/50 px-2 mt-1 mb-1">Channels</div>
-                                {reduceBookmarks(bookmarks)
-                                  .filter(b => b.type === 'channel')
-                                  .map((bookmark) => (
-                                    <SidebarMenuButton key={bookmark.id} asChild>
-                                      <button
-                                        onClick={() => handleChannelClick(bookmark.data!.id, true)}
-                                        className={cn(
-                                          "pr-2 group/bookmark w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-                                          channelMatch?.params.channelId === bookmark.data!.id ? "bg-sidebar-accent" : ""
-                                        )}
-                                      >
-                                        <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
-                                          <div className="flex items-center flex-1">
-                                            <span className="line-clamp-1">{bookmark.title}</span>
-                                          </div>
-                                          <div className="flex items-center">
-                                            <span className="text-xs text-sidebar-foreground/50 ml-2">
-                                              {bookmarks.filter(b => b.type === 'channel' && b.data?.id === bookmark.data!.id).length}
-                                            </span>
-                                          </div>
-                                        </SidebarMenuItem>
-                                      </button>
-                                    </SidebarMenuButton>
-                                  ))}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </TabsContent>
-                    </Tabs>
-                  </SidebarMenu>
+                          {bookmarks.some(b => b.type === 'channel') && (
+                            <div>
+                              <div className="text-xs text-sidebar-foreground/50 px-2 mt-1 mb-1">Channels</div>
+                              {reduceBookmarks(bookmarks)
+                                .filter(b => b.type === 'channel')
+                                .map((bookmark) => (
+                                  <SidebarMenuButton key={bookmark.id} asChild>
+                                    <button
+                                      onClick={() => handleChannelClick(bookmark.data!.id, true)}
+                                      className={cn(
+                                        "pr-2 group/bookmark w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
+                                        channelMatch?.params.channelId === bookmark.data!.id ? "bg-sidebar-accent" : ""
+                                      )}
+                                    >
+                                      <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
+                                        <div className="flex items-center flex-1">
+                                          <span className="line-clamp-1">{bookmark.title}</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <span className="text-xs text-sidebar-foreground/50 ml-2">
+                                            {bookmarks.filter(b => b.type === 'channel' && b.data?.id === bookmark.data!.id).length}
+                                          </span>
+                                        </div>
+                                      </SidebarMenuItem>
+                                    </button>
+                                  </SidebarMenuButton>
+                                ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </SidebarMenu>
 
 
-                </div>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-      </>
-    );
-  }
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+    </>
+  );
+}
