@@ -6,7 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar
+  SidebarTrigger
 } from "@/components/ui/sidebar";
 import {
   Dialog,
@@ -269,7 +269,6 @@ export default function AppSidebar() {
   const [playlistOrChannelUrl, setPlaylistOrChannelUrl] = useState("");
   const [addingPlaylistOrChannel, setAddingPlaylistOrChannel] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toggleSidebar } = useSidebar();
   const lastCheckTimeRef = useRef<number>(0);
   const [activeTab, setActiveTab] = useState("playlists");
   const [bookmarks, setBookmarks] = useState<EnrichedBookmark[]>([]);
@@ -684,18 +683,11 @@ export default function AppSidebar() {
 
   return (
     <>
-      <TooltipProvider disableHoverableContent={true}>
-        <button
-          onClick={toggleSidebar}
-          className="fixed left-20 top-2 z-50 btn-icon text-sidebar-foreground"
-        >
-          <PanelLeft size={18} strokeWidth={1.5} />
-        </button>
         <Sidebar className="h-full">
           <SidebarContent className="h-full">
             <SidebarGroup className="h-full pr-0">
               <SidebarGroupContent className="h-full flex flex-col" >
-                <div data-tauri-drag-region className="h-12 -m-2 flex items-center justify-end">
+                <div data-tauri-drag-region className="h-11 -m-2 flex items-center justify-end">
                   {(activeTab === 'playlists' && playlists.filter(item => !isDivider(item)).length > 0) || (activeTab === 'channels' && channels.filter(item => !isDivider(item)).length > 0) ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -992,7 +984,6 @@ export default function AppSidebar() {
             </SidebarGroup>
           </SidebarContent>
         </Sidebar>
-      </TooltipProvider>
-    </>
-  );
-}
+      </>
+    );
+  }

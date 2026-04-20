@@ -103,7 +103,7 @@ const SidebarProvider = React.forwardRef<
         setOpen,
         toggleSidebar
       }),
-      [state, open, setOpen, , toggleSidebar]
+      [state, open, setOpen, toggleSidebar]
     );
 
     return (

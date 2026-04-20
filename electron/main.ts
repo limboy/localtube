@@ -48,7 +48,7 @@ function createMainWindow() {
 
   if (isDev) {
     mainWindow.loadURL(DEV_URL);
-    mainWindow.webContents.openDevTools({ mode: "detach" });
+    // mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
     mainWindow.loadFile(path.join(__dirname, "../../src-web/dist/index.html"));
   }

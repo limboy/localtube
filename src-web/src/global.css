@@ -143,7 +143,7 @@ html {
 
 @layer utilities {
   .btn-icon {
-    @apply block p-1 mr-2 cursor-default rounded hover:bg-sidebar-accent focus:outline-none focus-visible:right-0 text-sidebar-foreground/80;
+    @apply block p-1 mr-2 cursor-pointer rounded hover:bg-sidebar-accent focus:outline-none focus-visible:ring-0 text-sidebar-foreground/80;
   }
 
   .sidebar-tabs-list {

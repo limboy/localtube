@@ -10,7 +10,8 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div className={cn("flex flex-col h-screen items-center")}>
-      <Nav className="flex-row-reverse">
+      <Nav>
+        <div />
         <ThemeSwitcher />
       </Nav>
 

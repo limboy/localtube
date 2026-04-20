@@ -40,7 +40,7 @@ function Layout() {
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <SidebarProvider>
         <AppSidebar />
-        <main className="w-full bg-background text-foreground">
+        <main className="flex-1 bg-background text-foreground overflow-hidden">
           <Outlet />
         </main>
         <Toaster />
