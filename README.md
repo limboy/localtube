@@ -50,15 +50,14 @@ You can download the latest version of LocalTube for macOS from the [Releases pa
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or later recommended)
-- [pnpm](https://pnpm.io/) or `npm`
+- [Node.js](https://nodejs.org/) (v20 or later recommended)
 
 ### Installation
 
 1. Clone the repository:
    ```sh
    git clone https://github.com/limboy/localtube.git
-   cd LocalTube
+   cd localtube
    ```
 
 2. Install dependencies:
