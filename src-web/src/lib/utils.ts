@@ -42,6 +42,7 @@ export async function markChannelAsRead(channelId: string) {
 
   const store = await getStore();
   await store.set("channels", data);
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function addOrUpdateChannel(channel: ChannelInfo) {
@@ -54,6 +55,7 @@ export async function addOrUpdateChannel(channel: ChannelInfo) {
     data.push(channel);
   }
   await store.set("channels", data);
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function removeChannel(channelId: string) {
@@ -64,6 +66,7 @@ export async function removeChannel(channelId: string) {
     data.splice(index, 1);
     await store.set("channels", data);
     await store.save();
+    window.dispatchEvent(new CustomEvent('store-updated'));
   }
 }
 
@@ -75,6 +78,7 @@ export async function reorderChannels(channelIds: string[]) {
 
   await store.set("channels", reorderedData);
   await store.save();
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function loadPlaylist(playlistId: string) {
@@ -95,6 +99,7 @@ export async function markPlaylistAsRead(playlistId: string) {
     data[index].unreadCount = 0;
   }
   await store.set("playlists", data);
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function addOrUpdatePlaylist(playlist: PlaylistInfo) {
@@ -107,6 +112,7 @@ export async function addOrUpdatePlaylist(playlist: PlaylistInfo) {
     data.push(playlist);
   }
   await store.set("playlists", data);
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function removePlaylist(playlistId: string) {
@@ -117,6 +123,7 @@ export async function removePlaylist(playlistId: string) {
     data.splice(index, 1);
     await store.set("playlists", data);
     await store.save();
+    window.dispatchEvent(new CustomEvent('store-updated'));
   }
 }
 
@@ -128,6 +135,7 @@ export async function reorderPlaylists(playlistIds: string[]) {
 
   await store.set("playlists", reorderedData);
   await store.save();
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function loadBookmarks(): Promise<Map<string, BookmarkData>> {
@@ -140,6 +148,7 @@ export async function saveBookmarks(bookmarks: Map<string, BookmarkData>) {
   const store = await getStore();
   await store.set("bookmarks", Array.from(bookmarks.entries()));
   await store.save();
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function removeBookmark(videoId: string) {
@@ -160,6 +169,7 @@ export async function saveSkippedVideos(skippedVideos: Set<string>) {
   const store = await getStore();
   await store.set("skippedVideos", Array.from(skippedVideos));
   await store.save();
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export function disableInspectShortcut() {
@@ -260,6 +270,7 @@ export async function savePlaylistsWithDividers(items: SidebarItem[]) {
   const store = await getStore();
   await store.set("playlistsWithDividers", items);
   await store.save();
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function loadChannelsWithDividers(): Promise<SidebarItem[]> {
@@ -272,6 +283,7 @@ export async function saveChannelsWithDividers(items: SidebarItem[]) {
   const store = await getStore();
   await store.set("channelsWithDividers", items);
   await store.save();
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function addDividerAfterItem(itemId: string, type: 'playlist' | 'channel') {

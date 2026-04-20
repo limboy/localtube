@@ -319,7 +319,7 @@ export default function AppSidebar() {
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
   const [bookmarks, setBookmarks] = useState<EnrichedBookmark[]>([]);
-  const lastCheckTimeRef = useRef<number>(0);
+  const lastCheckTimeRef = useRef<number>(Date.now());
 
   // Tabs effect removed
 
@@ -392,8 +392,6 @@ export default function AppSidebar() {
   };
 
   useEffect(() => {
-    checkUpdatesIfNeeded();
-
     const unlistenFocus = window.electron.onWindowFocus(() => {
       checkUpdatesIfNeeded();
       loadPlaylistsData();
@@ -479,6 +477,14 @@ export default function AppSidebar() {
     loadPlaylistsData();
     loadChannelsData();
     loadBookmarksData();
+
+    const handleUpdate = () => {
+      loadPlaylistsData();
+      loadChannelsData();
+      loadBookmarksData();
+    };
+    window.addEventListener('store-updated', handleUpdate);
+    return () => window.removeEventListener('store-updated', handleUpdate);
   }, []);
 
   const hasLoadedRef = useRef(false);
@@ -881,16 +887,18 @@ export default function AppSidebar() {
                   </SidebarGroupContent>
                 </SidebarGroup>
 
-                <SidebarSeparator className="my-2" />
+                {bookmarks.length > 0 && (
+                  <>
+                    <SidebarSeparator className="my-2" />
 
-                <SidebarGroup className="py-0">
-                  <SidebarGroupLabel className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Bookmarks
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="pr-2">
-                       {/* Bookmarks content ... */}
-                       {bookmarks.map((bookmark) => {
+                    <SidebarGroup className="py-0">
+                      <SidebarGroupLabel className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                        Bookmarks
+                      </SidebarGroupLabel>
+                      <SidebarGroupContent>
+                        <SidebarMenu className="pr-2">
+                          {/* Bookmarks content ... */}
+                          {bookmarks.map((bookmark) => {
                             const searchParams = new URLSearchParams(location.search);
                             const activeBookmarkVideoId = searchParams.get('videoId');
                             const isActive = bookmarkMatch && activeBookmarkVideoId === bookmark.id;
@@ -949,9 +957,11 @@ export default function AppSidebar() {
                               </SidebarMenuItem>
                             );
                           })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
+                  </>
+                )}
               </div>
             </SidebarGroupContent>
           </SidebarGroup>
