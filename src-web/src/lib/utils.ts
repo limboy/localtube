@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, DividerInfo, SidebarItem } from "@/types";
 import { setupKonamiCode } from "./konami";
-import { fetchViaMain } from "./bridge";
+import { getInnertube } from "./innertube";
 
 const store = {
   get<T>(key: string) {
@@ -185,91 +185,6 @@ export function disableInspectShortcut() {
   });
 }
 
-
-export async function parseYouTubePage(url: string) {
-  // Fetch the HTML content of the playlist page.
-  const response = await fetchViaMain(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/237.84.2.178 Safari/537.36"
-    }
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch playlist page: ${response.statusText}`);
-  }
-  const html = await response.text();
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-
-  const scripts = doc.getElementsByTagName("script");
-  let ytInitialData: any;
-  let innerTube: {
-    INNERTUBE_API_KEY: string;
-    INNERTUBE_CLIENT_VERSION: string;
-    INNERTUBE_API_VERSION: string;
-    INNERTUBE_CLIENT_NAME: string;
-    INNERTUBE_CONTEXT: Record<string, any>;
-  } | null = null;
-  for (const script of scripts) {
-    if (script.textContent!.includes("ytInitialData =")) {
-      // Execute the script in a safe context
-      ytInitialData = new Function(`
-        ${script.textContent}
-        return ytInitialData;
-      `)();
-    }
-
-    if (script.textContent!.includes("INNERTUBE_API_KEY")) {
-      // console.log(script.textContent);
-      // Execute the script in a safe context
-      innerTube = new Function(`
-        window.ytcfg = {
-            _config: {},
-
-            set: function() {
-                // Handle different argument patterns
-                if (arguments.length === 1 && typeof arguments[0] === 'object') {
-                    // When passing an object
-                    Object.assign(this._config, arguments[0]);
-                } else if (arguments.length === 2) {
-                    // When passing key, value
-                    const [key, value] = arguments;
-                    this._config[key] = value;
-                } else {
-                    throw new Error('Invalid arguments. Use set(object) or set(key, value)');
-                }
-                return this;
-            },
-
-            get: function(key) {
-                if (key === undefined) {
-                    return this._config;
-                }
-                return this._config[key];
-            }
-        };
-
-        ${script.textContent}
-
-        const INNERTUBE_API_KEY = ytcfg.get("INNERTUBE_API_KEY");
-        const INNERTUBE_API_VERSION = ytcfg.get("INNERTUBE_API_VERSION");
-        const INNERTUBE_CLIENT_NAME = ytcfg.get("INNERTUBE_CLIENT_NAME");
-        const INNERTUBE_CLIENT_VERSION = ytcfg.get("INNERTUBE_CLIENT_VERSION");
-        const INNERTUBE_CONTEXT = ytcfg.get("INNERTUBE_CONTEXT");
-        return {
-          INNERTUBE_API_KEY,
-          INNERTUBE_API_VERSION,
-          INNERTUBE_CLIENT_NAME,
-          INNERTUBE_CLIENT_VERSION,
-          INNERTUBE_CONTEXT
-        }
-      `)();
-    }
-  }
-
-  return { ytInitialData, innerTube };
-}
 
 /**
  * Checks if a URL is a valid YouTube playlist URL
@@ -500,75 +415,22 @@ export async function syncChannelsWithDividers() {
 }
 export async function getVideoDescription(videoId: string): Promise<string> {
   const store = await getStore();
-  const cache = await store.get<Record<string, string>>("videoDescriptions") || {};
+  const cache = (await store.get<Record<string, string>>("videoDescriptions")) || {};
   if (cache[videoId]) return cache[videoId];
 
-  const url = `https://www.youtube.com/watch?v=${videoId}`;
-  const response = await fetchViaMain(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/237.84.2.178 Safari/537.36"
-    }
-  });
-  if (!response.ok) return "";
-  const html = await response.text();
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
+  try {
+    const yt = await getInnertube();
+    const info = await yt.getBasicInfo(videoId);
+    const description = info.basic_info.short_description ?? "";
 
-  const genericDescription = "Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on YouTube.";
-  
-  let finalDescription = "";
-  const scripts = doc.getElementsByTagName("script");
-  for (const script of scripts) {
-    const content = script.textContent || "";
-    
-    // Try ytInitialPlayerResponse first as it often has direct shortDescription
-    if (content.includes("ytInitialPlayerResponse =")) {
-      try {
-        const data = new Function(`
-          ${content.replace("var ytInitialPlayerResponse =", "window.ytInitialPlayerResponse =")}
-          return window.ytInitialPlayerResponse;
-        `)();
-        const description = data.videoDetails?.shortDescription;
-        if (description && description !== genericDescription) {
-          finalDescription = description;
-          break;
-        }
-      } catch (e) {}
+    if (description) {
+      cache[videoId] = description;
+      await store.set("videoDescriptions", cache);
+      await store.save();
     }
 
-    if (content.includes("ytInitialData =")) {
-      try {
-        const data = new Function(`
-          ${content.replace("var ytInitialData =", "window.ytInitialData =")}
-          return window.ytInitialData;
-        `)();
-        
-        // Try multiple paths for description
-        const description = 
-          data.contents?.twoColumnWatchNextResults?.results?.results?.contents?.[1]?.videoSecondaryInfoRenderer?.description?.runs?.map((r: any) => r.text).join("") ||
-          data.contents?.twoColumnWatchNextResults?.results?.results?.contents?.[1]?.videoSecondaryInfoRenderer?.attributedDescription?.content;
-          
-        if (description && description !== genericDescription) {
-          finalDescription = description;
-          break;
-        }
-      } catch (e) {}
-    }
+    return description;
+  } catch {
+    return "";
   }
-
-  if (!finalDescription) {
-    const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content');
-    if (metaDescription && metaDescription !== genericDescription) {
-      finalDescription = metaDescription;
-    }
-  }
-
-  if (finalDescription) {
-    cache[videoId] = finalDescription;
-    await store.set("videoDescriptions", cache);
-    await store.save();
-  }
-
-  return finalDescription;
 }

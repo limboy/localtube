@@ -1,234 +1,120 @@
-import { ChannelInfo, VideoItem } from "@/types";
-import { fetchViaMain } from "./bridge";
-import { addOrUpdateChannel, loadChannel, loadChannels, parseYouTubePage } from "./utils";
+import type { ChannelInfo, VideoItem } from "@/types";
+import { addOrUpdateChannel, loadChannel, loadChannels } from "./utils";
+import { getInnertube } from "./innertube";
 
-interface InnertubeConfig {
-  INNERTUBE_API_KEY: string;
-  INNERTUBE_CLIENT_VERSION: string;
-  INNERTUBE_CONTEXT: any;
+const CHANNEL_VIDEO_CAP = 170;
+
+function extractChannelIdFromUrl(url: string): string | null {
+  const match = url.match(/\/channel\/(UC[\w-]+)/);
+  return match ? match[1] : null;
 }
 
-export class YouTubeChannelParser {
-  private readonly config: InnertubeConfig;
-  private readonly userAgent = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3`;
+async function resolveChannelId(channelUrl: string): Promise<string> {
+  const direct = extractChannelIdFromUrl(channelUrl);
+  if (direct) return direct;
 
-  constructor(config: InnertubeConfig) {
-    this.config = config;
+  const yt = await getInnertube();
+  const endpoint = await yt.resolveURL(channelUrl);
+  const browseId = endpoint.payload?.browseId as string | undefined;
+  if (!browseId || !browseId.startsWith("UC")) {
+    throw new Error(`Could not resolve channel ID from URL: ${channelUrl}`);
   }
-
-  private async fetchChannelPage(channelId: string, continuation?: string) {
-    const payload = {
-      context: this.config.INNERTUBE_CONTEXT,
-      ...(continuation ? { continuation } : { browseId: `${channelId}` })
-    };
-
-    const response = await fetchViaMain(
-      `https://www.youtube.com/youtubei/v1/browse?prettyPrint=false`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": this.config.INNERTUBE_CONTEXT.client.userAgent || this.userAgent,
-          "X-YouTube-Client-Name": "1",
-          "X-YouTube-Client-Version": "2.20250213.05.00",
-          Origin: "https://www.youtube.com"
-        },
-        body: JSON.stringify(payload),
-        timeout: 10000
-      }
-    );
-
-    if (response.status === 429) {
-      throw new Error("Rate limit exceeded. Please try again later.");
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid response format");
-    }
-
-    return data;
-  }
-
-  private extractVideosFromResponse(data: any): VideoItem[] {
-    const videos: VideoItem[] = [];
-
-    try {
-      let contents =
-        data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems;
-
-      if (!contents) {
-        return videos;
-      }
-
-      for (const item of contents) {
-        if (item.richItemRenderer) {
-          const video = item.richItemRenderer.content.videoRenderer;
-          if (JSON.stringify(video).includes("BADGE_STYLE_TYPE_MEMBERS_ONLY")) {
-            console.log("Skipping members-only video:", video.title.runs[0].text);
-            continue; // Skip members-only videos
-          }
-
-          // Get highest resolution thumbnail
-          const thumbnails = video.thumbnail.thumbnails;
-          const bestThumbnail = thumbnails[thumbnails.length - 1].url;
-
-          videos.push({
-            id: video.videoId,
-            title: video.title.runs[0].text,
-            thumbnail: bestThumbnail,
-            duration: video.lengthText?.simpleText || "Live"
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error extracting videos:", error);
-    }
-
-    return videos;
-  }
-
-  private extractContinuationToken(data: any): string | null {
-    try {
-      const continuationItems =
-        data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems;
-      return (
-        data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems[
-          continuationItems.length - 1
-        ].continuationItemRenderer.continuationEndpoint.continuationCommand.token || null
-      );
-    } catch {
-      return null;
-    }
-  }
-
-  public async parseChannel(channelId: string, continuation: string | null): Promise<VideoItem[]> {
-    try {
-      let allVideos: VideoItem[] = [];
-      let retryCount = 0;
-
-      do {
-        // Add exponential backoff for retries
-        const delay = continuation ? Math.min(1000 * Math.pow(2, retryCount), 10000) : 0;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-
-        const data = await this.fetchChannelPage(channelId, continuation || undefined);
-
-        const videos = this.extractVideosFromResponse(data);
-        allVideos = allVideos.concat(videos);
-
-        if (allVideos.length >= 170) {
-          allVideos = allVideos.slice(0, 170);
-          break;
-        }
-
-        continuation = this.extractContinuationToken(data);
-        retryCount++;
-      } while (continuation);
-
-      return allVideos;
-    } catch (error) {
-      console.error("Error parsing channel:", error);
-      throw new Error(`Failed to parse channel: ${(error as Error).message}`);
-    }
-  }
+  return browseId;
 }
 
-function parseContinuationFromInitialData(data: any): string | null {
-  let continuation: string | null = null;
-  const channelVideos =
-    data.contents.twoColumnBrowseResultsRenderer.tabs[1].tabRenderer.content.richGridRenderer
-      .contents;
+function mapVideo(v: any): VideoItem | null {
+  const id: string | undefined = v?.video_id ?? v?.id;
+  if (!id) return null;
 
-  if (channelVideos[channelVideos.length - 1].continuationItemRenderer) {
-    continuation =
-      channelVideos[channelVideos.length - 1].continuationItemRenderer.continuationEndpoint
-        .continuationCommand.token;
+  const title = typeof v.title === "string" ? v.title : v.title?.toString?.() ?? "";
+  if (!title) return null;
+
+  if (v.badges?.some?.((b: any) => b.style === "BADGE_STYLE_TYPE_MEMBERS_ONLY")) {
+    return null;
   }
 
-  return continuation;
+  const thumbs = v.thumbnails ?? [];
+  const thumbnail: string =
+    v.best_thumbnail?.url ?? thumbs[thumbs.length - 1]?.url ?? thumbs[0]?.url ?? "";
+
+  const isLive = v.is_live === true;
+  const duration: string = isLive
+    ? "Live"
+    : v.duration?.text ?? v.length_text?.toString?.() ?? "Live";
+
+  return { id, title, thumbnail, duration };
 }
 
-function parseVideosFromInitialData(data: any): VideoItem[] {
-  const channelVideos =
-    data.contents.twoColumnBrowseResultsRenderer.tabs[1].tabRenderer.content.richGridRenderer
-      .contents;
+async function collectChannelVideos(channelId: string): Promise<VideoItem[]> {
+  const yt = await getInnertube();
+  const channelRoot = await yt.getChannel(channelId);
+  let feed: { videos: any[]; has_continuation: boolean; getContinuation: () => Promise<any> } =
+    await channelRoot.getVideos();
 
-  const items = channelVideos
-    .filter((item: any) => item.richItemRenderer && !JSON.stringify(item).includes("BADGE_STYLE_TYPE_MEMBERS_ONLY"))
-    .map((item: any) => {
-      const video = item.richItemRenderer.content.videoRenderer;
-      return {
-        id: video.videoId,
-        title: video.title.runs[0].text,
-        thumbnail: video.thumbnail.thumbnails[0].url,
-        duration: video.lengthText?.simpleText || "Live"
-      };
-    });
+  const items: VideoItem[] = [];
+  let retryCount = 0;
+
+  while (true) {
+    for (const v of feed.videos) {
+      const mapped = mapVideo(v);
+      if (mapped) items.push(mapped);
+      if (items.length >= CHANNEL_VIDEO_CAP) return items;
+    }
+
+    if (!feed.has_continuation) break;
+
+    const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    retryCount++;
+
+    feed = await feed.getContinuation();
+  }
 
   return items;
 }
 
 export async function parseYouTubeChannel(channelUrl: string): Promise<ChannelInfo> {
-  channelUrl = channelUrl.replace(/\/$/, "");
-  channelUrl = channelUrl.replace(/\/featured$/, "");
-  channelUrl = channelUrl.includes("/videos") ? channelUrl : `${channelUrl}/videos`;
-  const page = await parseYouTubePage(channelUrl);
-  let result: ChannelInfo = {
+  const cleanedUrl = channelUrl.replace(/\/$/, "").replace(/\/featured$/, "").replace(/\/videos$/, "");
+  const channelId = await resolveChannelId(cleanedUrl);
+
+  const yt = await getInnertube();
+  const channelRoot = await yt.getChannel(channelId);
+
+  const metadata = channelRoot.metadata;
+  const avatar = metadata.avatar;
+  const thumbnail = avatar?.[avatar.length - 1]?.url ?? avatar?.[0]?.url;
+
+  const items = await collectChannelVideos(channelId);
+
+  return {
     unreadCount: 0,
-    id: "",
-    title: "",
-    items: [],
-    lastUpdated: Date.now()
+    id: metadata.external_id ?? channelId,
+    title: metadata.title ?? "",
+    thumbnail,
+    items,
+    lastUpdated: Date.now(),
   };
-  let continuation: string | null = null;
-
-  if (page.ytInitialData) {
-    const channelMetadata = page.ytInitialData.metadata.channelMetadataRenderer;
-    continuation = parseContinuationFromInitialData(page.ytInitialData);
-    const items = parseVideosFromInitialData(page.ytInitialData);
-
-    result = {
-      unreadCount: 0,
-      id: channelMetadata.externalId,
-      title: channelMetadata.title,
-      thumbnail: channelMetadata.avatar?.thumbnails?.[0]?.url,
-      items,
-      lastUpdated: Date.now()
-    };
-  }
-
-  if (continuation && page.innerTube) {
-    const parser = new YouTubeChannelParser(page.innerTube);
-    result.items = result.items.concat(await parser.parseChannel(channelUrl, continuation));
-  }
-
-  return result;
 }
 
 export async function checkForChannelUpdates(channelId: string): Promise<Boolean> {
   const channel = await loadChannel(channelId);
-  const channelUrl = `https://www.youtube.com/channel/${channelId}/videos`;
-  const page = await parseYouTubePage(channelUrl);
-  const items = parseVideosFromInitialData(page.ytInitialData);
+  const yt = await getInnertube();
+  const channelRoot = await yt.getChannel(channelId);
+  const feed = await channelRoot.getVideos();
 
-  let hasNewVideos = false;
-  for (const item of items) {
-    if (!channel?.items.some((video) => video.id === item.id)) {
-      hasNewVideos = true;
-      break;
+  for (const v of feed.videos) {
+    const mapped = mapVideo(v);
+    if (!mapped) continue;
+    if (!channel?.items.some((video) => video.id === mapped.id)) {
+      return true;
     }
   }
-
-  return hasNewVideos;
+  return false;
 }
 
-export async function checkAllChannelsForUpdates(progressCallback?: (current: number, total: number) => void): Promise<Boolean> {
+export async function checkAllChannelsForUpdates(
+  progressCallback?: (current: number, total: number) => void
+): Promise<Boolean> {
   const channels = await loadChannels();
   let needsUpdate = false;
   for (let i = 0; i < channels.length; i++) {
@@ -247,7 +133,6 @@ export async function checkAllChannelsForUpdates(progressCallback?: (current: nu
       needsUpdate = true;
     }
 
-    // Always update to capture metadata like thumbnails/avatars
     newResult.unreadCount = (channel.unreadCount || 0) + newVideos.length;
     newResult.lastUpdated = Date.now();
     await addOrUpdateChannel(newResult);
