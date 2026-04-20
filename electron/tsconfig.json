@@ -12,5 +12,5 @@
     "outDir": "./dist",
     "rootDir": "."
   },
-  "include": ["main.ts", "preload.ts", "menu.ts", "updater.ts", "ipc.ts", "types.ts"]
+  "include": ["main.ts", "preload.ts", "menu.ts", "updater.ts", "ipc.ts", "types.ts", "server.ts"]
 }

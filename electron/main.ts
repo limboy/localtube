@@ -1,13 +1,15 @@
-import { app, BrowserWindow, shell, nativeTheme, session } from "electron";
+import { app, BrowserWindow, shell, nativeTheme } from "electron";
 import path from "node:path";
 import { registerIpcHandlers, store } from "./ipc";
 import { setupMenu } from "./menu";
 import { setupAutoUpdater } from "./updater";
+import { startStaticServer } from "./server";
 
-const isDev = !app.isPackaged;
+const isDev = !app.isPackaged && process.env.NODE_ENV !== "production";
 const DEV_URL = "http://localhost:1422";
 
 let mainWindow: BrowserWindow | null = null;
+let prodURL: string | null = null;
 
 function createMainWindow() {
   const lastState: any = store.get("windowState") || {
@@ -74,6 +76,11 @@ function createMainWindow() {
 
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
+    // Preview mode (npm run preview): not packaged but NODE_ENV=production.
+    // Auto-open DevTools so errors are visible while simulating production.
+    if (!app.isPackaged && process.env.NODE_ENV === "production") {
+      mainWindow?.webContents.openDevTools({ mode: "detach" });
+    }
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -87,8 +94,8 @@ function createMainWindow() {
 
   if (isDev) {
     mainWindow.loadURL(DEV_URL);
-  } else {
-    mainWindow.loadFile(path.join(__dirname, "../../src-web/dist/index.html"));
+  } else if (prodURL) {
+    mainWindow.loadURL(prodURL);
   }
 
   mainWindow.on("closed", () => {
@@ -96,15 +103,16 @@ function createMainWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  // Inject Referer header for YouTube requests to fix Error 153 in production
-  session.defaultSession.webRequest.onBeforeSendHeaders(
-    { urls: ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"] },
-    (details, callback) => {
-      details.requestHeaders["Referer"] = "https://www.youtube.com/";
-      callback({ requestHeaders: details.requestHeaders });
-    }
-  );
+// Strip "Electron/<version>" from the default UA — YouTube's embed checks
+// treat that token as a non-browser client and refuse playback (Error 152-4).
+app.userAgentFallback = app.userAgentFallback.replace(/ Electron\/\S+/, "");
+
+app.whenReady().then(async () => {
+  if (!isDev) {
+    const distDir = path.join(__dirname, "../../src-web/dist");
+    const port = await startStaticServer(distDir);
+    prodURL = `http://localhost:${port}`;
+  }
 
   registerIpcHandlers(() => mainWindow);
   setupMenu(() => mainWindow);

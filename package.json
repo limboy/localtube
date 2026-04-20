@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "concurrently -k -n vite,electron -c blue,green \"npm run dev -w src-web\" \"tsc -p electron && wait-on http://localhost:1422 && electron ./electron/dist/main.js\"",
     "build": "npm run build -w src-web && tsc -p electron && env-cmd -f .env electron-builder --mac --arm64 --x64",
+    "preview": "npm run build -w src-web && tsc -p electron && NODE_ENV=production electron ./electron/dist/main.js",
     "changelog": "node scripts/generate-changelog.cjs"
   },
   "devDependencies": {
