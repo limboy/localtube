@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.0.5](https://github.com/limboy/localtube/compare/v1.0.4...v1.0.5) - 2026-04-21
+
+### Bug Fixes
+
+- cache channel avatars as base64 to avoid 429 rate limiting ([23c6798](https://github.com/limboy/localtube/commit/23c67987933077c2ce400f204a5c5e4e8b3b13e4))
+
+### Refactoring
+
+- improve video player layout scroll behavior by updating container overflow and structure ([159f173](https://github.com/limboy/localtube/commit/159f1731815b2c09c3c1f46f8364088b455887aa))
+
+### Documentation
+
+- update CHANGELOG for v1.0.4 ([279f3ba](https://github.com/limboy/localtube/commit/279f3bafddb137ff32d43ba114afb8f7894886ee))
+
+### Styles
+
+- add custom thin scrollbar styling to global CSS ([d9d7630](https://github.com/limboy/localtube/commit/d9d7630beeb3529e858a3d77ddab0c6662e8aee9))
+
+### Build
+
+- restrict macOS build target to arm64 and update documentation requirements ([e383dab](https://github.com/limboy/localtube/commit/e383dabafb8566ec321fe9699432d3dab1151beb))
+
+### Chores
+
+- remove VS Code extensions config and update copyright holder name ([db4e392](https://github.com/limboy/localtube/commit/db4e39268575a1584e427660c2e7365412a3e184))
+
 ## [v1.0.4](https://github.com/limboy/localtube/compare/v1.0.3...v1.0.4) - 2026-04-21
 
 ### Features
