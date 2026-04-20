@@ -1,0 +1,28 @@
+{
+  "name": "localtube",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "bun@1.2.2",
+  "workspaces": [
+    "src-web"
+  ],
+  "scripts": {
+    "app:dev": "bun tauri dev",
+    "app:build": "bun run app:build:arm && bun run app:build:intel",
+    "app:build:intel": "env-cmd -f .env bun tauri build --target x86_64-apple-darwin",
+    "app:build:arm": "env-cmd -f .env bun tauri build --target aarch64-apple-darwin",
+    "dev": "bun --filter src-web dev",
+    "build": "bun --filter src-web build",
+    "preview": "bun --filter src-web preview",
+    "tauri": "tauri",
+    "gen-updates": "bun ./scripts/gen-updates.ts /Users/limboy/Dropbox/R2/releases/localtube https://releases.limstack.com/localtube"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "typescript": "~5.6.2"
+  },
+  "dependencies": {
+    "env-cmd": "^10.1.0"
+  }
+}
