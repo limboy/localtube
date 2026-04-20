@@ -559,9 +559,9 @@ export default function AppSidebar() {
       if (isPlaylist) {
         const playlist = await parseYouTubePlaylist(playlistOrChannelUrl);
         await addOrUpdatePlaylist(playlist);
-        
+
         await loadPlaylistsData();
-        
+
         setOpen(false);
         setPlaylistOrChannelUrl("");
         setAddingPlaylistOrChannel(false);
@@ -709,113 +709,118 @@ export default function AppSidebar() {
         <SidebarContent className="h-full">
           <SidebarGroup className="h-full pr-0">
             <SidebarGroupContent className="h-full flex flex-col" >
-              <div data-tauri-drag-region className="-mx-2 flex items-center justify-end">
-                {(activeTab === 'playlists' && playlists.filter(item => !isDivider(item)).length > 0) || (activeTab === 'channels' && channels.filter(item => !isDivider(item)).length > 0) ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={activeTab === 'playlists' ? handleRefreshPlaylists : handleRefreshChannels}
-                        disabled={refreshingPlaylists || refreshingChannels}
-                        className={cn(
-                          "mr-2",
-                          (refreshingPlaylists || refreshingChannels)
-                            ? "cursor-default opacity-50"
-                            : "btn-icon"
-                        )}
-                      >
-                        {(activeTab === 'playlists' && refreshingPlaylists) || (activeTab === 'channels' && refreshingChannels) ? (
-                          <div className="flex items-center gap-1">
-                            {activeTab === 'playlists' && playlistProgress && (
-                              <span className="text-xs">{playlistProgress.current}/{playlistProgress.total}</span>
-                            )}
-                            {activeTab === 'channels' && channelProgress && (
-                              <span className="text-xs">{channelProgress.current}/{channelProgress.total}</span>
-                            )}
-                            <Loader size={14} className="animate-spin" />
-                          </div>
-                        ) : (
-                          <RefreshCw size={18} strokeWidth={1.5} />
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    {!(refreshingPlaylists || refreshingChannels) && (
-                      <TooltipContent>
-                        {activeTab === 'playlists' ? 'Refresh Playlists' : 'Refresh Channels'}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                ) : null}
-                <Dialog
-                  open={open}
-                  onOpenChange={(isOpen) => {
-                    if (addingPlaylistOrChannel) return;
-                    setOpen(isOpen);
-                  }}
-                >
-                  <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-4">
+              <div data-tauri-drag-region className="-mx-2 flex items-center justify-between shrink-0">
+                <div className="flex items-center">
+                  <div className="w-26 shrink-0" />
+                </div>
+                <div className="flex items-center">
+                  {(activeTab === 'playlists' && playlists.filter(item => !isDivider(item)).length > 0) || (activeTab === 'channels' && channels.filter(item => !isDivider(item)).length > 0) ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className={cn("btn-icon")}>
-                          <Plus size={18} strokeWidth={1.5} />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>Add YouTube Playlist or Channel</TooltipContent>
-                    </Tooltip>
-                  </DialogTrigger>
-                  <DialogContent forceMount showCloseButton={false}>
-                    <DialogHeader>
-                      <DialogTitle className="text-foreground">
-                        Add YouTube Playlist or Channel
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Enter YouTube playlist or channel URL"
-                          className="flex-1 bg-muted focus-visible:ring-0 text-foreground"
-                          value={playlistOrChannelUrl}
-                          onChange={(e) => {
-                            setPlaylistOrChannelUrl(e.target.value);
-                            setError(null);
-                          }}
-                          disabled={addingPlaylistOrChannel}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              if (
-                                !addingPlaylistOrChannel &&
-                                playlistOrChannelUrl &&
-                                (isPlaylistUrl(playlistOrChannelUrl) ||
-                                  isChannelUrl(playlistOrChannelUrl))
-                              ) {
-                                handleAddPlaylistOrChannel();
-                              }
-                            }
-                          }}
-                        />
-                        <Button
-                          className="w-12"
-                          onClick={handleAddPlaylistOrChannel}
-                          disabled={
-                            addingPlaylistOrChannel ||
-                            !playlistOrChannelUrl ||
-                            !(
-                              isPlaylistUrl(playlistOrChannelUrl) ||
-                              isChannelUrl(playlistOrChannelUrl)
-                            )
-                          }
-                        >
-                          {addingPlaylistOrChannel ? (
-                            <Loader className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Add"
+                        <button
+                          onClick={activeTab === 'playlists' ? handleRefreshPlaylists : handleRefreshChannels}
+                          disabled={refreshingPlaylists || refreshingChannels}
+                          className={cn(
+                            "mr-2",
+                            (refreshingPlaylists || refreshingChannels)
+                              ? "cursor-default opacity-50"
+                              : "btn-icon"
                           )}
-                        </Button>
+                        >
+                          {(activeTab === 'playlists' && refreshingPlaylists) || (activeTab === 'channels' && refreshingChannels) ? (
+                            <div className="flex items-center gap-1">
+                              {activeTab === 'playlists' && playlistProgress && (
+                                <span className="text-xs">{playlistProgress.current}/{playlistProgress.total}</span>
+                              )}
+                              {activeTab === 'channels' && channelProgress && (
+                                <span className="text-xs">{channelProgress.current}/{channelProgress.total}</span>
+                              )}
+                              <Loader size={14} className="animate-spin" />
+                            </div>
+                          ) : (
+                            <RefreshCw size={18} strokeWidth={1.5} />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      {!(refreshingPlaylists || refreshingChannels) && (
+                        <TooltipContent>
+                          {activeTab === 'playlists' ? 'Refresh Playlists' : 'Refresh Channels'}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  ) : null}
+                  <Dialog
+                    open={open}
+                    onOpenChange={(isOpen) => {
+                      if (addingPlaylistOrChannel) return;
+                      setOpen(isOpen);
+                    }}
+                  >
+                    <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-4">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={cn("btn-icon")}>
+                            <Plus size={18} strokeWidth={1.5} />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Add YouTube Playlist or Channel</TooltipContent>
+                      </Tooltip>
+                    </DialogTrigger>
+                    <DialogContent forceMount showCloseButton={false}>
+                      <DialogHeader>
+                        <DialogTitle className="text-foreground">
+                          Add YouTube Playlist or Channel
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter YouTube playlist or channel URL"
+                            className="flex-1 bg-muted focus-visible:ring-0 text-foreground"
+                            value={playlistOrChannelUrl}
+                            onChange={(e) => {
+                              setPlaylistOrChannelUrl(e.target.value);
+                              setError(null);
+                            }}
+                            disabled={addingPlaylistOrChannel}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                if (
+                                  !addingPlaylistOrChannel &&
+                                  playlistOrChannelUrl &&
+                                  (isPlaylistUrl(playlistOrChannelUrl) ||
+                                    isChannelUrl(playlistOrChannelUrl))
+                                ) {
+                                  handleAddPlaylistOrChannel();
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            className="w-12"
+                            onClick={handleAddPlaylistOrChannel}
+                            disabled={
+                              addingPlaylistOrChannel ||
+                              !playlistOrChannelUrl ||
+                              !(
+                                isPlaylistUrl(playlistOrChannelUrl) ||
+                                isChannelUrl(playlistOrChannelUrl)
+                              )
+                            }
+                          >
+                            {addingPlaylistOrChannel ? (
+                              <Loader className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Add"
+                            )}
+                          </Button>
+                        </div>
+                        {error && <div className="text-sm text-red-500">{error}</div>}
                       </div>
-                      {error && <div className="text-sm text-red-500">{error}</div>}
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
               <div className="mt-1 flex-1 flex flex-col min-h-0 select-none">
                 <SidebarMenu className="mt-1 pr-2 flex-1 overflow-y-auto sidebar-menu">
