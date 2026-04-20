@@ -49,6 +49,20 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
     }
   });
 
+  ipcMain.handle("net:fetchImageAsDataUrl", async (_e, url: string): Promise<string | null> => {
+    try {
+      const response = await net.fetch(url, { redirect: "follow" });
+      if (!response.ok) return null;
+
+      const contentType = response.headers.get("content-type") || "image/jpeg";
+      const buffer = await response.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+      return `data:${contentType};base64,${base64}`;
+    } catch {
+      return null;
+    }
+  });
+
   ipcMain.handle("shell:openExternal", async (_e, url: string) => {
     await shell.openExternal(url);
   });

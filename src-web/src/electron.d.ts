@@ -34,6 +34,7 @@ export interface ElectronAPI {
     save(): Promise<void>;
   };
   fetch(url: string, init?: FetchInit): Promise<FetchResult>;
+  fetchImageAsDataUrl(url: string): Promise<string | null>;
   openUrl(url: string): Promise<void>;
   confirm(message: string, options?: ConfirmOptions): Promise<boolean>;
   showContextMenu(items: ContextMenuItem[]): Promise<string | null>;

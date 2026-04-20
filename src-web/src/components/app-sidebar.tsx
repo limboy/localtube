@@ -67,6 +67,7 @@ interface PlaylistItemProps {
 }
 
 function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: PlaylistItemProps) {
+  const [imgError, setImgError] = useState(false);
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onPlaylistClick(playlist.id);
@@ -91,11 +92,12 @@ function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: Pl
         >
           <div className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
             <div className="flex items-center flex-1 gap-2">
-              {playlist.thumbnail ? (
+              {playlist.thumbnail && !imgError ? (
                 <img
                   src={playlist.thumbnail}
                   alt=""
                   className="w-5 h-5 rounded object-cover shrink-0"
+                  onError={() => setImgError(true)}
                 />
               ) : (
                 <List size={16} className="shrink-0 text-muted-foreground" />
@@ -127,6 +129,7 @@ interface ChannelItemProps {
 }
 
 function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: ChannelItemProps) {
+  const [imgError, setImgError] = useState(false);
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChannelClick(channel.id);
@@ -151,11 +154,12 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
         >
           <div className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
             <div className="flex items-center flex-1 gap-2">
-              {channel.thumbnail ? (
+              {channel.thumbnail && !imgError ? (
                 <img
                   src={channel.thumbnail}
                   alt=""
                   className="w-5 h-5 rounded-full object-cover shrink-0"
+                  onError={() => setImgError(true)}
                 />
               ) : (
                 <CircleUserRound size={16} className="shrink-0 text-muted-foreground" />

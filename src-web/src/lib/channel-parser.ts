@@ -68,6 +68,16 @@ async function collectChannelVideos(channelId: string): Promise<VideoItem[]> {
   return items;
 }
 
+async function fetchAvatarAsDataUrl(url: string | undefined): Promise<string | undefined> {
+  if (!url) return undefined;
+  try {
+    const dataUrl = await window.electron.fetchImageAsDataUrl(url);
+    return dataUrl ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function parseYouTubeChannel(channelUrl: string): Promise<ChannelInfo> {
   const cleanedUrl = channelUrl.replace(/\/$/, "").replace(/\/featured$/, "").replace(/\/videos$/, "");
   const channelId = await resolveChannelId(cleanedUrl);
@@ -77,7 +87,8 @@ export async function parseYouTubeChannel(channelUrl: string): Promise<ChannelIn
 
   const metadata = channelRoot.metadata;
   const avatar = metadata.avatar;
-  const thumbnail = avatar?.[avatar.length - 1]?.url ?? avatar?.[0]?.url;
+  const avatarUrl = avatar?.[avatar.length - 1]?.url ?? avatar?.[0]?.url;
+  const thumbnail = await fetchAvatarAsDataUrl(avatarUrl);
 
   const items = await collectChannelVideos(channelId);
 
@@ -108,7 +119,8 @@ export async function checkForChannelUpdates(channelId: string): Promise<Boolean
 }
 
 async function fetchChannelFirstPage(
-  channelId: string
+  channelId: string,
+  existingThumbnail?: string
 ): Promise<{ items: VideoItem[]; thumbnail: string | undefined; title: string }> {
   const yt = await getInnertube();
   const channelRoot = await yt.getChannel(channelId);
@@ -116,7 +128,13 @@ async function fetchChannelFirstPage(
 
   const metadata = channelRoot.metadata;
   const avatar = metadata.avatar;
-  const thumbnail = avatar?.[avatar.length - 1]?.url ?? avatar?.[0]?.url;
+  const avatarUrl = avatar?.[avatar.length - 1]?.url ?? avatar?.[0]?.url;
+
+  // Only fetch new avatar if we don't have a cached one (data URL)
+  let thumbnail = existingThumbnail;
+  if (!existingThumbnail?.startsWith("data:") && avatarUrl) {
+    thumbnail = await fetchAvatarAsDataUrl(avatarUrl);
+  }
 
   const items: VideoItem[] = [];
   for (const v of feed.videos) {
@@ -136,7 +154,7 @@ export async function checkAllChannelsForUpdates(
     const channel = channels[i];
     progressCallback?.(i + 1, channels.length);
 
-    const { items: firstPage, thumbnail, title } = await fetchChannelFirstPage(channel.id);
+    const { items: firstPage, thumbnail, title } = await fetchChannelFirstPage(channel.id, channel.thumbnail);
 
     const storedIds = new Set(channel.items.map((v) => v.id));
     const newVideos = firstPage.filter((v) => !storedIds.has(v.id));

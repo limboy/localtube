@@ -12,6 +12,9 @@ const api = {
   fetch: (url: string, init?: FetchInit) =>
     ipcRenderer.invoke("net:fetch", url, init) as Promise<FetchResult>,
 
+  fetchImageAsDataUrl: (url: string) =>
+    ipcRenderer.invoke("net:fetchImageAsDataUrl", url) as Promise<string | null>,
+
   openUrl: (url: string) => ipcRenderer.invoke("shell:openExternal", url) as Promise<void>,
 
   confirm: (message: string, options?: ConfirmOptions) =>
