@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v0.7.2](https://github.com/limboy/localtube/compare/v0.7.1...v0.7.2) - 2026-04-20
+
+### Refactoring
+
+- update electron updater interface and type definitions for onUpdateReady event ([0887d59](https://github.com/limboy/localtube/commit/0887d59950bb8948118bb27e1d3da7617417b7fb))
+
+### Documentation
+
+- update CHANGELOG for v0.7.1 ([953108c](https://github.com/limboy/localtube/commit/953108c5918660342d8015d407b79b42a1190c2e))
+
 ## [v0.7.1](https://github.com/limboy/localtube/releases/tag/v0.7.1) - 2026-04-20
 
 ### Features
@@ -13,6 +23,7 @@ This file is generated automatically from [Conventional Commits](https://www.con
 
 ### Refactoring
 
+- update electron updater interface and type definitions for onUpdateReady event ([d0e7711](https://github.com/limboy/localtube/commit/d0e77114b02e51fc042f9f1ea16dc3376a593cd5))
 - replace UpdateChecker with a global UpdateIndicator in the navigation bar and automate background update downloads ([dd3ba4a](https://github.com/limboy/localtube/commit/dd3ba4a7c8bf490cf71bc1615973fe55747d90c1))
 - update Tailwind syntax to v4 and modernize sidebar styling configurations ([7cf0259](https://github.com/limboy/localtube/commit/7cf0259fe6f369d58593974ae735193f2fc9af1b))
 - integrate SidebarTrigger into Nav component and update layout styling ([a6db202](https://github.com/limboy/localtube/commit/a6db20261c3b1dbdda2a29c21dc5c9e5ae43c9b4))
