@@ -48,7 +48,16 @@ export default function VideoListPlayer({
   const [bookmarkedVideos, setBookmarkedVideos] = useState<Map<string, BookmarkData>>(new Map());
   const [skippedVideos, setSkippedVideos] = useState<Set<string>>(new Set());
   const [shouldAutoPlay, setShouldAutoPlay] = useState(autoPlay);
+  const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    window.addEventListener('store-updated', handleUpdate);
+    return () => window.removeEventListener('store-updated', handleUpdate);
+  }, []);
 
   const playNextVideoRef = useRef<() => void>(() => { });
 
@@ -152,7 +161,7 @@ export default function VideoListPlayer({
       }
     }
     fetchData();
-  }, [playlistId, channelId, showBookmarkedOnly]);
+  }, [playlistId, channelId, showBookmarkedOnly, refreshKey]);
 
   // Add a safety check to ensure currentVideoId belongs to current playlist
   useEffect(() => {

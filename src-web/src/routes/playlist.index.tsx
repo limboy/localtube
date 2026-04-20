@@ -15,10 +15,16 @@ function RouteComponent() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    loadPlaylists().then(data => {
-      setPlaylists(data)
-      setIsLoading(false)
-    })
+    const fetchData = () => {
+      loadPlaylists().then(data => {
+        setPlaylists(data)
+        setIsLoading(false)
+      })
+    }
+    fetchData()
+
+    window.addEventListener('store-updated', fetchData)
+    return () => window.removeEventListener('store-updated', fetchData)
   }, [])
 
   return (

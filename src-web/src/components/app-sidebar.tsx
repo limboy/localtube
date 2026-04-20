@@ -311,8 +311,7 @@ export default function AppSidebar() {
   );
   const [refreshingPlaylists, setRefreshingPlaylists] = useState(false);
   const [refreshingChannels, setRefreshingChannels] = useState(false);
-  const [playlistProgress, setPlaylistProgress] = useState<{ current: number, total: number } | null>(null);
-  const [channelProgress, setChannelProgress] = useState<{ current: number, total: number } | null>(null);
+  const [refreshProgress, setRefreshProgress] = useState<{ current: number, total: number } | null>(null);
   const [playlistOrChannelUrl, setPlaylistOrChannelUrl] = useState("");
   const [addingPlaylistOrChannel, setAddingPlaylistOrChannel] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -322,7 +321,7 @@ export default function AppSidebar() {
 
   // Tabs effect removed
 
-  const checkUpdatesIfNeeded = () => {
+  const checkUpdatesIfNeeded = async () => {
     const now = Date.now();
     const oneHour = 60 * 60 * 1000;
 
@@ -331,42 +330,40 @@ export default function AppSidebar() {
     }
     lastCheckTimeRef.current = now;
 
+    const actualPlaylists = await loadPlaylists();
+    const actualChannels = await loadChannels();
+    const totalCount = actualPlaylists.length + actualChannels.length;
+
+    if (totalCount === 0) return;
+
     setRefreshingPlaylists(true);
     setRefreshingChannels(true);
-    setPlaylistProgress(null);
-    setChannelProgress(null);
+    setRefreshProgress(null);
 
-    checkAllPlaylistsForUpdates((current, total) => {
-      setPlaylistProgress({ current, total });
-    })
-      .then(async (playlistsUpdated) => {
-        if (playlistsUpdated) {
-          const newPlaylists = await syncPlaylistsWithDividers();
-          setPlaylists(newPlaylists);
-        }
-        setRefreshingPlaylists(false);
-        setPlaylistProgress(null);
-      })
-      .catch(() => {
-        setRefreshingPlaylists(false);
-        setPlaylistProgress(null);
+    try {
+      await checkAllPlaylistsForUpdates((current) => {
+        setRefreshProgress({ current, total: totalCount });
       });
 
-    checkAllChannelsForUpdates((current, total) => {
-      setChannelProgress({ current, total });
-    })
-      .then(async (channelsUpdated) => {
-        if (channelsUpdated) {
-          const newChannels = await syncChannelsWithDividers();
-          setChannels(newChannels);
-        }
-        setRefreshingChannels(false);
-        setChannelProgress(null);
-      })
-      .catch(() => {
-        setRefreshingChannels(false);
-        setChannelProgress(null);
+      const playlistsData = await syncPlaylistsWithDividers();
+      setPlaylists(playlistsData);
+      window.dispatchEvent(new CustomEvent('store-updated'));
+      setRefreshingPlaylists(false);
+
+      await checkAllChannelsForUpdates((current) => {
+        setRefreshProgress({ current: actualPlaylists.length + current, total: totalCount });
       });
+
+      const channelsData = await syncChannelsWithDividers();
+      setChannels(channelsData);
+      window.dispatchEvent(new CustomEvent('store-updated'));
+      setRefreshingChannels(false);
+    } catch (e) {
+      setRefreshingPlaylists(false);
+      setRefreshingChannels(false);
+    } finally {
+      setRefreshProgress(null);
+    }
   };
 
   const loadPlaylistsData = async () => {
@@ -502,41 +499,39 @@ export default function AppSidebar() {
 
   const handleRefreshPlaylists = () => {
     setRefreshingPlaylists(true);
-    setPlaylistProgress(null);
+    setRefreshProgress(null);
     checkAllPlaylistsForUpdates((current, total) => {
-      setPlaylistProgress({ current, total });
+      setRefreshProgress({ current, total });
     })
-      .then(async (playlistsUpdated) => {
-        if (playlistsUpdated) {
-          const newPlaylists = await syncPlaylistsWithDividers();
-          setPlaylists(newPlaylists);
-        }
+      .then(async () => {
+        const newPlaylists = await syncPlaylistsWithDividers();
+        setPlaylists(newPlaylists);
+        window.dispatchEvent(new CustomEvent('store-updated'));
         setRefreshingPlaylists(false);
-        setPlaylistProgress(null);
+        setRefreshProgress(null);
       })
       .catch(() => {
         setRefreshingPlaylists(false);
-        setPlaylistProgress(null);
+        setRefreshProgress(null);
       });
   };
 
   const handleRefreshChannels = () => {
     setRefreshingChannels(true);
-    setChannelProgress(null);
+    setRefreshProgress(null);
     checkAllChannelsForUpdates((current, total) => {
-      setChannelProgress({ current, total });
+      setRefreshProgress({ current, total });
     })
-      .then(async (channelsUpdated) => {
-        if (channelsUpdated) {
-          const newChannels = await syncChannelsWithDividers();
-          setChannels(newChannels);
-        }
+      .then(async () => {
+        const newChannels = await syncChannelsWithDividers();
+        setChannels(newChannels);
+        window.dispatchEvent(new CustomEvent('store-updated'));
         setRefreshingChannels(false);
-        setChannelProgress(null);
+        setRefreshProgress(null);
       })
       .catch(() => {
         setRefreshingChannels(false);
-        setChannelProgress(null);
+        setRefreshProgress(null);
       });
   };
 
@@ -707,9 +702,40 @@ export default function AppSidebar() {
   };
 
 
-  const handleRefreshAll = () => {
-    handleRefreshPlaylists();
-    handleRefreshChannels();
+  const handleRefreshAll = async () => {
+    const pItemsCount = playlists.filter(p => !isDivider(p)).length;
+    const cItemsCount = channels.filter(c => !isDivider(c)).length;
+    const totalCount = pItemsCount + cItemsCount;
+
+    setRefreshingPlaylists(true);
+    setRefreshingChannels(true);
+    setRefreshProgress(null);
+
+    try {
+      await checkAllPlaylistsForUpdates((current) => {
+        setRefreshProgress({ current, total: totalCount });
+      });
+      const newPlaylists = await syncPlaylistsWithDividers();
+      setPlaylists(newPlaylists);
+      window.dispatchEvent(new CustomEvent('store-updated'));
+      setRefreshingPlaylists(false);
+
+      await checkAllChannelsForUpdates((current) => {
+        setRefreshProgress({ current: pItemsCount + current, total: totalCount });
+      });
+      const newChannels = await syncChannelsWithDividers();
+      setChannels(newChannels);
+      window.dispatchEvent(new CustomEvent('store-updated'));
+      setRefreshingChannels(false);
+
+      await loadBookmarksData();
+    } catch (e) {
+      console.error("Refresh all failed", e);
+      setRefreshingPlaylists(false);
+      setRefreshingChannels(false);
+    } finally {
+      setRefreshProgress(null);
+    }
   };
 
 
@@ -739,11 +765,8 @@ export default function AppSidebar() {
                         >
                           {(refreshingPlaylists || refreshingChannels) ? (
                             <div className="flex items-center gap-1">
-                              {playlistProgress && (
-                                <span className="text-xs">{playlistProgress.current}/{playlistProgress.total}</span>
-                              )}
-                              {channelProgress && (
-                                <span className="text-xs">{channelProgress.current}/{channelProgress.total}</span>
+                              {refreshProgress && (
+                                <span className="text-xs">{refreshProgress.current}/{refreshProgress.total}</span>
                               )}
                               <Loader size={14} className="animate-spin" />
                             </div>
