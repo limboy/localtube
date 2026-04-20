@@ -719,33 +719,39 @@ export default function AppSidebar() {
                   {(playlists.filter(item => !isDivider(item)).length > 0 || channels.filter(item => !isDivider(item)).length > 0) ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button
-                          onClick={handleRefreshAll}
-                          disabled={refreshingPlaylists || refreshingChannels}
+                        <div
                           className={cn(
                             "mr-2",
                             (refreshingPlaylists || refreshingChannels)
-                              ? "cursor-default opacity-50"
+                              ? "opacity-50 cursor-default"
                               : "btn-icon"
                           )}
                         >
-                          {(refreshingPlaylists || refreshingChannels) ? (
-                            <div className="flex items-center gap-1">
-                              {refreshProgress && (
-                                <span className="text-xs">{refreshProgress.current}/{refreshProgress.total}</span>
-                              )}
-                              <Loader size={14} className="animate-spin" />
-                            </div>
-                          ) : (
-                            <RefreshCw size={18} strokeWidth={1.5} />
-                          )}
-                        </button>
+                          <button
+                            onClick={handleRefreshAll}
+                            onPointerDown={(e) => e.preventDefault()}
+                            disabled={refreshingPlaylists || refreshingChannels}
+                            className={cn(
+                              "flex items-center justify-center h-full w-full",
+                              (refreshingPlaylists || refreshingChannels) && "pointer-events-none"
+                            )}
+                          >
+                            {(refreshingPlaylists || refreshingChannels) ? (
+                              <div className="flex items-center gap-1">
+                                {refreshProgress && (
+                                  <span className="text-xs">{refreshProgress.current}/{refreshProgress.total}</span>
+                                )}
+                                <Loader size={14} className="animate-spin" />
+                              </div>
+                            ) : (
+                              <RefreshCw size={18} strokeWidth={1.5} />
+                            )}
+                          </button>
+                        </div>
                       </TooltipTrigger>
-                      {!(refreshingPlaylists || refreshingChannels) && (
-                        <TooltipContent>
-                          Refresh All
-                        </TooltipContent>
-                      )}
+                      <TooltipContent>
+                        Refresh All
+                      </TooltipContent>
                     </Tooltip>
                   ) : null}
                   <Dialog
