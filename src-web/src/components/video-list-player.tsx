@@ -384,7 +384,10 @@ export default function VideoListPlayer({
         </div>
         {currentVideoId && (
           <div className="mt-4 pb-4 border-b">
-            <h1 className="text-xl font-bold line-clamp-2">
+            <h1
+              className="underline text-xl font-bold line-clamp-2 cursor-pointer hover:text-primary transition-colors block"
+              onClick={() => window.electron.openUrl(`https://www.youtube.com/watch?v=${currentVideoId}`)}
+            >
               {processedVideos.find(v => v.id === currentVideoId)?.title}
             </h1>
             {!showDescription ? (
