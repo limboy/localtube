@@ -82,16 +82,23 @@ export default function VideoListPlayer({
     return processedVideos;
   };
 
+  const lastSourceKeyRef = useRef<string>("");
+
   useEffect(() => {
+    const sourceKey = `${playlistId ?? ""}::${channelId ?? ""}::${showBookmarkedOnly}`;
+    const isSourceChange = lastSourceKeyRef.current !== sourceKey;
+    lastSourceKeyRef.current = sourceKey;
+
     async function fetchData() {
-      // Reset all states when playlist changes
-      setVideoList(null);
-      setCurrentVideoId(null);
-      setIsShuffled(false);
-      setLoopMode("none");
-      setShuffledItems([]);
-      setShouldAutoPlay(autoPlay);
-      setIsLoading(true);
+      if (isSourceChange) {
+        setVideoList(null);
+        setCurrentVideoId(null);
+        setIsShuffled(false);
+        setLoopMode("none");
+        setShuffledItems([]);
+        setShouldAutoPlay(autoPlay);
+        setIsLoading(true);
+      }
 
       try {
         let data = null;
@@ -99,8 +106,6 @@ export default function VideoListPlayer({
         setBookmarkedVideos(bookmarks);
 
         if (showBookmarkedOnly && !playlistId && !channelId) {
-          // If no playlist or channel is provided, show bookmarks only
-          // convert bookmarks to a video list
           const playlists = await loadPlaylists();
           const channels = await loadChannels();
           const allPlaylistItems = playlists.flatMap(p => p.items);
@@ -111,7 +116,6 @@ export default function VideoListPlayer({
             lastUpdated: Date.now(),
             unreadCount: 0,
             items: Array.from(bookmarks.keys()).map((videoId) => {
-              // find video in playlists and channels
               const video = allPlaylistItems.find((item) => item.id === videoId) || allChannelItems.find((item) => item.id === videoId);
               if (video) {
                 return {
@@ -124,9 +128,11 @@ export default function VideoListPlayer({
             }).filter((item) => item !== null) as VideoItem[]
           };
           setVideoList(videoList);
-          const processedVideos = processVideoList(videoList.items, bookmarks, showBookmarkedOnly);
-          const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
-          setCurrentVideoId(initialVideoId || firstNonSkipped?.id || null);
+          if (isSourceChange) {
+            const processedVideos = processVideoList(videoList.items, bookmarks, showBookmarkedOnly);
+            const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
+            setCurrentVideoId(initialVideoId || firstNonSkipped?.id || null);
+          }
           return;
         }
 
@@ -137,7 +143,6 @@ export default function VideoListPlayer({
         }
 
         if (data) {
-          // Remove duplicate video IDs
           const seen = new Set();
           const uniqueItems = data.items.filter((item: VideoItem) => {
             if (seen.has(item.id)) return false;
@@ -147,17 +152,18 @@ export default function VideoListPlayer({
           const dedupedPlaylist = { ...data, items: uniqueItems };
           setVideoList(dedupedPlaylist);
 
-          // Process video list and find first non-skipped video
-          const processedVideos = processVideoList(uniqueItems, bookmarks, showBookmarkedOnly);
-          const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
-          setCurrentVideoId(initialVideoId || firstNonSkipped?.id || null);
+          if (isSourceChange) {
+            const processedVideos = processVideoList(uniqueItems, bookmarks, showBookmarkedOnly);
+            const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
+            setCurrentVideoId(initialVideoId || firstNonSkipped?.id || null);
+          }
         } else if (playlistId || channelId) {
-          setError("Playlist or channel not found");
+          if (isSourceChange) setError("Playlist or channel not found");
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load content");
+        if (isSourceChange) setError(e instanceof Error ? e.message : "Failed to load content");
       } finally {
-        setIsLoading(false);
+        if (isSourceChange) setIsLoading(false);
       }
     }
     fetchData();
