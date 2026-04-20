@@ -547,7 +547,8 @@ export default function AppSidebar() {
         setAddingPlaylistOrChannel(false);
         navigate({
           to: "/playlist/$playlistId",
-          params: { playlistId: playlist.id }
+          params: { playlistId: playlist.id },
+          search: { autoPlay: false }
         });
       } else {
         const channel = await parseYouTubeChannel(playlistOrChannelUrl);
@@ -560,7 +561,8 @@ export default function AppSidebar() {
         setAddingPlaylistOrChannel(false);
         navigate({
           to: "/channel/$channelId",
-          params: { channelId: channel.id }
+          params: { channelId: channel.id },
+          search: { autoPlay: false }
         });
       }
     } catch (error) {
@@ -577,7 +579,7 @@ export default function AppSidebar() {
     navigate({
       to: "/playlist/$playlistId",
       params: { playlistId },
-      search: { showBookmarkedOnly: fromBookmarks }
+      search: { showBookmarkedOnly: fromBookmarks, autoPlay: false }
     });
   };
 
@@ -605,7 +607,7 @@ export default function AppSidebar() {
     navigate({
       to: "/channel/$channelId",
       params: { channelId },
-      search: { showBookmarkedOnly: fromBookmarks }
+      search: { showBookmarkedOnly: fromBookmarks, autoPlay: false }
     });
   };
 
