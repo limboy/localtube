@@ -18,7 +18,6 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { PinOff, Pin, Loader, RefreshCw, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
-import ThemeSwitcher from "./theme-switcher";
 import YTPlayer from "./yt-player";
 import { parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { useNavigate } from "@tanstack/react-router";
@@ -414,7 +413,6 @@ export default function VideoListPlayer({
             </Tooltip>
           </TooltipProvider>
 
-          <ThemeSwitcher />
         </div>
       </Nav>
       <div className="p-4 w-full max-w-200 bg-background">

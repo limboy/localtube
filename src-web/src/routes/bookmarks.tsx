@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import Nav from '@/components/nav'
-import ThemeSwitcher from '@/components/theme-switcher'
 import { useSidebar } from '@/components/ui/sidebar'
 
 export const Route = createFileRoute('/bookmarks')({
@@ -19,9 +18,7 @@ function RouteComponent() {
             Bookmarks
           </h1>
         </div>
-        <div className="flex flex-row gap-1">
-          <ThemeSwitcher />
-        </div>
+        <div />
       </Nav>
 
       <div className="flex-1 flex items-center justify-center">

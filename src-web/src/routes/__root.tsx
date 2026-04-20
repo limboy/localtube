@@ -37,7 +37,7 @@ function Layout() {
   }, []);
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+    <ThemeProvider>
       <SidebarProvider>
         <AppSidebar />
         <main className="flex-1 bg-background text-foreground overflow-hidden">

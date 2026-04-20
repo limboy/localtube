@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import ThemeSwitcher from "@/components/theme-switcher";
 import Nav from "@/components/nav";
 
 export const Route = createFileRoute("/")({
@@ -12,7 +11,7 @@ function Index() {
     <div className={cn("flex flex-col h-screen items-center")}>
       <Nav>
         <div />
-        <ThemeSwitcher />
+        <div />
       </Nav>
 
       <div className="flex-1 flex flex-col gap-2 items-center justify-center">

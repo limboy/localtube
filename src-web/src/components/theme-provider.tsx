@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getTheme, getThemeSync, setTheme as setStoredTheme } from "@/lib/utils";
 
 type Theme = "dark" | "light" | "system";
 
@@ -21,44 +20,30 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
-export function ThemeProvider({ children, defaultTheme = "light", ...props }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    try {
-      return (getThemeSync() as Theme) || defaultTheme;
-    } catch (e) {
-      return defaultTheme;
-    }
-  });
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  const [theme, _setTheme] = useState<Theme>("system");
 
   useEffect(() => {
     const root = window.document.documentElement;
 
-    root.classList.remove("light", "dark");
+    const applyTheme = (isDark: boolean) => {
+      root.classList.remove("light", "dark");
+      root.classList.add(isDark ? "dark" : "light");
+    };
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    applyTheme(mediaQuery.matches);
 
-      root.classList.add(systemTheme);
-      return;
-    }
+    const listener = (e: MediaQueryListEvent) => applyTheme(e.matches);
+    mediaQuery.addEventListener("change", listener);
 
-    root.classList.add(theme);
-  }, [theme]);
+    return () => mediaQuery.removeEventListener("change", listener);
+  }, []);
 
   const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      try {
-        setStoredTheme(theme);
-      } catch (error) {
-        console.warn(
-          "Failed to save theme to store:",
-          error instanceof Error ? error.message : error
-        );
-      }
-      setTheme(theme);
+    theme: "system" as Theme,
+    setTheme: () => {
+      console.warn("Manual theme switching is disabled. Following system theme.");
     }
   };
 

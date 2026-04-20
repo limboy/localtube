@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
 import Nav from '@/components/nav'
-import ThemeSwitcher from '@/components/theme-switcher'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/components/ui/sidebar'
 
@@ -17,9 +16,7 @@ function RouteComponent() {
           Playlists
         </h1>
       </div>
-      <div className="flex flex-row gap-1">
-        <ThemeSwitcher />
-      </div>
+      <div />
     </Nav>
 
     <div className="flex-1 flex items-center justify-center">

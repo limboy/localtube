@@ -177,19 +177,6 @@ export function disableInspectShortcut() {
   });
 }
 
-export async function getTheme() {
-  const store = await getStore();
-  return (await store.get<string>("theme")) || "light";
-}
-
-export function getThemeSync() {
-  return window.electron.store.getSync<string>("theme") || "light";
-}
-
-export async function setTheme(theme: string) {
-  const store = await getStore();
-  await store.set("theme", theme);
-}
 
 export async function parseYouTubePage(url: string) {
   // Fetch the HTML content of the playlist page.
