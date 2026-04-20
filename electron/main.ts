@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, nativeTheme } from "electron";
+import { app, BrowserWindow, shell, nativeTheme, session } from "electron";
 import path from "node:path";
 import { registerIpcHandlers, store } from "./ipc";
 import { setupMenu } from "./menu";
@@ -97,6 +97,15 @@ function createMainWindow() {
 }
 
 app.whenReady().then(() => {
+  // Inject Referer header for YouTube requests to fix Error 153 in production
+  session.defaultSession.webRequest.onBeforeSendHeaders(
+    { urls: ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"] },
+    (details, callback) => {
+      details.requestHeaders["Referer"] = "https://www.youtube.com/";
+      callback({ requestHeaders: details.requestHeaders });
+    }
+  );
+
   registerIpcHandlers(() => mainWindow);
   setupMenu(() => mainWindow);
   createMainWindow();

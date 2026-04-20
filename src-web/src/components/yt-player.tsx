@@ -57,6 +57,7 @@ export default function YTPlayer({
       const player = new (window as any).YT.Player("player", {
         height: '100%',
         width: '100%',
+        host: 'https://www.youtube-nocookie.com',
         playerVars: {
           playsinline: 1,
           disablekb: 0,
@@ -66,7 +67,8 @@ export default function YTPlayer({
           controls: 1,
           rel: 0,
           autoplay: 1,
-          mute: 0
+          mute: 0,
+          origin: window.location.origin
         },
         events: {
           onReady: onPlayerReady,
