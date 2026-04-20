@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
-import { useSidebar } from "./ui/sidebar";
 import { UpdateIndicator } from "./update-indicator";
+import { useLeftSidebar } from "./left-sidebar-context";
+import { Button } from "./ui/button";
+import { PanelLeft } from "lucide-react";
 
 export default function Nav({
   children,
@@ -9,7 +11,8 @@ export default function Nav({
   children: React.ReactNode;
   className?: string;
 }) {
-  const { state } = useSidebar();
+  const { state: leftState, toggleSidebar: toggleLeftSidebar } = useLeftSidebar();
+
   return (
     <nav
       data-tauri-drag-region
@@ -18,10 +21,25 @@ export default function Nav({
         className ? className : ""
       )}
     >
-      {state === "collapsed" && (
-        <div className="w-26 shrink-0" />
-      )}
-      <div className="flex flex-1 items-center justify-between min-w-0 mx-2">
+      <div className="flex items-center">
+        <div
+          className={cn(
+            "transition-[width] duration-150 ease-in-out shrink-0 overflow-hidden",
+            leftState === "collapsed" ? "w-20" : "w-0"
+          )}
+        />
+        <Button
+          data-sidebar="trigger"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 [app-region:no-drag] [-webkit-app-region:no-drag] shrink-0"
+          onClick={toggleLeftSidebar}
+        >
+          <PanelLeft size={18} strokeWidth={2} />
+          <span className="sr-only">Toggle Left Sidebar</span>
+        </Button>
+      </div>
+      <div className="flex flex-1 items-center justify-between min-w-0">
         {children}
       </div>
       <UpdateIndicator />

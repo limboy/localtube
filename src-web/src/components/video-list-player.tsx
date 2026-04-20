@@ -375,7 +375,7 @@ export default function VideoListPlayer({
             {/* The right sidebar trigger */}
             {!showBookmarkedOnly && (
               <SidebarTrigger className="shrink-0 ml-2">
-                <PanelRight />
+                <PanelRight size={18} strokeWidth={2} />
               </SidebarTrigger>
             )}
           </div>

@@ -1,9 +1,10 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect } from "react";
+import { LeftSidebarProvider } from "@/components/left-sidebar-context";
 
 export const Route = createRootRoute({
   component: Layout
@@ -41,9 +42,10 @@ function Layout() {
       <SidebarProvider>
         <AppSidebar />
         <main className="flex-1 bg-background text-foreground overflow-hidden">
-          <Outlet />
+          <LeftSidebarProvider>
+            <Outlet />
+          </LeftSidebarProvider>
         </main>
-        <SidebarTrigger className="fixed top-2 left-20 z-25 btn-icon text-sidebar-foreground pointer-events-auto" />
         <Toaster />
       </SidebarProvider>
     </ThemeProvider>
