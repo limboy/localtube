@@ -4,6 +4,7 @@ import { PlaylistInfo } from '@/types'
 import { loadPlaylists } from '@/lib/utils'
 import { List } from 'lucide-react'
 import Nav from '@/components/nav'
+import { UpdateIndicator } from '@/components/update-indicator'
 
 export const Route = createFileRoute('/playlist/')({
   component: RouteComponent,
@@ -35,7 +36,9 @@ function RouteComponent() {
             Playlists
           </h1>
         </div>
-        <div />
+        <div className="flex items-center">
+          <UpdateIndicator />
+        </div>
       </Nav>
 
       <div className="flex-1 w-full overflow-y-auto p-8 max-w-5xl">

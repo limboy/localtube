@@ -47,7 +47,7 @@ export function UpdateIndicator() {
             size="sm"
             variant="outline"
             className={cn(
-              "h-8 px-3 text-xs shrink-0 rounded-md border-amber-600/50 text-amber-600 transition-all hover:bg-amber-600/10 hover:text-amber-600 hover:border-amber-600 shadow-none",
+              "h-7 px-2.5 text-xs shrink-0 rounded-md border-amber-600! text-amber-600 transition-all hover:bg-amber-600/10 hover:text-amber-600 hover:border-amber-600 shadow-none",
               isInstalling && "opacity-50 cursor-default"
             )}
             disabled={isInstalling}

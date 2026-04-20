@@ -20,6 +20,7 @@ import YTPlayer from "./yt-player";
 import { useNavigate } from "@tanstack/react-router";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { PanelRight } from "lucide-react";
+import { UpdateIndicator } from "./update-indicator";
 
 export default function VideoListPlayer({
   playlistId,
@@ -372,10 +373,11 @@ export default function VideoListPlayer({
         <Nav>
           <div />
 
-          <div className="flex flex-row gap-1 items-center">
+          <div className="flex flex-row gap-2 items-center">
+            <UpdateIndicator />
             {/* The right sidebar trigger */}
             {!showBookmarkedOnly && (
-              <SidebarTrigger className="shrink-0 ml-2">
+              <SidebarTrigger className="shrink-0 ml-1">
                 <PanelRight size={18} strokeWidth={2} />
               </SidebarTrigger>
             )}

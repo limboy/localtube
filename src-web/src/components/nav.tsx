@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { UpdateIndicator } from "./update-indicator";
 import { useLeftSidebar } from "./left-sidebar-context";
 import { Button } from "./ui/button";
 import { PanelLeft } from "lucide-react";
@@ -42,7 +41,6 @@ export default function Nav({
       <div className="flex flex-1 items-center justify-between min-w-0">
         {children}
       </div>
-      <UpdateIndicator />
     </nav>
   );
 }
