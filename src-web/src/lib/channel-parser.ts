@@ -52,7 +52,6 @@ async function collectChannelVideos(channelId: string): Promise<VideoItem[]> {
     await channelRoot.getVideos();
 
   const items: VideoItem[] = [];
-  let retryCount = 0;
 
   while (true) {
     for (const v of feed.videos) {
@@ -62,10 +61,6 @@ async function collectChannelVideos(channelId: string): Promise<VideoItem[]> {
     }
 
     if (!feed.has_continuation) break;
-
-    const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    retryCount++;
 
     feed = await feed.getContinuation();
   }
@@ -112,6 +107,26 @@ export async function checkForChannelUpdates(channelId: string): Promise<Boolean
   return false;
 }
 
+async function fetchChannelFirstPage(
+  channelId: string
+): Promise<{ items: VideoItem[]; thumbnail: string | undefined; title: string }> {
+  const yt = await getInnertube();
+  const channelRoot = await yt.getChannel(channelId);
+  const feed = await channelRoot.getVideos();
+
+  const metadata = channelRoot.metadata;
+  const avatar = metadata.avatar;
+  const thumbnail = avatar?.[avatar.length - 1]?.url ?? avatar?.[0]?.url;
+
+  const items: VideoItem[] = [];
+  for (const v of feed.videos) {
+    const mapped = mapVideo(v);
+    if (mapped) items.push(mapped);
+  }
+
+  return { items, thumbnail, title: metadata.title ?? "" };
+}
+
 export async function checkAllChannelsForUpdates(
   progressCallback?: (current: number, total: number) => void
 ): Promise<Boolean> {
@@ -121,21 +136,26 @@ export async function checkAllChannelsForUpdates(
     const channel = channels[i];
     progressCallback?.(i + 1, channels.length);
 
-    const newResult = await parseYouTubeChannel(
-      `https://www.youtube.com/channel/${channel.id}/videos`
-    );
+    const { items: firstPage, thumbnail, title } = await fetchChannelFirstPage(channel.id);
 
-    const newVideos = newResult.items.filter(
-      (video) => !channel.items.some((v) => v.id === video.id)
-    );
+    const storedIds = new Set(channel.items.map((v) => v.id));
+    const newVideos = firstPage.filter((v) => !storedIds.has(v.id));
 
     if (newVideos.length > 0) {
       needsUpdate = true;
     }
 
-    newResult.unreadCount = (channel.unreadCount || 0) + newVideos.length;
-    newResult.lastUpdated = Date.now();
-    await addOrUpdateChannel(newResult);
+    const mergedItems = [...newVideos, ...channel.items].slice(0, CHANNEL_VIDEO_CAP);
+
+    const updated: ChannelInfo = {
+      ...channel,
+      title: title || channel.title,
+      thumbnail: thumbnail ?? channel.thumbnail,
+      items: mergedItems,
+      unreadCount: (channel.unreadCount || 0) + newVideos.length,
+      lastUpdated: Date.now(),
+    };
+    await addOrUpdateChannel(updated);
   }
 
   return needsUpdate;

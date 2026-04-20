@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Bookmark, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkOff } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkOff } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import {
   DropdownMenu,
@@ -46,6 +46,8 @@ import {
   markPlaylistAsRead,
   markChannelAsRead,
   addOrUpdateChannel,
+  loadPlaylists,
+  loadChannels,
   enrichBookmarks,
   savePlaylistsWithDividers,
   saveChannelsWithDividers,
@@ -497,43 +499,7 @@ export default function AppSidebar() {
     }
   }, [playlists, channels, location.pathname]);
 
-  const handleRefreshPlaylists = () => {
-    setRefreshingPlaylists(true);
-    setRefreshProgress(null);
-    checkAllPlaylistsForUpdates((current, total) => {
-      setRefreshProgress({ current, total });
-    })
-      .then(async () => {
-        const newPlaylists = await syncPlaylistsWithDividers();
-        setPlaylists(newPlaylists);
-        window.dispatchEvent(new CustomEvent('store-updated'));
-        setRefreshingPlaylists(false);
-        setRefreshProgress(null);
-      })
-      .catch(() => {
-        setRefreshingPlaylists(false);
-        setRefreshProgress(null);
-      });
-  };
 
-  const handleRefreshChannels = () => {
-    setRefreshingChannels(true);
-    setRefreshProgress(null);
-    checkAllChannelsForUpdates((current, total) => {
-      setRefreshProgress({ current, total });
-    })
-      .then(async () => {
-        const newChannels = await syncChannelsWithDividers();
-        setChannels(newChannels);
-        window.dispatchEvent(new CustomEvent('store-updated'));
-        setRefreshingChannels(false);
-        setRefreshProgress(null);
-      })
-      .catch(() => {
-        setRefreshingChannels(false);
-        setRefreshProgress(null);
-      });
-  };
 
   async function playlistClickHandler(event: React.MouseEvent, playlistId: string) {
     event.preventDefault();

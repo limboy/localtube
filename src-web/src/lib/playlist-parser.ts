@@ -44,7 +44,6 @@ export async function parseYouTubePlaylist(playlistUrl: string): Promise<Playlis
     headerThumbs[headerThumbs.length - 1]?.url ?? headerThumbs[0]?.url;
 
   const items: VideoItem[] = [];
-  let retryCount = 0;
 
   while (true) {
     for (const v of playlist.items) {
@@ -54,10 +53,6 @@ export async function parseYouTubePlaylist(playlistUrl: string): Promise<Playlis
     }
 
     if (items.length >= PLAYLIST_VIDEO_CAP || !playlist.has_continuation) break;
-
-    const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    retryCount++;
 
     playlist = await playlist.getContinuation();
   }
@@ -91,6 +86,29 @@ export async function checkForPlaylistUpdates(playlistId: string): Promise<Boole
   return false;
 }
 
+async function fetchPlaylistFirstPage(
+  playlistId: string
+): Promise<{ items: VideoItem[]; thumbnail: string | undefined }> {
+  const yt = await getInnertube();
+  const playlist = await yt.getPlaylist(playlistId);
+
+  const headerThumbs = playlist.info.thumbnails ?? [];
+  let thumbnail: string | undefined =
+    headerThumbs[headerThumbs.length - 1]?.url ?? headerThumbs[0]?.url;
+
+  const items: VideoItem[] = [];
+  for (const v of playlist.items) {
+    const mapped = mapVideo(v);
+    if (mapped) items.push(mapped);
+  }
+
+  if (!thumbnail && items.length > 0) {
+    thumbnail = items[0].thumbnail;
+  }
+
+  return { items, thumbnail };
+}
+
 export async function checkAllPlaylistsForUpdates(
   progressCallback?: (current: number, total: number) => void
 ): Promise<Boolean> {
@@ -100,22 +118,21 @@ export async function checkAllPlaylistsForUpdates(
     const playlist = playlists[i];
     progressCallback?.(i + 1, playlists.length);
 
-    const newResult = await parseYouTubePlaylist(
-      `https://www.youtube.com/playlist?list=${playlist.id}`
-    );
+    const { items: firstPage, thumbnail } = await fetchPlaylistFirstPage(playlist.id);
 
-    const newVideos = newResult.items.filter(
-      (video) => !playlist.items.some((v) => v.id === video.id)
-    );
+    const storedIds = new Set(playlist.items.map((v) => v.id));
+    const newVideos = firstPage.filter((v) => !storedIds.has(v.id));
 
     if (newVideos.length > 0) {
       needsUpdate = true;
     }
 
+    const mergedItems = [...newVideos, ...playlist.items].slice(0, PLAYLIST_VIDEO_CAP);
+
     const updatedPlaylist = {
       ...playlist,
-      items: newResult.items,
-      thumbnail: newResult.thumbnail,
+      items: mergedItems,
+      thumbnail: thumbnail ?? playlist.thumbnail,
       unreadCount: (playlist.unreadCount || 0) + newVideos.length,
       lastUpdated: Date.now(),
     };
