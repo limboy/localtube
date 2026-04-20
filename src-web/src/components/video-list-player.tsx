@@ -19,7 +19,6 @@ import { PinOff, Pin, Loader, RefreshCw, Shuffle, Repeat1, Repeat, BookmarkIcon,
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import ThemeSwitcher from "./theme-switcher";
-import { useSidebar } from "./ui/sidebar";
 import YTPlayer from "./yt-player";
 import { parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { useNavigate } from "@tanstack/react-router";
@@ -33,7 +32,6 @@ export default function VideoListPlayer({
   channelId?: string;
   showBookmarkedOnly?: boolean;
 }) {
-  const { state } = useSidebar();
   const { toast } = useToast();
   const [videolist, setVideoList] = useState<VideoListInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -419,7 +417,7 @@ export default function VideoListPlayer({
           <ThemeSwitcher />
         </div>
       </Nav>
-      <div className="p-4 w-full max-w-[800px] bg-background">
+      <div className="p-4 w-full max-w-200 bg-background">
         <div className="aspect-video">
           <YTPlayer
             videoId={currentVideoId || ""}
@@ -429,7 +427,7 @@ export default function VideoListPlayer({
         </div>
       </div>
 
-      <div className="h-8 flex items-center justify-between pb-2 sticky top-0 bg-background z-10 pt-2 max-w-[800px] w-full">
+      <div className="h-8 flex items-center justify-between pb-2 sticky top-0 bg-background z-10 pt-2 max-w-200 w-full">
         <div className="flex flex-row justify-between w-full px-4">
           <h2 className="font-semibold">
             Playlist
@@ -460,7 +458,7 @@ export default function VideoListPlayer({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-4 pb-4 max-w-[800px] w-full bg-background">
+      <div className="flex-1 overflow-auto px-4 pb-4 max-w-200 w-full bg-background">
         <div className="grid gap-4">
           {processedVideos.map((video) => (
             <div

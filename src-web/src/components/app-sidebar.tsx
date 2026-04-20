@@ -5,8 +5,7 @@ import {
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger
+  SidebarMenuItem
 } from "@/components/ui/sidebar";
 import {
   Dialog,
@@ -18,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch } from "@tanstack/react-router";
-import { Plus, Loader, PanelLeft, RefreshCw, List, CircleUserRound, Bookmark } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Bookmark } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import {
   cn,
@@ -42,7 +41,7 @@ import {
   isDivider
 } from "@/lib/utils";
 import { PlaylistInfo, ChannelInfo, EnrichedBookmark, SidebarItem } from "@/types";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import UpdateChecker from "./update-checker";
 import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { checkAllChannelsForUpdates, parseYouTubeChannel } from "@/lib/channel-parser";

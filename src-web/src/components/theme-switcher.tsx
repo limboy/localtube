@@ -22,7 +22,7 @@ export default function ThemeSwitcher() {
     >
       <div
         className={cn(
-          "absolute w-6 h-6 rounded-full transition-all duration-300 ease-in-out [app-region:no-drag] [-webkit-app-region:no-drag] -ml-[1px] -mt-[1px]",
+          "absolute w-6 h-6 rounded-full transition-all duration-300 ease-in-out [app-region:no-drag] [-webkit-app-region:no-drag] -ml-px -mt-px",
           isLight 
             ? "left-0 bg-white border border-zinc-200 shadow-sm" 
             : "left-6 bg-black border border-zinc-800 shadow-none"

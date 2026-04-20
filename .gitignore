@@ -30,3 +30,5 @@ binaries
 electron/dist
 dist-electron
 out
+
+reference

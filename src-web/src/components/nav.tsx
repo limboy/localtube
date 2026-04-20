@@ -20,7 +20,7 @@ export default function Nav({
       <div
         className={cn(
           "transition-[width] duration-150 ease-in-out",
-          state === "collapsed" ? "w-[72px]" : "w-0"
+          state === "collapsed" ? "w-18" : "w-0"
         )}
       />
       <SidebarTrigger className="btn-icon text-sidebar-foreground shrink-0" />
