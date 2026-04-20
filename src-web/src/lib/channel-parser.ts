@@ -2,7 +2,7 @@ import type { ChannelInfo, VideoItem } from "@/types";
 import { addOrUpdateChannel, loadChannel, loadChannels } from "./utils";
 import { getInnertube } from "./innertube";
 
-const CHANNEL_VIDEO_CAP = 170;
+const CHANNEL_VIDEO_CAP = 500;
 
 function extractChannelIdFromUrl(url: string): string | null {
   const match = url.match(/\/channel\/(UC[\w-]+)/);

@@ -172,7 +172,7 @@ export default function VideoListPlayer({
   // Add a safety check to ensure currentVideoId belongs to current playlist
   useEffect(() => {
     if (videolist && currentVideoId) {
-      const items = isShuffled ? shuffledItems : processVideoList(videolist.items, bookmarkedVideos, showBookmarkedOnly);
+      const items = processVideoList(videolist.items, bookmarkedVideos, showBookmarkedOnly);
       const videoExists = items.some((item) => item.id === currentVideoId);
       if (!videoExists) {
         if (!initialVideoId) {
@@ -180,7 +180,7 @@ export default function VideoListPlayer({
         }
       }
     }
-  }, [videolist, currentVideoId, isShuffled, shuffledItems, bookmarkedVideos, initialVideoId]);
+  }, [videolist, currentVideoId, isShuffled, bookmarkedVideos, showBookmarkedOnly, initialVideoId]);
 
   useEffect(() => {
     if (initialVideoId) {
@@ -202,7 +202,8 @@ export default function VideoListPlayer({
 
   const shufflePlaylist = () => {
     if (!videolist) return;
-    const cloned = [...videolist.items];
+    const itemsToShuffle = processVideoList(videolist.items, bookmarkedVideos, showBookmarkedOnly);
+    const cloned = [...itemsToShuffle];
     if (currentVideoId) {
       const currentIndex = cloned.findIndex((v) => v.id === currentVideoId);
       if (currentIndex > -1) {
@@ -277,7 +278,7 @@ export default function VideoListPlayer({
           setCurrentVideoId(shuffledItems[nextIdx].id);
         }
       } else {
-        const items = videolist.items;
+        const items = processVideoList(videolist.items, bookmarkedVideos, showBookmarkedOnly);
         const currentIndex = items.findIndex((item) => item.id === currentVideoId);
         let nextIndex = currentIndex + 1;
         // Find next non-skipped video
@@ -293,7 +294,7 @@ export default function VideoListPlayer({
         }
       }
     };
-  }, [isShuffled, loopMode, currentVideoId, videolist, shuffledItems]);
+  }, [isShuffled, loopMode, currentVideoId, videolist, shuffledItems, bookmarkedVideos, showBookmarkedOnly]);
 
   useEffect(() => {
     if (currentVideoId) {
@@ -348,7 +349,7 @@ export default function VideoListPlayer({
   if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   const processedVideos = processVideoList(
-    isShuffled ? shuffledItems : videolist?.items || [],
+    videolist?.items || [],
     bookmarkedVideos,
     showBookmarkedOnly
   )
