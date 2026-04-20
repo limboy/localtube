@@ -1,6 +1,6 @@
 appId: localtube.me.limboy
 productName: LocalTube
-copyright: Copyright © 2026 LI ZHONG
+copyright: Copyright © 2026 Limboy
 
 directories:
   output: dist-electron
