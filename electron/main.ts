@@ -1,7 +1,7 @@
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, shell, nativeTheme } from "electron";
 import path from "node:path";
 import windowStateKeeper from "electron-window-state";
-import { registerIpcHandlers } from "./ipc";
+import { registerIpcHandlers, store } from "./ipc";
 import { setupMenu } from "./menu";
 import { setupAutoUpdater } from "./updater";
 
@@ -16,6 +16,15 @@ function createMainWindow() {
     defaultHeight: 600,
   });
 
+  const theme = store.get("theme") || "light";
+  let backgroundColor = "#ffffff";
+
+  if (theme === "dark") {
+    backgroundColor = "#29282b";
+  } else if (theme === "system") {
+    backgroundColor = nativeTheme.shouldUseDarkColors ? "#29282b" : "#ffffff";
+  }
+
   mainWindow = new BrowserWindow({
     x: windowState.x,
     y: windowState.y,
@@ -26,7 +35,7 @@ function createMainWindow() {
     title: "LocalTube",
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 12, y: 14 },
-    backgroundColor: "#000000",
+    backgroundColor: backgroundColor,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

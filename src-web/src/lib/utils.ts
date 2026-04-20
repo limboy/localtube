@@ -182,6 +182,10 @@ export async function getTheme() {
   return (await store.get<string>("theme")) || "light";
 }
 
+export function getThemeSync() {
+  return window.electron.store.getSync<string>("theme") || "light";
+}
+
 export async function setTheme(theme: string) {
   const store = await getStore();
   await store.set("theme", theme);

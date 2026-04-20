@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getTheme, setTheme as setStoredTheme } from "@/lib/utils";
+import { getTheme, getThemeSync, setTheme as setStoredTheme } from "@/lib/utils";
 
 type Theme = "dark" | "light" | "system";
 
@@ -21,26 +21,14 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
-const getStoredTheme = async (defaultTheme: Theme): Promise<Theme> => {
-  try {
-    const storedTheme = (await getTheme()) as Theme;
-    return storedTheme || defaultTheme;
-  } catch (error) {
-    console.warn(
-      "Failed to read theme from store:",
-      error instanceof Error ? error.message : error
-    );
-    return defaultTheme;
-  }
-};
-
 export function ThemeProvider({ children, defaultTheme = "light", ...props }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
-
-  // Initialize theme from store
-  useEffect(() => {
-    getStoredTheme(defaultTheme).then(setTheme);
-  }, [defaultTheme]);
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      return (getThemeSync() as Theme) || defaultTheme;
+    } catch (e) {
+      return defaultTheme;
+    }
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;

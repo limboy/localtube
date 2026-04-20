@@ -2,7 +2,7 @@ import { BrowserWindow, Menu, MenuItem, dialog, ipcMain, net, shell } from "elec
 import Store from "electron-store";
 import type { ConfirmOptions, ContextMenuItem, FetchInit, FetchResult } from "./types";
 
-const store = new Store({ name: "app-data" });
+export const store = new Store({ name: "app-data" });
 
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
   ipcMain.handle("store:get", (_e, key: string) => store.get(key));
@@ -11,6 +11,10 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
   });
   ipcMain.handle("store:save", () => {
     // electron-store persists on every set; no-op for API parity.
+  });
+
+  ipcMain.on("store:get-sync", (event, key: string) => {
+    event.returnValue = store.get(key);
   });
 
   ipcMain.handle("net:fetch", async (_e, url: string, init?: FetchInit): Promise<FetchResult> => {

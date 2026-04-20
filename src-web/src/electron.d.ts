@@ -29,6 +29,7 @@ export interface ConfirmOptions {
 export interface ElectronAPI {
   store: {
     get<T>(key: string): Promise<T | undefined>;
+    getSync<T>(key: string): T | undefined;
     set(key: string, value: unknown): Promise<void>;
     save(): Promise<void>;
   };

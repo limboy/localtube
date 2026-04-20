@@ -4,6 +4,7 @@ import type { ConfirmOptions, ContextMenuItem, FetchInit, FetchResult } from "./
 const api = {
   store: {
     get: <T>(key: string) => ipcRenderer.invoke("store:get", key) as Promise<T | undefined>,
+    getSync: <T>(key: string) => ipcRenderer.sendSync("store:get-sync", key) as T | undefined,
     set: (key: string, value: unknown) => ipcRenderer.invoke("store:set", key, value) as Promise<void>,
     save: () => ipcRenderer.invoke("store:save") as Promise<void>,
   },
