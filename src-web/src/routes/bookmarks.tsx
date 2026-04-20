@@ -1,31 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { cn } from '@/lib/utils'
-import Nav from '@/components/nav'
-import { useSidebar } from '@/components/ui/sidebar'
+import VideoListPlayer from '@/components/video-list-player'
+import { z } from 'zod'
+
+const bookmarksSearchSchema = z.object({
+  videoId: z.string().optional()
+})
 
 export const Route = createFileRoute('/bookmarks')({
   component: RouteComponent,
+  validateSearch: (search) => bookmarksSearchSchema.parse(search),
 })
 
 function RouteComponent() {
-  const { state } = useSidebar()
+  const { videoId } = Route.useSearch()
 
   return (
-    <div className="flex flex-col h-screen items-center bg-background">
-      <Nav>
-        <div>
-          <h1 className="font-semibold line-clamp-1 select-none cursor-default">
-            Bookmarks
-          </h1>
-        </div>
-        <div />
-      </Nav>
-
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center text-muted-foreground">
-          <p>Select a channel or playlist to view bookmarked videos</p>
-        </div>
-      </div>
-    </div>
+    <VideoListPlayer 
+      showBookmarkedOnly={true} 
+      initialVideoId={videoId}
+    />
   )
 }

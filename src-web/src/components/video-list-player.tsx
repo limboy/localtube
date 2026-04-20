@@ -11,7 +11,8 @@ import {
   loadPlaylists,
   loadChannels,
   loadSkippedVideos,
-  saveSkippedVideos
+  saveSkippedVideos,
+  getVideoDescription
 } from "@/lib/utils";
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
@@ -25,11 +26,13 @@ import { useNavigate } from "@tanstack/react-router";
 export default function VideoListPlayer({
   playlistId,
   channelId,
-  showBookmarkedOnly = false
+  showBookmarkedOnly = false,
+  initialVideoId
 }: {
   playlistId?: string;
   channelId?: string;
   showBookmarkedOnly?: boolean;
+  initialVideoId?: string;
 }) {
   const { toast } = useToast();
   const [videolist, setVideoList] = useState<VideoListInfo | null>(null);
@@ -40,6 +43,8 @@ export default function VideoListPlayer({
   const [loopMode, setLoopMode] = useState<"none" | "all" | "one">("none");
   const [shuffledItems, setShuffledItems] = useState<VideoListInfo["items"]>([]);
   const [forceReplay, setForceReplay] = useState(false);
+  const [description, setDescription] = useState<string>("");
+  const [isLoadingDescription, setIsLoadingDescription] = useState(false);
 
   const [isPinned, setIsPinned] = useState(false);
   const [bookmarkedVideos, setBookmarkedVideos] = useState<Map<string, BookmarkData>>(new Map());
@@ -112,7 +117,7 @@ export default function VideoListPlayer({
           setVideoList(videoList);
           const processedVideos = processVideoList(videoList.items, bookmarks, showBookmarkedOnly);
           const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
-          setCurrentVideoId(firstNonSkipped?.id || null);
+          setCurrentVideoId(initialVideoId || firstNonSkipped?.id || null);
           return;
         }
 
@@ -136,7 +141,7 @@ export default function VideoListPlayer({
           // Process video list and find first non-skipped video
           const processedVideos = processVideoList(uniqueItems, bookmarks, showBookmarkedOnly);
           const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
-          setCurrentVideoId(firstNonSkipped?.id || null);
+          setCurrentVideoId(initialVideoId || firstNonSkipped?.id || null);
         } else if (playlistId || channelId) {
           setError("Playlist or channel not found");
         }
@@ -155,10 +160,18 @@ export default function VideoListPlayer({
       const items = isShuffled ? shuffledItems : processVideoList(videolist.items, bookmarkedVideos, showBookmarkedOnly);
       const videoExists = items.some((item) => item.id === currentVideoId);
       if (!videoExists) {
-        setCurrentVideoId(items[0]?.id || null);
+        if (!initialVideoId) {
+          setCurrentVideoId(items[0]?.id || null);
+        }
       }
     }
-  }, [videolist, currentVideoId, isShuffled, shuffledItems, bookmarkedVideos]);
+  }, [videolist, currentVideoId, isShuffled, shuffledItems, bookmarkedVideos, initialVideoId]);
+
+  useEffect(() => {
+    if (initialVideoId) {
+      setCurrentVideoId(initialVideoId);
+    }
+  }, [initialVideoId]);
 
   // Load bookmarks and skipped videos on component mount
   useEffect(() => {
@@ -272,6 +285,14 @@ export default function VideoListPlayer({
     if (currentVideoId) {
       const el = document.getElementById(`video-item-${currentVideoId}`);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Fetch description
+      setDescription("");
+      setIsLoadingDescription(true);
+      getVideoDescription(currentVideoId).then(desc => {
+        setDescription(desc);
+        setIsLoadingDescription(false);
+      });
     }
   }, [currentVideoId]);
 
@@ -369,104 +390,125 @@ export default function VideoListPlayer({
             forceReplay={forceReplay}
           />
         </div>
-      </div>
-
-      <div className="h-8 flex items-center justify-between pb-2 sticky top-0 bg-background z-10 pt-2 max-w-200 w-full">
-        <div className="flex flex-row justify-between w-full px-4">
-          <h2 className="font-semibold">
-            Playlist
-            <span className="text-sm text-muted-foreground ml-2 font-normal">
-              {currentVideoId
-                ? `${processedVideos.findIndex((v) => v.id === currentVideoId) + 1} / ${processedVideos.length}`
-                : `0 / ${processedVideos.length}`}
-            </span>
-          </h2>
-          <div className="flex gap-2">
-            <button
-              onClick={toggleShuffle}
-              className={cn("p-1 rounded hover:bg-accent", isShuffled && "text-primary")}
-            >
-              <Shuffle strokeWidth={1.5} size={20} />
-            </button>
-            <button
-              onClick={toggleLoopMode}
-              className={cn("p-1 rounded hover:bg-accent", loopMode !== "none" && "text-primary")}
-            >
-              {loopMode === "one" ? (
-                <Repeat1 strokeWidth={1.5} size={20} />
-              ) : (
-                <Repeat strokeWidth={1.5} size={20} />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto px-4 pb-4 max-w-200 w-full bg-background">
-        <div className="grid gap-4">
-          {processedVideos.map((video) => (
-            <div
-              key={video.id}
-              id={`video-item-${video.id}`}
-              className={cn(
-                "flex gap-4 items-center hover:bg-accent p-2 rounded group",
-                currentVideoId === video.id && "bg-accent",
-                video.isSkipped && "opacity-50"
-              )}
-              onClick={() => setCurrentVideoId(video.id)}
-            >
-              <div className="w-6 flex items-center justify-center text-sm text-muted-foreground shrink-0">
-                {processedVideos.findIndex(v => v.id === video.id) + 1}
-              </div>
-              {/* Modified thumbnail container */}
-              <div className="w-24 h-16 flex-none">
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  className="w-full h-full object-cover rounded"
-                />
-              </div>
-              <div className="user-select-none cursor-default" style={{ WebkitUserSelect: "none" }}>
-                <h2 className="line-clamp-2 leading-5">{video.title}</h2>
-                <div className="flex flex-row gap-1">
-                  <span className="text-sm text-gray-500">{video.duration}</span>
+        {currentVideoId && (
+          <div className="mt-4 pb-4 border-b">
+            <h1 className="text-xl font-bold line-clamp-2">
+              {processedVideos.find(v => v.id === currentVideoId)?.title}
+            </h1>
+            <div className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap max-h-40 overflow-y-auto">
+              {isLoadingDescription ? (
+                <div className="flex items-center gap-2">
+                  <Loader size={14} className="animate-spin" />
+                  <span>Loading description...</span>
                 </div>
-              </div>
-              <div className="ml-auto flex gap-1">
-                {video.isSkipped ? (
-                  <button
-                    onClick={(e) => handleUnskipVideo(video.id, e)}
-                    className="p-1 rounded hover:bg-accent-foreground/10 opacity-80"
-                  >
-                    <Eye size={20} strokeWidth={1.5} />
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={(e) => handleSkipVideo(video.id, e)}
-                      className={cn(
-                        "p-1 rounded hover:bg-accent-foreground/10",
-                        "opacity-0 group-hover:opacity-80"
-                      )}
-                    >
-                      <EyeOff size={20} strokeWidth={1.5} />
-                    </button>
-                    <button
-                      onClick={(e) => toggleBookmark(video.id, e)}
-                      className={cn(
-                        "p-1 rounded hover:bg-accent-foreground/10",
-                        bookmarkedVideos.has(video.id) ? "" : "opacity-0 group-hover:opacity-100"
-                      )}
-                    >
-                      <BookmarkIcon size={20} fill={bookmarkedVideos.has(video.id) ? "#ccc" : "none"} strokeWidth={bookmarkedVideos.has(video.id) ? 1 : 1} />
-                    </button>
-                  </>
-                )}
+              ) : (
+                description || "No description available"
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {!showBookmarkedOnly && (
+        <>
+          <div className="h-8 flex items-center justify-between pb-2 sticky top-0 bg-background z-10 pt-2 max-w-200 w-full">
+            <div className="flex flex-row justify-between w-full px-4">
+              <h2 className="font-semibold">
+                Playlist
+                <span className="text-sm text-muted-foreground ml-2 font-normal">
+                  {currentVideoId
+                    ? `${processedVideos.findIndex((v) => v.id === currentVideoId) + 1} / ${processedVideos.length}`
+                    : `0 / ${processedVideos.length}`}
+                </span>
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={toggleShuffle}
+                  className={cn("p-1 rounded hover:bg-accent", isShuffled && "text-primary")}
+                >
+                  <Shuffle strokeWidth={1.5} size={20} />
+                </button>
+                <button
+                  onClick={toggleLoopMode}
+                  className={cn("p-1 rounded hover:bg-accent", loopMode !== "none" && "text-primary")}
+                >
+                  {loopMode === "one" ? (
+                    <Repeat1 strokeWidth={1.5} size={20} />
+                  ) : (
+                    <Repeat strokeWidth={1.5} size={20} />
+                  )}
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+
+          <div className="flex-1 overflow-auto px-4 pb-4 max-w-200 w-full bg-background">
+            <div className="grid gap-4">
+              {processedVideos.map((video) => (
+                <div
+                  key={video.id}
+                  id={`video-item-${video.id}`}
+                  className={cn(
+                    "flex gap-4 items-center hover:bg-accent p-2 rounded group",
+                    currentVideoId === video.id && "bg-accent",
+                    video.isSkipped && "opacity-50"
+                  )}
+                  onClick={() => setCurrentVideoId(video.id)}
+                >
+                  <div className="w-6 flex items-center justify-center text-sm text-muted-foreground shrink-0">
+                    {processedVideos.findIndex(v => v.id === video.id) + 1}
+                  </div>
+                  {/* Modified thumbnail container */}
+                  <div className="w-24 h-16 flex-none">
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </div>
+                  <div className="user-select-none cursor-default" style={{ WebkitUserSelect: "none" }}>
+                    <h2 className="line-clamp-2 leading-5">{video.title}</h2>
+                    <div className="flex flex-row gap-1">
+                      <span className="text-sm text-gray-500">{video.duration}</span>
+                    </div>
+                  </div>
+                  <div className="ml-auto flex gap-1">
+                    {video.isSkipped ? (
+                      <button
+                        onClick={(e) => handleUnskipVideo(video.id, e)}
+                        className="p-1 rounded hover:bg-accent-foreground/10 opacity-80"
+                      >
+                        <Eye size={20} strokeWidth={1.5} />
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={(e) => handleSkipVideo(video.id, e)}
+                          className={cn(
+                            "p-1 rounded hover:bg-accent-foreground/10",
+                            "opacity-0 group-hover:opacity-80"
+                          )}
+                        >
+                          <EyeOff size={20} strokeWidth={1.5} />
+                        </button>
+                        <button
+                          onClick={(e) => toggleBookmark(video.id, e)}
+                          className={cn(
+                            "p-1 rounded hover:bg-accent-foreground/10",
+                            bookmarkedVideos.has(video.id) ? "" : "opacity-0 group-hover:opacity-100"
+                          )}
+                        >
+                          <BookmarkIcon size={20} fill={bookmarkedVideos.has(video.id) ? "#ccc" : "none"} strokeWidth={bookmarkedVideos.has(video.id) ? 1 : 1} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

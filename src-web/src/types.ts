@@ -49,6 +49,8 @@ export interface BookmarkData {
 export interface EnrichedBookmark {
   id: string;
   title: string;
+  thumbnail?: string;
+  duration?: string;
   type: 'playlist' | 'channel';
   bookmarkedAt: number;
   data?: PlaylistInfo | ChannelInfo;

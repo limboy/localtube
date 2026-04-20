@@ -295,21 +295,31 @@ export async function enrichBookmarks(): Promise<EnrichedBookmark[]> {
     const channel = channels.find(channel => channel.items.some(item => item.id === id));
 
     if (playlist) {
-      enriched.push({
-        id,
-        title: playlist.title,
-        type: 'playlist',
-        bookmarkedAt: bookmark.createdAt,
-        data: playlist
-      });
+      const video = playlist.items.find(item => item.id === id);
+      if (video) {
+        enriched.push({
+          id,
+          title: video.title,
+          thumbnail: video.thumbnail,
+          duration: video.duration,
+          type: 'playlist',
+          bookmarkedAt: bookmark.createdAt,
+          data: playlist
+        });
+      }
     } else if (channel) {
-      enriched.push({
-        id,
-        title: channel.title,
-        type: 'channel',
-        bookmarkedAt: bookmark.createdAt,
-        data: channel
-      });
+      const video = channel.items.find(item => item.id === id);
+      if (video) {
+        enriched.push({
+          id,
+          title: video.title,
+          thumbnail: video.thumbnail,
+          duration: video.duration,
+          type: 'channel',
+          bookmarkedAt: bookmark.createdAt,
+          data: channel
+        });
+      }
     }
   }
 
@@ -479,4 +489,78 @@ export async function syncChannelsWithDividers() {
 
   await saveChannelsWithDividers(syncedItems);
   return syncedItems;
+}
+export async function getVideoDescription(videoId: string): Promise<string> {
+  const store = await getStore();
+  const cache = await store.get<Record<string, string>>("videoDescriptions") || {};
+  if (cache[videoId]) return cache[videoId];
+
+  const url = `https://www.youtube.com/watch?v=${videoId}`;
+  const response = await fetchViaMain(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/237.84.2.178 Safari/537.36"
+    }
+  });
+  if (!response.ok) return "";
+  const html = await response.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  const genericDescription = "Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on YouTube.";
+  
+  let finalDescription = "";
+  const scripts = doc.getElementsByTagName("script");
+  for (const script of scripts) {
+    const content = script.textContent || "";
+    
+    // Try ytInitialPlayerResponse first as it often has direct shortDescription
+    if (content.includes("ytInitialPlayerResponse =")) {
+      try {
+        const data = new Function(`
+          ${content.replace("var ytInitialPlayerResponse =", "window.ytInitialPlayerResponse =")}
+          return window.ytInitialPlayerResponse;
+        `)();
+        const description = data.videoDetails?.shortDescription;
+        if (description && description !== genericDescription) {
+          finalDescription = description;
+          break;
+        }
+      } catch (e) {}
+    }
+
+    if (content.includes("ytInitialData =")) {
+      try {
+        const data = new Function(`
+          ${content.replace("var ytInitialData =", "window.ytInitialData =")}
+          return window.ytInitialData;
+        `)();
+        
+        // Try multiple paths for description
+        const description = 
+          data.contents?.twoColumnWatchNextResults?.results?.results?.contents?.[1]?.videoSecondaryInfoRenderer?.description?.runs?.map((r: any) => r.text).join("") ||
+          data.contents?.twoColumnWatchNextResults?.results?.results?.contents?.[1]?.videoSecondaryInfoRenderer?.attributedDescription?.content;
+          
+        if (description && description !== genericDescription) {
+          finalDescription = description;
+          break;
+        }
+      } catch (e) {}
+    }
+  }
+
+  if (!finalDescription) {
+    const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content');
+    if (metaDescription && metaDescription !== genericDescription) {
+      finalDescription = metaDescription;
+    }
+  }
+
+  if (finalDescription) {
+    cache[videoId] = finalDescription;
+    await store.set("videoDescriptions", cache);
+    await store.save();
+  }
+
+  return finalDescription;
 }

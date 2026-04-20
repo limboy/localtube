@@ -693,15 +693,6 @@ export default function AppSidebar() {
     }
   };
 
-  const reduceBookmarks = (bookmarks: EnrichedBookmark[]) => {
-    return bookmarks.reduce((acc, bookmark) => {
-      const existing = acc.find(b => b.data?.id === bookmark.data?.id && b.type === bookmark.type);
-      if (!existing) {
-        acc.push(bookmark);
-      }
-      return acc;
-    }, [] as EnrichedBookmark[]);
-  };
 
   return (
     <>
@@ -934,70 +925,63 @@ export default function AppSidebar() {
                     <TabsContent value="bookmarks" className="m-0">
                       {loadingBookmarks ? (
                         <div className="flex items-center justify-center py-2">
-                          {/* <Loader className="h-4 w-4 animate-spin" /> */}
                         </div>
                       ) : (
-                        <>
-                          {bookmarks.some(b => b.type === 'playlist') && (
-                            <div className="mb-4">
-                              <div className="text-xs text-sidebar-foreground/50 px-2 mt-1 mb-1">Playlists</div>
-                              {reduceBookmarks(bookmarks)
-                                .filter(b => b.type === 'playlist')
-                                .map((bookmark) => (
-                                  <SidebarMenuButton key={bookmark.id} asChild>
-                                    <button
-                                      onClick={() => handlePlaylistClick(bookmark.data!.id, true)}
-                                      className={cn(
-                                        "pr-2 group/bookmark w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-                                        playlistMatch?.params.playlistId === bookmark.data!.id ? "bg-sidebar-accent" : ""
+                        <div className="flex flex-col gap-0.5">
+                          {bookmarks.map((bookmark) => {
+                            const searchParams = new URLSearchParams(location.search);
+                            const activeBookmarkVideoId = searchParams.get('videoId');
+                            const isActive = bookmarkMatch && activeBookmarkVideoId === bookmark.id;
+                            
+                            return (
+                              <SidebarMenuButton 
+                                key={bookmark.id} 
+                                asChild
+                                className={cn(
+                                  "pr-2 group/bookmark h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                                  isActive ? "bg-sidebar-accent" : ""
+                                )}
+                              >
+                              <button
+                                onClick={() => navigate({ to: '/bookmarks', search: { videoId: bookmark.id } })}
+                              >
+                                <SidebarMenuItem className="select-none flex items-start gap-2 w-full flex-1">
+                                  <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
+                                    {bookmark.thumbnail && (
+                                      <img 
+                                        src={bookmark.thumbnail} 
+                                        alt="" 
+                                        className="w-full h-full object-cover"
+                                      />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="line-clamp-2 text-sm leading-tight mb-0.5">
+                                      {bookmark.title}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 opacity-50 text-[10px]">
+                                      <span className="truncate max-w-[80px]">
+                                        {bookmark.data?.title}
+                                      </span>
+                                      {bookmark.duration && (
+                                        <>
+                                          <span>•</span>
+                                          <span>{bookmark.duration}</span>
+                                        </>
                                       )}
-                                    >
-                                      <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
-                                        <div className="flex items-center flex-1">
-                                          <span className="line-clamp-1">{bookmark.title}</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                          <span className="text-xs text-sidebar-foreground/50 ml-2">
-                                            {bookmarks.filter(b => b.type === 'playlist' && b.data?.id === bookmark.data!.id).length}
-                                          </span>
-                                        </div>
-                                      </SidebarMenuItem>
-                                    </button>
-                                  </SidebarMenuButton>
-                                ))}
+                                    </div>
+                                  </div>
+                                </SidebarMenuItem>
+                              </button>
+                              </SidebarMenuButton>
+                            );
+                          })}
+                          {bookmarks.length === 0 && (
+                            <div className="px-2 py-4 text-xs text-center text-sidebar-foreground/50">
+                              No bookmarks yet
                             </div>
                           )}
-
-                          {bookmarks.some(b => b.type === 'channel') && (
-                            <div>
-                              <div className="text-xs text-sidebar-foreground/50 px-2 mt-1 mb-1">Channels</div>
-                              {reduceBookmarks(bookmarks)
-                                .filter(b => b.type === 'channel')
-                                .map((bookmark) => (
-                                  <SidebarMenuButton key={bookmark.id} asChild>
-                                    <button
-                                      onClick={() => handleChannelClick(bookmark.data!.id, true)}
-                                      className={cn(
-                                        "pr-2 group/bookmark w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-                                        channelMatch?.params.channelId === bookmark.data!.id ? "bg-sidebar-accent" : ""
-                                      )}
-                                    >
-                                      <SidebarMenuItem className="line-clamp-1 select-none flex items-center justify-between w-full flex-1">
-                                        <div className="flex items-center flex-1">
-                                          <span className="line-clamp-1">{bookmark.title}</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                          <span className="text-xs text-sidebar-foreground/50 ml-2">
-                                            {bookmarks.filter(b => b.type === 'channel' && b.data?.id === bookmark.data!.id).length}
-                                          </span>
-                                        </div>
-                                      </SidebarMenuItem>
-                                    </button>
-                                  </SidebarMenuButton>
-                                ))}
-                            </div>
-                          )}
-                        </>
+                        </div>
                       )}
                     </TabsContent>
                   </Tabs>
