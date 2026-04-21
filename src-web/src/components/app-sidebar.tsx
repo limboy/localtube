@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuBadge,
   SidebarRail,
   SidebarSeparator
 } from "@/components/ui/sidebar";
@@ -104,10 +105,7 @@ function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: Pl
               ) : (
                 <List size={16} className="shrink-0 text-muted-foreground" />
               )}
-              <span className={cn(
-                "line-clamp-1",
-                playlist.unreadCount > 0 ? "font-bold" : "font-normal"
-              )}>
+              <span className="line-clamp-1 font-normal">
                 {playlist.title}
               </span>
             </div>
@@ -119,6 +117,11 @@ function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: Pl
           </div>
         </div>
       </SidebarMenuButton>
+      {playlist.unreadCount > 0 && (
+        <SidebarMenuBadge className="bg-muted text-sidebar-foreground/50 mr-0.5">
+          {playlist.unreadCount}
+        </SidebarMenuBadge>
+      )}
     </SidebarMenuItem>
   );
 }
@@ -166,10 +169,7 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
               ) : (
                 <CircleUserRound size={16} className="shrink-0 text-muted-foreground" />
               )}
-              <span className={cn(
-                "line-clamp-1",
-                channel.unreadCount > 0 ? "font-bold" : "font-normal"
-              )}>
+              <span className="line-clamp-1 font-normal">
                 {channel.title}
               </span>
             </div>
@@ -181,6 +181,11 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
           </div>
         </div>
       </SidebarMenuButton>
+      {channel.unreadCount > 0 && (
+        <SidebarMenuBadge className="bg-primary text-primary-foreground">
+          {channel.unreadCount}
+        </SidebarMenuBadge>
+      )}
     </SidebarMenuItem>
   );
 }
