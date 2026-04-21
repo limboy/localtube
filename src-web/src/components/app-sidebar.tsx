@@ -553,7 +553,7 @@ export default function AppSidebar() {
         <SidebarContent className="h-full">
           <SidebarGroup className="h-full pr-0">
             <SidebarGroupContent className="h-full flex flex-col" >
-              <div data-tauri-drag-region className="-mx-2 flex items-center justify-between shrink-0">
+              <div className="-mx-2 flex items-center justify-between shrink-0">
                 <div className="flex items-center">
                   <div className="w-26 shrink-0" />
                 </div>
