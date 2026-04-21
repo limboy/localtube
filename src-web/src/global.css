@@ -150,6 +150,19 @@ html {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] a,
+[data-tauri-drag-region] [role="button"],
+[data-sidebar="trigger"],
+.btn-icon {
+  -webkit-app-region: no-drag;
+}
+
 @layer utilities {
   .btn-icon {
     @apply inline-flex items-center justify-center p-1 cursor-default rounded hover:bg-sidebar-accent focus:outline-none focus-visible:ring-0 text-sidebar-foreground/80 transition-colors;
