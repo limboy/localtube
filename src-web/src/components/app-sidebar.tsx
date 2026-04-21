@@ -777,7 +777,7 @@ export default function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-2 border-t border-sidebar-border">
+        <SidebarFooter className="">
           <SidebarMenu>
             <SidebarMenuItem>
               <DropdownMenu>
