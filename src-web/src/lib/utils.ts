@@ -195,11 +195,24 @@ export function disableInspectShortcut() {
   });
 }
 
+export function isValidUrl(url: string): boolean {
+  try {
+    let urlToParse = url.trim();
+    if (!urlToParse.startsWith('http://') && !urlToParse.startsWith('https://')) {
+      urlToParse = 'https://' + urlToParse;
+    }
+    new URL(urlToParse);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Checks if a URL is a valid YouTube playlist URL
  */
 export function isPlaylistUrl(url: string): boolean {
+  if (!isValidUrl(url)) return false;
   return url.includes("list=") && url.includes("youtube.com");
 }
 
@@ -207,6 +220,7 @@ export function isPlaylistUrl(url: string): boolean {
  * Checks if a URL is a valid YouTube channel URL
  */
 export function isChannelUrl(url: string): boolean {
+  if (!isValidUrl(url)) return false;
   return (
     url.includes("/channel/") ||
     url.includes("/c/") ||

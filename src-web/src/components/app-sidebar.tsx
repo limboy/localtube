@@ -407,6 +407,16 @@ export default function AppSidebar() {
     setAddingPlaylistOrChannel(true);
     setError(null);
     try {
+      try {
+        let urlToParse = playlistOrChannelUrl.trim();
+        if (!urlToParse.startsWith('http://') && !urlToParse.startsWith('https://')) {
+          urlToParse = 'https://' + urlToParse;
+        }
+        new URL(urlToParse);
+      } catch {
+        throw new Error("Please enter a valid URL.");
+      }
+
       const isPlaylist = isPlaylistUrl(playlistOrChannelUrl);
       const isChannel = isChannelUrl(playlistOrChannelUrl);
       const isVideo = isVideoUrl(playlistOrChannelUrl);
@@ -429,20 +439,6 @@ export default function AppSidebar() {
           params: { playlistId: playlist.id },
           search: { autoPlay: false }
         });
-      } else if (isChannel) {
-        const channel = await parseYouTubeChannel(playlistOrChannelUrl);
-        await addOrUpdateChannel(channel);
-
-        await refreshSidebarData();
-
-        setOpen(false);
-        setPlaylistOrChannelUrl("");
-        setAddingPlaylistOrChannel(false);
-        navigate({
-          to: "/channel/$channelId",
-          params: { channelId: channel.id },
-          search: { autoPlay: false }
-        });
       } else if (isVideo) {
         const video = await parseYouTubeVideo(playlistOrChannelUrl);
         const currentBookmarks = await loadBookmarks();
@@ -460,6 +456,20 @@ export default function AppSidebar() {
         navigate({
           to: "/bookmarks",
           search: { videoId: video.id }
+        });
+      } else if (isChannel) {
+        const channel = await parseYouTubeChannel(playlistOrChannelUrl);
+        await addOrUpdateChannel(channel);
+
+        await refreshSidebarData();
+
+        setOpen(false);
+        setPlaylistOrChannelUrl("");
+        setAddingPlaylistOrChannel(false);
+        navigate({
+          to: "/channel/$channelId",
+          params: { channelId: channel.id },
+          search: { autoPlay: false }
         });
       }
     } catch (error) {
@@ -765,14 +775,16 @@ export default function AppSidebar() {
                                       </span>
                                       <div className="flex items-center justify-between opacity-50 text-sm font-normal">
                                         <div className="flex items-center gap-1.5 min-w-0">
-                                          <span className="truncate max-w-20">
-                                            {bookmark.data?.title}
-                                          </span>
-                                          {bookmark.duration && (
+                                          {bookmark.data?.title && (
                                             <>
-                                              <span>•</span>
-                                              <span>{bookmark.duration}</span>
+                                              <span className="truncate max-w-20">
+                                                {bookmark.data.title}
+                                              </span>
+                                              {bookmark.duration && <span>•</span>}
                                             </>
+                                          )}
+                                          {bookmark.duration && (
+                                            <span>{bookmark.duration}</span>
                                           )}
                                         </div>
                                         <button
