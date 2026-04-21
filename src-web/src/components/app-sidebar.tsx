@@ -182,7 +182,7 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
         </div>
       </SidebarMenuButton>
       {channel.unreadCount > 0 && (
-        <SidebarMenuBadge className="bg-primary text-primary-foreground">
+        <SidebarMenuBadge className="bg-muted text-sidebar-foreground/50 mr-0.5">
           {channel.unreadCount}
         </SidebarMenuBadge>
       )}
