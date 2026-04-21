@@ -3,6 +3,35 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.1.0](https://github.com/limboy/localtube/compare/v1.0.5...v1.1.0) - 2026-04-21
+
+### Features
+
+- add unread count badges to sidebar playlist and channel items ([3fd0d01](https://github.com/limboy/localtube/commit/3fd0d018a178409974b3eca090ca737ab2985df3))
+- add URL validation utility and integrate into sidebar input and bookmark display ([523bbe7](https://github.com/limboy/localtube/commit/523bbe74043258693eb9084809d302f4c0f14635))
+- add support for bookmarking individual YouTube videos ([b9923be](https://github.com/limboy/localtube/commit/b9923be0ad2c113fad585d403972ac4b15f48b35))
+- enable window dragging for navigation and sidebar regions via Tauri drag-region attribute ([e6e2379](https://github.com/limboy/localtube/commit/e6e23797d6dda9df4aa26ec8c048efa4c652f408))
+- persist sidebar width to localStorage and improve loading/empty state handling in video player ([bc9b544](https://github.com/limboy/localtube/commit/bc9b544edfc084f128c7dbe898af5b3a0bb5579b))
+
+### Bug Fixes
+
+- increase sidebar z-index, remove redundant title, and disable drag region on resize handle ([80a2e48](https://github.com/limboy/localtube/commit/80a2e48a580a0574908d790cc83c4b671dbb2127))
+
+### Refactoring
+
+- remove tooltip from playlist add button in app sidebar ([15aeda0](https://github.com/limboy/localtube/commit/15aeda0d8016b7fdf4d354f96fd1f651e7fd6cf2))
+- remove Tauri drag region attributes from sidebar and navigation components ([22d3fa9](https://github.com/limboy/localtube/commit/22d3fa99066cb08bfe475054c35098a5bf9c919a))
+
+### Documentation
+
+- update CHANGELOG for v1.0.5 ([392d662](https://github.com/limboy/localtube/commit/392d6625017397c1df3a58794bda1357adba67d3))
+
+### Styles
+
+- update unread count badge styling for better visual consistency ([8e0041f](https://github.com/limboy/localtube/commit/8e0041fa3fad1fcffa0cf9a63bb1ec0c6aa2dc52))
+- reduce padding for .btn-icon utility class ([4a71b49](https://github.com/limboy/localtube/commit/4a71b49a8b7a1c9a5be472187b1514b5209c3670))
+- remove padding and border from SidebarFooter in app-sidebar ([2cb7eb6](https://github.com/limboy/localtube/commit/2cb7eb680cd5c9f3a13f98cad796ec5072322c69))
+
 ## [v1.0.5](https://github.com/limboy/localtube/compare/v1.0.4...v1.0.5) - 2026-04-21
 
 ### Bug Fixes
