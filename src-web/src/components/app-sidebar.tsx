@@ -635,14 +635,9 @@ export default function AppSidebar() {
                     }}
                   >
                     <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-4">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className={cn("btn-icon")}>
-                            <Plus size={18} strokeWidth={1.5} />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>Add YouTube Playlist or Channel</TooltipContent>
-                      </Tooltip>
+                      <span className={cn("btn-icon")}>
+                        <Plus size={18} strokeWidth={1.5} />
+                      </span>
                     </DialogTrigger>
                     <DialogContent forceMount showCloseButton={false}>
                       <DialogHeader>
