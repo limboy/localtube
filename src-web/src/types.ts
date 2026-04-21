@@ -45,6 +45,7 @@ export type PlaylistStatus = "idle" | "loading" | "ready" | "error";
 
 export interface BookmarkData {
   createdAt: number;
+  videoDetails?: VideoItem;
 }
 
 export interface EnrichedBookmark {
@@ -52,7 +53,7 @@ export interface EnrichedBookmark {
   title: string;
   thumbnail?: string;
   duration?: string;
-  type: 'playlist' | 'channel';
+  type: 'playlist' | 'channel' | 'video';
   bookmarkedAt: number;
   data?: PlaylistInfo | ChannelInfo;
 }

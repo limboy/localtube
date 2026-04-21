@@ -262,6 +262,15 @@ export async function enrichBookmarks(
         bookmarkedAt: bookmark.createdAt,
         data: info.owner
       });
+    } else if (bookmark.videoDetails) {
+      enriched.push({
+        id,
+        title: bookmark.videoDetails.title,
+        thumbnail: bookmark.videoDetails.thumbnail,
+        duration: bookmark.videoDetails.duration,
+        type: 'video',
+        bookmarkedAt: bookmark.createdAt,
+      });
     }
   }
 

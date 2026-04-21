@@ -55,6 +55,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 
 import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { checkAllChannelsForUpdates, parseYouTubeChannel } from "@/lib/channel-parser";
+import { isVideoUrl, parseYouTubeVideo } from "@/lib/video-parser";
+import { loadBookmarks, saveBookmarks } from "@/lib/utils";
 // Tabs removed
 
 
@@ -407,9 +409,10 @@ export default function AppSidebar() {
     try {
       const isPlaylist = isPlaylistUrl(playlistOrChannelUrl);
       const isChannel = isChannelUrl(playlistOrChannelUrl);
+      const isVideo = isVideoUrl(playlistOrChannelUrl);
 
-      if (!isPlaylist && !isChannel) {
-        throw new Error("Invalid URL. Please provide a valid YouTube playlist or channel URL.");
+      if (!isPlaylist && !isChannel && !isVideo) {
+        throw new Error("Invalid URL. Please provide a valid YouTube playlist, channel, or video URL.");
       }
 
       if (isPlaylist) {
@@ -426,7 +429,7 @@ export default function AppSidebar() {
           params: { playlistId: playlist.id },
           search: { autoPlay: false }
         });
-      } else {
+      } else if (isChannel) {
         const channel = await parseYouTubeChannel(playlistOrChannelUrl);
         await addOrUpdateChannel(channel);
 
@@ -439,6 +442,24 @@ export default function AppSidebar() {
           to: "/channel/$channelId",
           params: { channelId: channel.id },
           search: { autoPlay: false }
+        });
+      } else if (isVideo) {
+        const video = await parseYouTubeVideo(playlistOrChannelUrl);
+        const currentBookmarks = await loadBookmarks();
+        currentBookmarks.set(video.id, {
+          createdAt: Date.now(),
+          videoDetails: video
+        });
+        await saveBookmarks(currentBookmarks);
+
+        await refreshSidebarData();
+
+        setOpen(false);
+        setPlaylistOrChannelUrl("");
+        setAddingPlaylistOrChannel(false);
+        navigate({
+          to: "/bookmarks",
+          search: { videoId: video.id }
         });
       }
     } catch (error) {
@@ -616,13 +637,13 @@ export default function AppSidebar() {
                     <DialogContent forceMount showCloseButton={false}>
                       <DialogHeader>
                         <DialogTitle className="text-foreground">
-                          Add YouTube Playlist or Channel
+                          Add YouTube Playlist, Channel, or Video
                         </DialogTitle>
                       </DialogHeader>
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
                           <Input
-                            placeholder="Enter YouTube playlist or channel URL"
+                            placeholder="Enter YouTube URL"
                             className="flex-1 bg-muted focus-visible:ring-0 text-foreground"
                             value={playlistOrChannelUrl}
                             onChange={(e) => {
@@ -637,7 +658,8 @@ export default function AppSidebar() {
                                   !addingPlaylistOrChannel &&
                                   playlistOrChannelUrl &&
                                   (isPlaylistUrl(playlistOrChannelUrl) ||
-                                    isChannelUrl(playlistOrChannelUrl))
+                                    isChannelUrl(playlistOrChannelUrl) ||
+                                    isVideoUrl(playlistOrChannelUrl))
                                 ) {
                                   handleAddPlaylistOrChannel();
                                 }
@@ -652,7 +674,8 @@ export default function AppSidebar() {
                               !playlistOrChannelUrl ||
                               !(
                                 isPlaylistUrl(playlistOrChannelUrl) ||
-                                isChannelUrl(playlistOrChannelUrl)
+                                isChannelUrl(playlistOrChannelUrl) ||
+                                isVideoUrl(playlistOrChannelUrl)
                               )
                             }
                           >
