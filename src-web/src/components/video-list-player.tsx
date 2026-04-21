@@ -346,26 +346,13 @@ export default function VideoListPlayer({
     await saveSkippedVideos(newSkipped);
   };
 
-  if (isLoading) return <div className="p-4"></div>;
-  if (error) return <div className="p-4 text-red-500">{error}</div>;
-
   const processedVideos = processVideoList(
     videolist?.items || [],
     bookmarkedVideos,
     showBookmarkedOnly
   )
 
-  if (!processedVideos.length) {
-    return (
-      <div className="flex flex-col h-screen items-center bg-background">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <p>Select a channel or playlist to start play</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const showEmptyState = !isLoading && !error && processedVideos.length === 0;
 
   return (
     <SidebarProvider defaultOpen={true} storageKey="right-sidebar" className="min-h-full h-full relative">
@@ -383,39 +370,56 @@ export default function VideoListPlayer({
             )}
           </div>
         </Nav>
+
         <div className="flex-1 overflow-y-auto w-full flex flex-col items-center">
-          <div className="p-4 w-full bg-background flex flex-col max-w-4xl">
-            <div className="aspect-video relative">
-              <YTPlayer
-                videoId={currentVideoId || ""}
-                onVideoEnd={() => playNextVideoRef.current()}
-                forceReplay={forceReplay}
-                autoPlay={shouldAutoPlay}
-              />
+          {isLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader className="animate-spin text-muted-foreground" size={32} />
             </div>
-            {currentVideoId && (
-              <div className="mt-4 pb-4">
-                <h1
-                  className="underline text-xl font-bold line-clamp-2 cursor-pointer hover:text-primary transition-colors block"
-                  onClick={() => window.electron.openUrl(`https://www.youtube.com/watch?v=${currentVideoId}`)}
-                >
-                  {processedVideos.find(v => v.id === currentVideoId)?.title}
-                </h1>
-                <div className="mt-2">
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap pr-2">
-                    {isLoadingDescription ? (
-                      <div className="flex items-center gap-2">
-                        <Loader size={12} className="animate-spin" />
-                        <span>Loading...</span>
-                      </div>
-                    ) : (
-                      description || "No description available"
-                    )}
+          ) : error ? (
+            <div className="flex-1 flex items-center justify-center p-4 text-red-500">
+              {error}
+            </div>
+          ) : showEmptyState ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center text-muted-foreground">
+                <p>Select a channel or playlist to start play</p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 w-full bg-background flex flex-col max-w-4xl">
+              <div className="aspect-video relative">
+                <YTPlayer
+                  videoId={currentVideoId || ""}
+                  onVideoEnd={() => playNextVideoRef.current()}
+                  forceReplay={forceReplay}
+                  autoPlay={shouldAutoPlay}
+                />
+              </div>
+              {currentVideoId && (
+                <div className="mt-4 pb-4">
+                  <h1
+                    className="underline text-xl font-bold line-clamp-2 cursor-pointer hover:text-primary transition-colors block"
+                    onClick={() => window.electron.openUrl(`https://www.youtube.com/watch?v=${currentVideoId}`)}
+                  >
+                    {processedVideos.find(v => v.id === currentVideoId)?.title}
+                  </h1>
+                  <div className="mt-2">
+                    <div className="text-sm text-muted-foreground whitespace-pre-wrap pr-2">
+                      {isLoadingDescription ? (
+                        <div className="flex items-center gap-2">
+                          <Loader size={12} className="animate-spin" />
+                          <span>Loading...</span>
+                        </div>
+                      ) : (
+                        description || "No description available"
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -426,98 +430,116 @@ export default function VideoListPlayer({
               <div className="flex flex-row justify-between w-full px-4 items-center gap-2">
                 <h2 className="font-semibold truncate min-w-0">
                   Videos
-                  <span className="text-sm text-muted-foreground ml-2 font-normal truncate">
-                    {currentVideoId
-                      ? `${processedVideos.findIndex((v) => v.id === currentVideoId) + 1} / ${processedVideos.length}`
-                      : `0 / ${processedVideos.length}`}
-                  </span>
+                  {!isLoading && (
+                    <span className="text-sm text-muted-foreground ml-2 font-normal truncate">
+                      {currentVideoId
+                        ? `${processedVideos.findIndex((v) => v.id === currentVideoId) + 1} / ${processedVideos.length}`
+                        : `0 / ${processedVideos.length}`}
+                    </span>
+                  )}
                 </h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={toggleShuffle}
-                    className={cn("p-1 rounded hover:bg-accent", isShuffled && "text-primary")}
-                  >
-                    <Shuffle strokeWidth={1.5} size={18} />
-                  </button>
-                  <button
-                    onClick={toggleLoopMode}
-                    className={cn("p-1 rounded hover:bg-accent", loopMode !== "none" && "text-primary")}
-                  >
-                    {loopMode === "one" ? (
-                      <Repeat1 strokeWidth={1.5} size={18} />
-                    ) : (
-                      <Repeat strokeWidth={1.5} size={18} />
-                    )}
-                  </button>
-                </div>
+                {!isLoading && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={toggleShuffle}
+                      className={cn("p-1 rounded hover:bg-accent", isShuffled && "text-primary")}
+                    >
+                      <Shuffle strokeWidth={1.5} size={18} />
+                    </button>
+                    <button
+                      onClick={toggleLoopMode}
+                      className={cn("p-1 rounded hover:bg-accent", loopMode !== "none" && "text-primary")}
+                    >
+                      {loopMode === "one" ? (
+                        <Repeat1 strokeWidth={1.5} size={18} />
+                      ) : (
+                        <Repeat strokeWidth={1.5} size={18} />
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 w-full bg-background">
-              <div className="grid gap-0.5">
-                {processedVideos.map((video) => (
-                  <div
-                    key={video.id}
-                    id={`video-item-${video.id}`}
-                    className={cn(
-                      "flex items-start gap-2 w-full hover:bg-accent p-2 rounded group/video cursor-default",
-                      currentVideoId === video.id && "bg-accent",
-                      video.isSkipped && "opacity-50"
-                    )}
-                    onClick={() => {
-                      setCurrentVideoId(video.id);
-                      setShouldAutoPlay(true);
-                    }}
-                  >
-                    <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
-                      <img
-                        src={video.thumbnail}
-                        alt={video.title}
-                        className="w-full h-full object-cover"
-                      />
+              {isLoading ? (
+                <div className="flex flex-col gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="flex gap-3 animate-pulse">
+                      <div className="w-16 h-10 bg-muted rounded shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-muted rounded w-3/4" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0 user-select-none" style={{ WebkitUserSelect: "none" }}>
-                      <span className="line-clamp-1 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
-                      <div className="flex items-center justify-between opacity-50 text-sm font-normal mt-0.5 min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0 mr-2 flex-1">
-                          <span className="truncate">{video.duration}</span>
-                        </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          {video.isSkipped ? (
-                            <button
-                              onClick={(e) => handleUnskipVideo(video.id, e)}
-                              className="p-0.5 rounded hover:bg-accent-foreground/20 opacity-80"
-                            >
-                              <Eye size={14} strokeWidth={1.5} />
-                            </button>
-                          ) : (
-                            <>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid gap-0.5">
+                  {processedVideos.map((video) => (
+                    <div
+                      key={video.id}
+                      id={`video-item-${video.id}`}
+                      className={cn(
+                        "flex items-start gap-2 w-full hover:bg-accent p-2 rounded group/video cursor-default",
+                        currentVideoId === video.id && "bg-accent",
+                        video.isSkipped && "opacity-50"
+                      )}
+                      onClick={() => {
+                        setCurrentVideoId(video.id);
+                        setShouldAutoPlay(true);
+                      }}
+                    >
+                      <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0 user-select-none" style={{ WebkitUserSelect: "none" }}>
+                        <span className="line-clamp-1 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
+                        <div className="flex items-center justify-between opacity-50 text-sm font-normal mt-0.5 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0 mr-2 flex-1">
+                            <span className="truncate">{video.duration}</span>
+                          </div>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {video.isSkipped ? (
                               <button
-                                onClick={(e) => handleSkipVideo(video.id, e)}
-                                className={cn(
-                                  "p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity",
-                                  "opacity-0 group-hover/video:opacity-80"
-                                )}
+                                onClick={(e) => handleUnskipVideo(video.id, e)}
+                                className="p-0.5 rounded hover:bg-accent-foreground/20 opacity-80"
                               >
-                                <EyeOff size={14} strokeWidth={1.5} />
+                                <Eye size={14} strokeWidth={1.5} />
                               </button>
-                              <button
-                                onClick={(e) => toggleBookmark(video.id, e)}
-                                className={cn(
-                                  "p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity",
-                                  bookmarkedVideos.has(video.id) ? "" : "opacity-0 group-hover/video:opacity-100"
-                                )}
-                              >
-                                <BookmarkIcon size={14} fill={bookmarkedVideos.has(video.id) ? "currentColor" : "none"} strokeWidth={1.5} />
-                              </button>
-                            </>
-                          )}
+                            ) : (
+                              <>
+                                <button
+                                  onClick={(e) => handleSkipVideo(video.id, e)}
+                                  className={cn(
+                                    "p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity",
+                                    "opacity-0 group-hover/video:opacity-80"
+                                  )}
+                                >
+                                  <EyeOff size={14} strokeWidth={1.5} />
+                                </button>
+                                <button
+                                  onClick={(e) => toggleBookmark(video.id, e)}
+                                  className={cn(
+                                    "p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity",
+                                    bookmarkedVideos.has(video.id) ? "" : "opacity-0 group-hover/video:opacity-100"
+                                  )}
+                                >
+                                  <BookmarkIcon size={14} fill={bookmarkedVideos.has(video.id) ? "currentColor" : "none"} strokeWidth={1.5} />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </SidebarContent>
           <SidebarRail />

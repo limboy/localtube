@@ -70,7 +70,16 @@ const SidebarProvider = React.forwardRef<
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen);
-    const [width, setWidth] = React.useState(defaultWidth);
+    const [width, setWidth] = React.useState(() => {
+      if (typeof window !== "undefined") {
+        const savedWidth = localStorage.getItem(`${storageKey}_width`);
+        if (savedWidth) {
+          const loadedWidth = parseInt(savedWidth, 10);
+          return Math.min(Math.max(loadedWidth, minWidth), maxWidth);
+        }
+      }
+      return defaultWidth;
+    });
     const [isResizing, setIsResizing] = React.useState(false);
 
     React.useEffect(() => {
