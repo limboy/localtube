@@ -163,7 +163,7 @@ html {
 
 @layer utilities {
   .btn-icon {
-    @apply inline-flex items-center justify-center p-1.5 cursor-default rounded hover:bg-sidebar-accent focus:outline-none focus-visible:ring-0 text-sidebar-foreground/80 transition-colors;
+    @apply inline-flex items-center justify-center p-1 cursor-default rounded hover:bg-sidebar-accent focus:outline-none focus-visible:ring-0 text-sidebar-foreground/80 transition-colors;
   }
 
   .sidebar-tabs-list {
