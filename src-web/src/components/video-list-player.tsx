@@ -371,7 +371,7 @@ export default function VideoListPlayer({
           </div>
         </Nav>
 
-        <div className="flex-1 overflow-y-auto w-full flex flex-col items-center">
+        <div className="flex-1 overflow-y-auto w-full flex flex-col">
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center">
               <Loader className="animate-spin text-muted-foreground" size={32} />
@@ -387,7 +387,7 @@ export default function VideoListPlayer({
               </div>
             </div>
           ) : (
-            <div className="p-4 w-full bg-background flex flex-col max-w-4xl">
+            <div className="p-4 w-full bg-background flex flex-col">
               <div className="aspect-video relative">
                 <YTPlayer
                   videoId={currentVideoId || ""}
