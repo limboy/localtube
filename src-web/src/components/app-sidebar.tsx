@@ -88,7 +88,7 @@ function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: Pl
       <SidebarMenuButton key={playlist.id} asChild>
         <div
           className={cn(
-            "pr-2 group/playlist w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
+            "group/playlist w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
             isActive ? "bg-sidebar-accent" : ""
           )}
           onMouseDown={handleMouseDown}
@@ -152,7 +152,7 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
       <SidebarMenuButton key={channel.id} asChild>
         <div
           className={cn(
-            "pr-2 group/channel w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
+            "group/channel w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
             isActive ? "bg-sidebar-accent" : ""
           )}
           onMouseDown={handleMouseDown}
@@ -703,7 +703,7 @@ export default function AppSidebar() {
                 </div>
               </div>
               <div className="mt-1 flex-1 flex flex-col min-h-0 select-none overflow-y-auto sidebar-menu">
-                <SidebarGroup className="py-0">
+                <SidebarGroup className="p-0">
                   <SidebarGroupLabel className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                     Collections
                   </SidebarGroupLabel>
@@ -735,7 +735,7 @@ export default function AppSidebar() {
                   <>
                     <SidebarSeparator className="my-2" />
 
-                    <SidebarGroup className="py-0">
+                    <SidebarGroup className="p-0">
                       <SidebarGroupLabel className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                         Bookmarks
                       </SidebarGroupLabel>
@@ -752,7 +752,7 @@ export default function AppSidebar() {
                                 <SidebarMenuButton
                                   asChild
                                   className={cn(
-                                    "pr-2 h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                                    "h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
                                     isActive ? "bg-sidebar-accent" : ""
                                   )}
                                 >
@@ -818,7 +818,7 @@ export default function AppSidebar() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton className="w-full justify-start hover:bg-sidebar-accent text-sidebar-foreground">
-                    <Settings className="mr-2 h-4 w-4" />
+                    <Settings className="h-4 w-4" />
                     <span>Settings</span>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
