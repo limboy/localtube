@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.1.2](https://github.com/limboy/localtube/compare/v1.1.1...v1.1.2) - 2026-05-12
+
+### Documentation
+
+- update CHANGELOG for v1.1.1 ([8fcdcf6](https://github.com/limboy/localtube/commit/8fcdcf6dcaf925522e0fdc1a90e0d4e8f68133ea))
+
+### Styles
+
+- fix sidebar badge overlap and align group padding ([9fc01ac](https://github.com/limboy/localtube/commit/9fc01acd8a76e38df958fbff959369fca256b6aa))
+
 ## [v1.1.1](https://github.com/limboy/localtube/compare/v1.1.0...v1.1.1) - 2026-05-11
 
 ### Documentation
