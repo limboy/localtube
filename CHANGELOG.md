@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.1.1](https://github.com/limboy/localtube/compare/v1.1.0...v1.1.1) - 2026-05-11
+
+### Documentation
+
+- update CHANGELOG for v1.1.0 ([99e8e49](https://github.com/limboy/localtube/commit/99e8e49928033c1525cf5b1e0356caeaccea269b))
+
+### Styles
+
+- make video player fill full width of middle column ([3657273](https://github.com/limboy/localtube/commit/3657273fdf71bc9532974454b1ef8bf1c60a7cc2))
+
 ## [v1.1.0](https://github.com/limboy/localtube/compare/v1.0.5...v1.1.0) - 2026-04-21
 
 ### Features
