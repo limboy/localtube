@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.1.3](https://github.com/limboy/localtube/compare/v1.1.2...v1.1.3) - 2026-05-25
+
+### Bug Fixes
+
+- handle YouTube LockupView format for channel video listings ([1954e56](https://github.com/limboy/localtube/commit/1954e565c110cd88520fdc5e19b6ec621bf09502))
+
 ## [v1.1.2](https://github.com/limboy/localtube/compare/v1.1.1...v1.1.2) - 2026-05-12
 
 ### Documentation
