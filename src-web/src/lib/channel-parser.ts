@@ -1,6 +1,7 @@
 import type { ChannelInfo, VideoItem } from "@/types";
 import { addOrUpdateChannel, loadChannel, loadChannels } from "./utils";
 import { getInnertube } from "./innertube";
+import { YTNodes } from "youtubei.js";
 
 const CHANNEL_VIDEO_CAP = 500;
 
@@ -45,18 +46,46 @@ function mapVideo(v: any): VideoItem | null {
   return { id, title, thumbnail, duration };
 }
 
+function mapLockupView(lockup: any): VideoItem | null {
+  if (lockup.content_type !== "VIDEO") return null;
+
+  const id: string | undefined = lockup.content_id;
+  if (!id) return null;
+
+  const title = lockup.metadata?.title?.toString?.() ?? "";
+  if (!title) return null;
+
+  const images = lockup.content_image?.image ?? [];
+  const thumbnail: string = images[0]?.url ?? "";
+
+  const badges = lockup.content_image?.overlays?.[0]?.badges ?? [];
+  const durationBadge = badges.find(
+    (b: any) => b.type === "ThumbnailBadgeView" && b.badge_style === "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+  );
+  const duration: string = durationBadge?.text ?? "Live";
+
+  return { id, title, thumbnail, duration };
+}
+
+function extractVideosFromFeed(feed: any): VideoItem[] {
+  if (feed.videos?.length > 0) {
+    return feed.videos.map(mapVideo).filter(Boolean) as VideoItem[];
+  }
+  const lockups = feed.memo?.getType(YTNodes.LockupView) ?? [];
+  return lockups.map(mapLockupView).filter(Boolean) as VideoItem[];
+}
+
 async function collectChannelVideos(channelId: string): Promise<VideoItem[]> {
   const yt = await getInnertube();
   const channelRoot = await yt.getChannel(channelId);
-  let feed: { videos: any[]; has_continuation: boolean; getContinuation: () => Promise<any> } =
-    await channelRoot.getVideos();
+  let feed: any = await channelRoot.getVideos();
 
   const items: VideoItem[] = [];
 
   while (true) {
-    for (const v of feed.videos) {
-      const mapped = mapVideo(v);
-      if (mapped) items.push(mapped);
+    const pageVideos = extractVideosFromFeed(feed);
+    for (const v of pageVideos) {
+      items.push(v);
       if (items.length >= CHANNEL_VIDEO_CAP) return items;
     }
 
@@ -108,10 +137,9 @@ export async function checkForChannelUpdates(channelId: string): Promise<Boolean
   const channelRoot = await yt.getChannel(channelId);
   const feed = await channelRoot.getVideos();
 
-  for (const v of feed.videos) {
-    const mapped = mapVideo(v);
-    if (!mapped) continue;
-    if (!channel?.items.some((video) => video.id === mapped.id)) {
+  const videos = extractVideosFromFeed(feed);
+  for (const v of videos) {
+    if (!channel?.items.some((video) => video.id === v.id)) {
       return true;
     }
   }
@@ -136,11 +164,7 @@ async function fetchChannelFirstPage(
     thumbnail = await fetchAvatarAsDataUrl(avatarUrl);
   }
 
-  const items: VideoItem[] = [];
-  for (const v of feed.videos) {
-    const mapped = mapVideo(v);
-    if (mapped) items.push(mapped);
-  }
+  const items = extractVideosFromFeed(feed);
 
   return { items, thumbnail, title: metadata.title ?? "" };
 }
