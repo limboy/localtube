@@ -122,7 +122,7 @@ function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: Pl
             <button
               onClick={handleClick}
               onContextMenu={(e) => onContextMenu(e, playlist.id)}
-              className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto"
+              className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto focus:outline-none"
             />
           </div>
         </div>
@@ -186,7 +186,7 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
             <button
               onClick={handleClick}
               onContextMenu={(e) => onContextMenu(e, channel.id)}
-              className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto"
+              className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto focus:outline-none"
             />
           </div>
         </div>
