@@ -3,6 +3,22 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.1.4](https://github.com/limboy/localtube/compare/v1.1.3...v1.1.4) - 2026-05-27
+
+### Features
+
+- add folder support for organizing playlists and channels ([7710217](https://github.com/limboy/localtube/commit/77102173c59a930ecd3910bca190298d338c7e3e))
+
+### Bug Fixes
+
+- remove focus ring from sidebar items and folders ([ac8f23a](https://github.com/limboy/localtube/commit/ac8f23a67c44eef8b66a12aed240acee5767a6b7))
+- prevent folder name flash during rename ([d709b28](https://github.com/limboy/localtube/commit/d709b286d5cb2dbfb6268bf569ba53ab12c107cf))
+- handle YouTube LockupView format for channel video listings ([c884fc5](https://github.com/limboy/localtube/commit/c884fc504e7183eda4bce8b1d082c5c349c0e32f))
+
+### Documentation
+
+- update CHANGELOG for v1.1.2 ([32a7120](https://github.com/limboy/localtube/commit/32a71203a83d029989f04d321f49a379a66cf9b1))
+
 ## [v1.1.3](https://github.com/limboy/localtube/compare/v1.1.2...v1.1.3) - 2026-05-25
 
 ### Bug Fixes
