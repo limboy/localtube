@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.1.5](https://github.com/limboy/localtube/compare/v1.1.4...v1.1.5) - 2026-05-27
+
+### Features
+
+- add folder support for organizing playlists and channels ([606f036](https://github.com/limboy/localtube/commit/606f036ebbf6b155be1255c087b577c519438f79))
+
+### Bug Fixes
+
+- allow text selection on video description in production ([20ab00b](https://github.com/limboy/localtube/commit/20ab00b3a5cb9202780e4e463ba70c30315f6de2))
+- remove focus ring from sidebar items and folders ([e1267b9](https://github.com/limboy/localtube/commit/e1267b906ebc8169dc379ad4625c89daff6d86d0))
+- prevent folder name flash during rename ([e3c0760](https://github.com/limboy/localtube/commit/e3c07601f15c8d755e10f9bf5d298e8a63c99dfa))
+
+### Documentation
+
+- update CHANGELOG for v1.1.4 ([10356ae](https://github.com/limboy/localtube/commit/10356ae025213358f92cdb1aafb3e8273571ec6a))
+- update CHANGELOG for v1.1.3 ([9859420](https://github.com/limboy/localtube/commit/985942071de89a5f87bd1b4762a89f5358a5448e))
+
+### Styles
+
+- update padding in SidebarGroup component ([71f8db7](https://github.com/limboy/localtube/commit/71f8db7061743682bd7738d98b26ac7975667838))
+
 ## [v1.1.4](https://github.com/limboy/localtube/compare/v1.1.3...v1.1.4) - 2026-05-27
 
 ### Features
