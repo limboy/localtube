@@ -695,8 +695,8 @@ export default function AppSidebar() {
 
   const handleFolderRenameCommit = async (folderId: string, name: string) => {
     await renameFolder(folderId, name);
-    setRenamingFolderId(null);
     await refreshSidebarData();
+    setRenamingFolderId(null);
   };
 
   const handleFolderRenameCancel = () => {
