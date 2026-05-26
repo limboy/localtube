@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, VideoItem } from "@/types";
+import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, VideoItem, FolderInfo, SidebarItem } from "@/types";
 import { setupKonamiCode } from "./konami";
 import { getInnertube } from "./innertube";
 
@@ -48,6 +48,7 @@ export async function markChannelAsRead(channelId: string) {
 export async function addOrUpdateChannel(channel: ChannelInfo) {
   const data = await loadChannels();
   const store = await getStore();
+  const isNew = !data.some(c => c.id === channel.id);
   const index = data.findIndex((p) => p.id === channel.id);
   if (index !== -1) {
     data[index] = channel;
@@ -55,6 +56,13 @@ export async function addOrUpdateChannel(channel: ChannelInfo) {
     data.push(channel);
   }
   await store.set("channels", data);
+
+  if (isNew) {
+    const order = await loadSidebarOrder();
+    order.push({ type: 'channel', id: channel.id });
+    await store.set("sidebarOrder", order);
+  }
+
   window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
@@ -65,6 +73,11 @@ export async function removeChannel(channelId: string) {
   if (index !== -1) {
     data.splice(index, 1);
     await store.set("channels", data);
+
+    const order = await loadSidebarOrder();
+    removeItemFromOrder(order, channelId, 'channel');
+    await store.set("sidebarOrder", order);
+
     await store.save();
     window.dispatchEvent(new CustomEvent('store-updated'));
   }
@@ -105,6 +118,7 @@ export async function markPlaylistAsRead(playlistId: string) {
 export async function addOrUpdatePlaylist(playlist: PlaylistInfo) {
   const data = await loadPlaylists();
   const store = await getStore();
+  const isNew = !data.some(p => p.id === playlist.id);
   const index = data.findIndex((p) => p.id === playlist.id);
   if (index !== -1) {
     data[index] = playlist;
@@ -112,6 +126,13 @@ export async function addOrUpdatePlaylist(playlist: PlaylistInfo) {
     data.push(playlist);
   }
   await store.set("playlists", data);
+
+  if (isNew) {
+    const order = await loadSidebarOrder();
+    order.push({ type: 'playlist', id: playlist.id });
+    await store.set("sidebarOrder", order);
+  }
+
   window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
@@ -122,6 +143,11 @@ export async function removePlaylist(playlistId: string) {
   if (index !== -1) {
     data.splice(index, 1);
     await store.set("playlists", data);
+
+    const order = await loadSidebarOrder();
+    removeItemFromOrder(order, playlistId, 'playlist');
+    await store.set("sidebarOrder", order);
+
     await store.save();
     window.dispatchEvent(new CustomEvent('store-updated'));
   }
@@ -136,6 +162,135 @@ export async function reorderPlaylists(playlistIds: string[]) {
   await store.set("playlists", reorderedData);
   await store.save();
   window.dispatchEvent(new CustomEvent('store-updated'));
+}
+
+// --- Folder & Sidebar Order ---
+
+export async function loadFolders(): Promise<FolderInfo[]> {
+  const s = await getStore();
+  return (await s.get<FolderInfo[]>("folders")) || [];
+}
+
+async function saveFolders(folders: FolderInfo[]) {
+  const s = await getStore();
+  await s.set("folders", folders);
+}
+
+export async function loadSidebarOrder(): Promise<SidebarItem[]> {
+  const s = await getStore();
+  const order = await s.get<SidebarItem[]>("sidebarOrder");
+  if (order) return order;
+
+  const playlists = await loadPlaylists();
+  const channels = await loadChannels();
+  const migrated: SidebarItem[] = [
+    ...playlists.map(p => ({ type: 'playlist' as const, id: p.id })),
+    ...channels.map(c => ({ type: 'channel' as const, id: c.id })),
+  ];
+  await s.set("sidebarOrder", migrated);
+  return migrated;
+}
+
+export async function saveSidebarOrder(order: SidebarItem[]) {
+  const s = await getStore();
+  await s.set("sidebarOrder", order);
+  window.dispatchEvent(new CustomEvent('store-updated'));
+}
+
+export async function createFolder(name: string): Promise<FolderInfo> {
+  const folder: FolderInfo = { id: crypto.randomUUID(), name, isCollapsed: false };
+  const folders = await loadFolders();
+  folders.push(folder);
+  await saveFolders(folders);
+
+  const order = await loadSidebarOrder();
+  order.push({ type: 'folder', id: folder.id, children: [] });
+  await saveSidebarOrder(order);
+
+  return folder;
+}
+
+export async function renameFolder(folderId: string, newName: string) {
+  const folders = await loadFolders();
+  const f = folders.find(f => f.id === folderId);
+  if (f) {
+    f.name = newName;
+    await saveFolders(folders);
+    window.dispatchEvent(new CustomEvent('store-updated'));
+  }
+}
+
+export async function removeFolder(folderId: string) {
+  const folders = await loadFolders();
+  const order = await loadSidebarOrder();
+
+  const idx = order.findIndex(e => e.type === 'folder' && e.id === folderId);
+  if (idx !== -1) {
+    const entry = order[idx];
+    if (entry.type === 'folder') {
+      const promoted: SidebarItem[] = entry.children.map(c => ({ type: c.type, id: c.id }));
+      order.splice(idx, 1);
+      const firstFolderIdx = order.findIndex(e => e.type === 'folder');
+      if (firstFolderIdx !== -1) {
+        order.splice(firstFolderIdx, 0, ...promoted);
+      } else {
+        order.push(...promoted);
+      }
+    }
+  }
+
+  const newFolders = folders.filter(f => f.id !== folderId);
+  await saveFolders(newFolders);
+  await saveSidebarOrder(order);
+}
+
+export async function setFolderCollapsed(folderId: string, collapsed: boolean) {
+  const folders = await loadFolders();
+  const f = folders.find(f => f.id === folderId);
+  if (f) {
+    f.isCollapsed = collapsed;
+    await saveFolders(folders);
+  }
+}
+
+function removeItemFromOrder(order: SidebarItem[], itemId: string, itemType: 'playlist' | 'channel') {
+  const topIdx = order.findIndex(e => e.type === itemType && e.id === itemId);
+  if (topIdx !== -1) {
+    order.splice(topIdx, 1);
+    return;
+  }
+  for (const entry of order) {
+    if (entry.type === 'folder') {
+      const childIdx = entry.children.findIndex(c => c.type === itemType && c.id === itemId);
+      if (childIdx !== -1) {
+        entry.children.splice(childIdx, 1);
+        return;
+      }
+    }
+  }
+}
+
+export async function moveItemToFolder(itemId: string, itemType: 'playlist' | 'channel', folderId: string) {
+  const order = await loadSidebarOrder();
+  removeItemFromOrder(order, itemId, itemType);
+
+  const folder = order.find(e => e.type === 'folder' && e.id === folderId);
+  if (folder && folder.type === 'folder') {
+    folder.children.push({ type: itemType, id: itemId });
+  }
+  await saveSidebarOrder(order);
+}
+
+export async function moveItemToTopLevel(itemId: string, itemType: 'playlist' | 'channel') {
+  const order = await loadSidebarOrder();
+  removeItemFromOrder(order, itemId, itemType);
+  const firstFolderIdx = order.findIndex(e => e.type === 'folder');
+  if (firstFolderIdx !== -1) {
+    order.splice(firstFolderIdx, 0, { type: itemType, id: itemId });
+  } else {
+    order.push({ type: itemType, id: itemId });
+  }
+  await saveSidebarOrder(order);
 }
 
 export async function loadBookmarks(): Promise<Map<string, BookmarkData>> {

@@ -58,5 +58,18 @@ export interface EnrichedBookmark {
   data?: PlaylistInfo | ChannelInfo;
 }
 
+export interface FolderInfo {
+  id: string;
+  name: string;
+  isCollapsed: boolean;
+}
+
+export type SidebarChildEntry = { type: 'playlist' | 'channel'; id: string };
+
+export type SidebarItem =
+  | { type: 'playlist'; id: string }
+  | { type: 'channel'; id: string }
+  | { type: 'folder'; id: string; children: SidebarChildEntry[] };
+
 
 

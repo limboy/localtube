@@ -17,6 +17,7 @@ export interface ContextMenuItem {
   id?: string;
   label?: string;
   type?: "normal" | "separator";
+  submenu?: ContextMenuItem[];
 }
 
 export interface ConfirmOptions {
@@ -37,7 +38,7 @@ export interface ElectronAPI {
   fetchImageAsDataUrl(url: string): Promise<string | null>;
   openUrl(url: string): Promise<void>;
   confirm(message: string, options?: ConfirmOptions): Promise<boolean>;
-  showContextMenu(items: ContextMenuItem[]): Promise<string | null>;
+  showContextMenu(items: ContextMenuItem[], position?: { x: number; y: number }): Promise<string | null>;
   setAlwaysOnTop(flag: boolean): Promise<void>;
   updater: {
     install(): Promise<void>;
