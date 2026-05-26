@@ -17,6 +17,7 @@ export interface ContextMenuItem {
   id?: string;
   label?: string;
   type?: "normal" | "separator";
+  submenu?: ContextMenuItem[];
 }
 
 export interface ConfirmOptions {

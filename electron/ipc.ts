@@ -80,33 +80,44 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
     return result.response === 0;
   });
 
-  ipcMain.handle("menu:showContext", async (_e, items: ContextMenuItem[]) => {
+  ipcMain.handle("menu:showContext", async (_e, items: ContextMenuItem[], position?: { x: number; y: number }) => {
     const win = getWindow();
     if (!win) return null;
 
+    const w = win;
     return new Promise<string | null>((resolve) => {
       let resolved = false;
-      const menu = new Menu();
-      for (const item of items) {
-        if (item.type === "separator") {
-          menu.append(new MenuItem({ type: "separator" }));
-        } else {
-          menu.append(
-            new MenuItem({
-              label: item.label ?? "",
-              click: () => {
-                resolved = true;
-                if (item.id) {
-                  win.webContents.send("menu:event", item.id);
-                }
-                resolve(item.id ?? null);
-              },
-            })
-          );
+
+      function buildMenuItems(entries: ContextMenuItem[], menu: Menu) {
+        for (const item of entries) {
+          if (item.type === "separator") {
+            menu.append(new MenuItem({ type: "separator" }));
+          } else if (item.submenu && item.submenu.length > 0) {
+            const sub = new Menu();
+            buildMenuItems(item.submenu, sub);
+            menu.append(new MenuItem({ label: item.label ?? "", submenu: sub }));
+          } else {
+            menu.append(
+              new MenuItem({
+                label: item.label ?? "",
+                click: () => {
+                  resolved = true;
+                  if (item.id) {
+                    w.webContents.send("menu:event", item.id);
+                  }
+                  resolve(item.id ?? null);
+                },
+              })
+            );
+          }
         }
       }
+
+      const menu = new Menu();
+      buildMenuItems(items, menu);
       menu.popup({
-        window: win,
+        window: w,
+        ...(position ? { x: Math.round(position.x), y: Math.round(position.y) } : {}),
         callback: () => {
           if (!resolved) resolve(null);
         },

@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuBadge,
+  SidebarHeader,
   SidebarRail,
   SidebarSeparator
 } from "@/components/ui/sidebar";
@@ -17,13 +18,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,9 +50,18 @@ import {
   addOrUpdateChannel,
   loadPlaylists,
   loadChannels,
-  enrichBookmarks
+  enrichBookmarks,
+  loadFolders,
+  loadSidebarOrder,
+  createFolder,
+  renameFolder,
+  removeFolder,
+  setFolderCollapsed,
+  moveItemToFolder,
+  moveItemToTopLevel,
 } from "@/lib/utils";
-import { PlaylistInfo, ChannelInfo, EnrichedBookmark } from "@/types";
+import { PlaylistInfo, ChannelInfo, EnrichedBookmark, FolderInfo, SidebarItem } from "@/types";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlist-parser";
@@ -192,11 +202,92 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
 
 
 
+interface FolderItemProps {
+  folder: FolderInfo;
+  children: React.ReactNode;
+  unreadCount: number;
+  onContextMenu: (e: React.MouseEvent, folderId: string) => void;
+  onToggleCollapse: (folderId: string, collapsed: boolean) => void;
+  renamingFolderId: string | null;
+  onRenameCommit: (folderId: string, name: string) => void;
+  onRenameCancel: () => void;
+}
+
+function FolderItem({ folder, children, unreadCount, onContextMenu, onToggleCollapse, renamingFolderId, onRenameCommit, onRenameCancel }: FolderItemProps) {
+  const [renameValue, setRenameValue] = useState(folder.name);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isRenaming = renamingFolderId === folder.id;
+
+  useEffect(() => {
+    if (isRenaming) {
+      setRenameValue(folder.name);
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 0);
+    }
+  }, [isRenaming, folder.name]);
+
+  const commitRename = () => {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== folder.name) {
+      onRenameCommit(folder.id, trimmed);
+    } else {
+      onRenameCancel();
+    }
+  };
+
+  return (
+    <Collapsible open={!folder.isCollapsed} onOpenChange={(open) => onToggleCollapse(folder.id, !open)}>
+      <SidebarMenuItem className="list-none w-full">
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            className="w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5"
+            onContextMenu={(e) => onContextMenu(e, folder.id)}
+          >
+            <ChevronRight size={14} className={cn("shrink-0 transition-transform duration-200", !folder.isCollapsed && "rotate-90")} />
+            <Folder size={16} className="shrink-0 text-muted-foreground" />
+            {isRenaming ? (
+              <input
+                ref={inputRef}
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                  if (e.key === 'Escape') { e.preventDefault(); onRenameCancel(); }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 bg-transparent border-b border-foreground/30 outline-none text-sm py-0 px-0"
+              />
+            ) : (
+              <span className="line-clamp-1 font-normal">{folder.name}</span>
+            )}
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        {!isRenaming && unreadCount > 0 && (
+          <SidebarMenuBadge className="bg-muted text-sidebar-foreground/50 mr-0.5">
+            {unreadCount}
+          </SidebarMenuBadge>
+        )}
+      </SidebarMenuItem>
+      <CollapsibleContent>
+        <SidebarMenu className="pl-6 pr-0">
+          {children}
+        </SidebarMenu>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export default function AppSidebar() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [playlists, setPlaylists] = useState<PlaylistInfo[]>([]);
   const [channels, setChannels] = useState<ChannelInfo[]>([]);
+  const [folders, setFolders] = useState<FolderInfo[]>([]);
+  const [sidebarOrder, setSidebarOrder] = useState<SidebarItem[]>([]);
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
 
@@ -274,17 +365,19 @@ export default function AppSidebar() {
 
   const refreshSidebarData = async () => {
     try {
-      // Load everything and update locally
       const pData = await loadPlaylists();
       setPlaylists(pData);
 
       const cData = await loadChannels();
       setChannels(cData);
 
-      // Pass the already loaded/synced data to avoid redundant store gets
-      const actualP = pData;
-      const actualC = cData;
-      const bData = await enrichBookmarks(actualP, actualC);
+      const fData = await loadFolders();
+      setFolders(fData);
+
+      const oData = await loadSidebarOrder();
+      setSidebarOrder(oData);
+
+      const bData = await enrichBookmarks(pData, cData);
       setBookmarks(bData);
     } catch (e) {
       console.error("Failed to refresh sidebar data:", e);
@@ -346,7 +439,35 @@ export default function AppSidebar() {
             navigate({ to: '/channel' });
           }
         }
-
+      } else if (eventId === "new-folder") {
+        handleNewFolder();
+      } else if (eventId.startsWith("rename-folder-")) {
+        const folderId = eventId.replace("rename-folder-", "");
+        setRenamingFolderId(folderId);
+      } else if (eventId.startsWith("delete-folder-")) {
+        const folderId = eventId.replace("delete-folder-", "");
+        const confirmed = await window.electron.confirm("Delete this folder? Items inside will be moved to the top level.", {
+          title: "Delete Folder",
+          kind: "warning",
+          okLabel: "Delete"
+        });
+        if (confirmed) {
+          await removeFolder(folderId);
+          await refreshSidebarData();
+        }
+      } else if (eventId.startsWith("move-playlist-") || eventId.startsWith("move-channel-")) {
+        const match = eventId.match(/^move-(playlist|channel)-(.+?)-to-(folder-(.+)|top-level)$/);
+        if (match) {
+          const itemType = match[1] as 'playlist' | 'channel';
+          const itemId = match[2];
+          const targetFolderId = match[4];
+          if (targetFolderId) {
+            await moveItemToFolder(itemId, itemType, targetFolderId);
+          } else {
+            await moveItemToTopLevel(itemId, itemType);
+          }
+          await refreshSidebarData();
+        }
       }
     });
 
@@ -397,11 +518,17 @@ export default function AppSidebar() {
   async function playlistClickHandler(event: React.MouseEvent, playlistId: string) {
     event.preventDefault();
     try {
-      await window.electron.showContextMenu([
-        { id: `view-playlist-in-browser-${playlistId}`, label: "View In Browser" },
-        { type: "separator" },
-        { id: `delete-playlist-${playlistId}`, label: "Delete" }
-      ]);
+      const menuItems: Array<{ id?: string; label?: string; type?: "normal" | "separator"; submenu?: Array<{ id?: string; label?: string; type?: "normal" | "separator" }> }> = [];
+      menuItems.push({ id: "new-folder", label: "New Folder" });
+      menuItems.push({ type: "separator" });
+      if (folders.length > 0 || isItemInFolder(playlistId, 'playlist')) {
+        menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(playlistId, 'playlist') });
+        menuItems.push({ type: "separator" });
+      }
+      menuItems.push({ id: `view-playlist-in-browser-${playlistId}`, label: "View In Browser" });
+      menuItems.push({ type: "separator" });
+      menuItems.push({ id: `delete-playlist-${playlistId}`, label: "Delete" });
+      await window.electron.showContextMenu(menuItems);
     } catch (error) {
       console.error("Error creating playlist context menu:", error);
     }
@@ -526,11 +653,17 @@ export default function AppSidebar() {
   async function channelClickHandler(event: React.MouseEvent, channelId: string) {
     event.preventDefault();
     try {
-      await window.electron.showContextMenu([
-        { id: `view-channel-in-browser-${channelId}`, label: "View In Browser" },
-        { type: "separator" },
-        { id: `delete-channel-${channelId}`, label: "Delete" }
-      ]);
+      const menuItems: Array<{ id?: string; label?: string; type?: "normal" | "separator"; submenu?: Array<{ id?: string; label?: string; type?: "normal" | "separator" }> }> = [];
+      menuItems.push({ id: "new-folder", label: "New Folder" });
+      menuItems.push({ type: "separator" });
+      if (folders.length > 0 || isItemInFolder(channelId, 'channel')) {
+        menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(channelId, 'channel') });
+        menuItems.push({ type: "separator" });
+      }
+      menuItems.push({ id: `view-channel-in-browser-${channelId}`, label: "View In Browser" });
+      menuItems.push({ type: "separator" });
+      menuItems.push({ id: `delete-channel-${channelId}`, label: "Delete" });
+      await window.electron.showContextMenu(menuItems);
     } catch (error) {
       console.error("Error creating channel context menu:", error);
     }
@@ -545,6 +678,73 @@ export default function AppSidebar() {
     await refreshSidebarData();
   };
 
+
+  const playlistsMap = useMemo(() => new Map(playlists.map(p => [p.id, p])), [playlists]);
+  const channelsMap = useMemo(() => new Map(channels.map(c => [c.id, c])), [channels]);
+  const foldersMap = useMemo(() => new Map(folders.map(f => [f.id, f])), [folders]);
+
+  const isItemInFolder = (itemId: string, itemType: 'playlist' | 'channel'): boolean => {
+    return sidebarOrder.some(e => e.type === 'folder' && e.children.some(c => c.type === itemType && c.id === itemId));
+  };
+
+  const handleNewFolder = async () => {
+    const folder = await createFolder("New Folder");
+    await refreshSidebarData();
+    setRenamingFolderId(folder.id);
+  };
+
+  const handleFolderRenameCommit = async (folderId: string, name: string) => {
+    await renameFolder(folderId, name);
+    setRenamingFolderId(null);
+    await refreshSidebarData();
+  };
+
+  const handleFolderRenameCancel = () => {
+    setRenamingFolderId(null);
+  };
+
+  const handleFolderToggleCollapse = async (folderId: string, collapsed: boolean) => {
+    await setFolderCollapsed(folderId, collapsed);
+    const fData = await loadFolders();
+    setFolders(fData);
+  };
+
+  async function folderContextMenuHandler(event: React.MouseEvent, folderId: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      await window.electron.showContextMenu([
+        { id: `rename-folder-${folderId}`, label: "Rename" },
+        { type: "separator" },
+        { id: `delete-folder-${folderId}`, label: "Delete Folder" }
+      ]);
+    } catch (error) {
+      console.error("Error creating folder context menu:", error);
+    }
+  }
+
+  async function collectionsHeaderContextMenu(event: React.MouseEvent) {
+    event.preventDefault();
+    try {
+      await window.electron.showContextMenu([
+        { id: "new-folder", label: "New Folder" }
+      ]);
+    } catch (error) {
+      console.error("Error creating collections context menu:", error);
+    }
+  }
+
+  function buildMoveToFolderSubmenu(itemId: string, itemType: 'playlist' | 'channel') {
+    const items: Array<{ id?: string; label?: string; type?: "normal" | "separator" }> = [];
+    for (const f of folders) {
+      items.push({ id: `move-${itemType}-${itemId}-to-folder-${f.id}`, label: f.name });
+    }
+    if (isItemInFolder(itemId, itemType)) {
+      if (items.length > 0) items.push({ type: "separator" });
+      items.push({ id: `move-${itemType}-${itemId}-to-top-level`, label: "Top Level" });
+    }
+    return items;
+  }
 
   const handleRefreshAll = async () => {
     const pItemsCount = playlists.length;
@@ -586,147 +786,214 @@ export default function AppSidebar() {
   return (
     <>
       <Sidebar className="h-full">
+        <SidebarHeader className="p-0">
+          <div data-tauri-drag-region className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-26 shrink-0" />
+            </div>
+            <div className="flex items-center">
+              {(playlists.length > 0 || channels.length > 0) ? (
+                <Tooltip open={(refreshingPlaylists || refreshingChannels) ? false : undefined}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={cn(
+                        "m-2",
+                        (refreshingPlaylists || refreshingChannels)
+                          ? "opacity-50 cursor-default p-1"
+                          : "btn-icon"
+                      )}
+                    >
+                      <button
+                        onClick={handleRefreshAll}
+                        onPointerDown={(e) => e.preventDefault()}
+                        disabled={refreshingPlaylists || refreshingChannels}
+                        className={cn(
+                          "flex items-center justify-center h-full w-full",
+                          (refreshingPlaylists || refreshingChannels) && "pointer-events-none"
+                        )}
+                      >
+                        {(refreshingPlaylists || refreshingChannels) ? (
+                          <div className="flex items-center gap-1">
+                            {refreshProgress && (
+                              <span className="text-xs">{refreshProgress.current}/{refreshProgress.total}</span>
+                            )}
+                            <Loader size={18} className="animate-spin" />
+                          </div>
+                        ) : (
+                          <RefreshCw size={18} strokeWidth={1.5} />
+                        )}
+                      </button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Refresh All
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
+              <Dialog
+                open={open}
+                onOpenChange={(isOpen) => {
+                  if (addingPlaylistOrChannel) return;
+                  setOpen(isOpen);
+                }}
+              >
+                <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-2">
+                  <span className={cn("btn-icon")}>
+                    <Plus size={18} strokeWidth={1.5} />
+                  </span>
+                </DialogTrigger>
+                <DialogContent forceMount showCloseButton={false}>
+                  <DialogHeader>
+                    <DialogTitle className="text-foreground">
+                      Add YouTube Playlist, Channel, or Video
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter YouTube URL"
+                        className="flex-1 bg-muted focus-visible:ring-0 text-foreground"
+                        value={playlistOrChannelUrl}
+                        onChange={(e) => {
+                          setPlaylistOrChannelUrl(e.target.value);
+                          setError(null);
+                        }}
+                        disabled={addingPlaylistOrChannel}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (
+                              !addingPlaylistOrChannel &&
+                              playlistOrChannelUrl &&
+                              (isPlaylistUrl(playlistOrChannelUrl) ||
+                                isChannelUrl(playlistOrChannelUrl) ||
+                                isVideoUrl(playlistOrChannelUrl))
+                            ) {
+                              handleAddPlaylistOrChannel();
+                            }
+                          }
+                        }}
+                      />
+                      <Button
+                        className="w-12"
+                        onClick={handleAddPlaylistOrChannel}
+                        disabled={
+                          addingPlaylistOrChannel ||
+                          !playlistOrChannelUrl ||
+                          !(
+                            isPlaylistUrl(playlistOrChannelUrl) ||
+                            isChannelUrl(playlistOrChannelUrl) ||
+                            isVideoUrl(playlistOrChannelUrl)
+                          )
+                        }
+                      >
+                        {addingPlaylistOrChannel ? (
+                          <Loader className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Add"
+                        )}
+                      </Button>
+                    </div>
+                    {error && <div className="text-sm text-red-500">{error}</div>}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        </SidebarHeader>
         <SidebarContent className="h-full">
           <SidebarGroup className="h-full pr-0">
             <SidebarGroupContent className="h-full flex flex-col" >
-              <div data-tauri-drag-region className="-mx-2 flex items-center justify-between shrink-0">
-                <div className="flex items-center">
-                  <div className="w-26 shrink-0" />
-                </div>
-                <div className="flex items-center">
-                  {(playlists.length > 0 || channels.length > 0) ? (
-                    <Tooltip open={(refreshingPlaylists || refreshingChannels) ? false : undefined}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={cn(
-                            "mr-2",
-                            (refreshingPlaylists || refreshingChannels)
-                              ? "opacity-50 cursor-default"
-                              : "btn-icon"
-                          )}
-                        >
-                          <button
-                            onClick={handleRefreshAll}
-                            onPointerDown={(e) => e.preventDefault()}
-                            disabled={refreshingPlaylists || refreshingChannels}
-                            className={cn(
-                              "flex items-center justify-center h-full w-full",
-                              (refreshingPlaylists || refreshingChannels) && "pointer-events-none"
-                            )}
-                          >
-                            {(refreshingPlaylists || refreshingChannels) ? (
-                              <div className="flex items-center gap-1">
-                                {refreshProgress && (
-                                  <span className="text-xs">{refreshProgress.current}/{refreshProgress.total}</span>
-                                )}
-                                <Loader size={14} className="animate-spin" />
-                              </div>
-                            ) : (
-                              <RefreshCw size={18} strokeWidth={1.5} />
-                            )}
-                          </button>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Refresh All
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : null}
-                  <Dialog
-                    open={open}
-                    onOpenChange={(isOpen) => {
-                      if (addingPlaylistOrChannel) return;
-                      setOpen(isOpen);
-                    }}
-                  >
-                    <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-4">
-                      <span className={cn("btn-icon")}>
-                        <Plus size={18} strokeWidth={1.5} />
-                      </span>
-                    </DialogTrigger>
-                    <DialogContent forceMount showCloseButton={false}>
-                      <DialogHeader>
-                        <DialogTitle className="text-foreground">
-                          Add YouTube Playlist, Channel, or Video
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Enter YouTube URL"
-                            className="flex-1 bg-muted focus-visible:ring-0 text-foreground"
-                            value={playlistOrChannelUrl}
-                            onChange={(e) => {
-                              setPlaylistOrChannelUrl(e.target.value);
-                              setError(null);
-                            }}
-                            disabled={addingPlaylistOrChannel}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                if (
-                                  !addingPlaylistOrChannel &&
-                                  playlistOrChannelUrl &&
-                                  (isPlaylistUrl(playlistOrChannelUrl) ||
-                                    isChannelUrl(playlistOrChannelUrl) ||
-                                    isVideoUrl(playlistOrChannelUrl))
-                                ) {
-                                  handleAddPlaylistOrChannel();
-                                }
-                              }
-                            }}
-                          />
-                          <Button
-                            className="w-12"
-                            onClick={handleAddPlaylistOrChannel}
-                            disabled={
-                              addingPlaylistOrChannel ||
-                              !playlistOrChannelUrl ||
-                              !(
-                                isPlaylistUrl(playlistOrChannelUrl) ||
-                                isChannelUrl(playlistOrChannelUrl) ||
-                                isVideoUrl(playlistOrChannelUrl)
-                              )
-                            }
-                          >
-                            {addingPlaylistOrChannel ? (
-                              <Loader className="h-4 w-4 animate-spin" />
-                            ) : (
-                              "Add"
-                            )}
-                          </Button>
-                        </div>
-                        {error && <div className="text-sm text-red-500">{error}</div>}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </div>
-              <div className="mt-1 flex-1 flex flex-col min-h-0 select-none overflow-y-auto sidebar-menu">
+              <div className="flex-1 flex flex-col min-h-0 select-none sidebar-menu">
                 <SidebarGroup className="p-0">
-                  <SidebarGroupLabel className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  <SidebarGroupLabel
+                    className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70"
+                    onContextMenu={collectionsHeaderContextMenu}
+                  >
                     Collections
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="pr-2">
-                      {playlists.map((playlist) => (
-                        <PlaylistItem
-                          key={playlist.id}
-                          playlist={playlist}
-                          isActive={playlistMatch?.params.playlistId === playlist.id}
-                          onPlaylistClick={handlePlaylistClick}
-                          onContextMenu={playlistClickHandler}
-                        />
-                      ))}
-                      {channels.map((channel) => (
-                        <ChannelItem
-                          key={channel.id}
-                          channel={channel}
-                          isActive={channelMatch?.params.channelId === channel.id}
-                          onChannelClick={handleChannelClick}
-                          onContextMenu={channelClickHandler}
-                        />
-                      ))}
+                      {sidebarOrder.map((entry) => {
+                        if (entry.type === 'folder') {
+                          const folder = foldersMap.get(entry.id);
+                          if (!folder) return null;
+                          const folderUnread = entry.children.reduce((sum, child) => {
+                            if (child.type === 'playlist') return sum + (playlistsMap.get(child.id)?.unreadCount ?? 0);
+                            if (child.type === 'channel') return sum + (channelsMap.get(child.id)?.unreadCount ?? 0);
+                            return sum;
+                          }, 0);
+                          return (
+                            <FolderItem
+                              key={`folder-${entry.id}`}
+                              folder={folder}
+                              unreadCount={folderUnread}
+                              onContextMenu={folderContextMenuHandler}
+                              onToggleCollapse={handleFolderToggleCollapse}
+                              renamingFolderId={renamingFolderId}
+                              onRenameCommit={handleFolderRenameCommit}
+                              onRenameCancel={handleFolderRenameCancel}
+                            >
+                              {entry.children.map((child) => {
+                                if (child.type === 'playlist') {
+                                  const playlist = playlistsMap.get(child.id);
+                                  if (!playlist) return null;
+                                  return (
+                                    <PlaylistItem
+                                      key={playlist.id}
+                                      playlist={playlist}
+                                      isActive={playlistMatch?.params.playlistId === playlist.id}
+                                      onPlaylistClick={handlePlaylistClick}
+                                      onContextMenu={playlistClickHandler}
+                                    />
+                                  );
+                                }
+                                if (child.type === 'channel') {
+                                  const channel = channelsMap.get(child.id);
+                                  if (!channel) return null;
+                                  return (
+                                    <ChannelItem
+                                      key={channel.id}
+                                      channel={channel}
+                                      isActive={channelMatch?.params.channelId === channel.id}
+                                      onChannelClick={handleChannelClick}
+                                      onContextMenu={channelClickHandler}
+                                    />
+                                  );
+                                }
+                                return null;
+                              })}
+                            </FolderItem>
+                          );
+                        }
+                        if (entry.type === 'playlist') {
+                          const playlist = playlistsMap.get(entry.id);
+                          if (!playlist) return null;
+                          return (
+                            <PlaylistItem
+                              key={playlist.id}
+                              playlist={playlist}
+                              isActive={playlistMatch?.params.playlistId === playlist.id}
+                              onPlaylistClick={handlePlaylistClick}
+                              onContextMenu={playlistClickHandler}
+                            />
+                          );
+                        }
+                        if (entry.type === 'channel') {
+                          const channel = channelsMap.get(entry.id);
+                          if (!channel) return null;
+                          return (
+                            <ChannelItem
+                              key={channel.id}
+                              channel={channel}
+                              isActive={channelMatch?.params.channelId === channel.id}
+                              onChannelClick={handleChannelClick}
+                              onContextMenu={channelClickHandler}
+                            />
+                          );
+                        }
+                        return null;
+                      })}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>

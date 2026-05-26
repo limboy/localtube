@@ -20,8 +20,8 @@ const api = {
   confirm: (message: string, options?: ConfirmOptions) =>
     ipcRenderer.invoke("dialog:confirm", message, options) as Promise<boolean>,
 
-  showContextMenu: (items: ContextMenuItem[]) =>
-    ipcRenderer.invoke("menu:showContext", items) as Promise<string | null>,
+  showContextMenu: (items: ContextMenuItem[], position?: { x: number; y: number }) =>
+    ipcRenderer.invoke("menu:showContext", items, position) as Promise<string | null>,
 
   setAlwaysOnTop: (flag: boolean) =>
     ipcRenderer.invoke("window:setAlwaysOnTop", flag) as Promise<void>,
