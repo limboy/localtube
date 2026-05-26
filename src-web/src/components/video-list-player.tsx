@@ -405,7 +405,7 @@ export default function VideoListPlayer({
                     {processedVideos.find(v => v.id === currentVideoId)?.title}
                   </h1>
                   <div className="mt-2">
-                    <div className="text-sm text-muted-foreground whitespace-pre-wrap pr-2">
+                    <div className="text-sm text-muted-foreground whitespace-pre-wrap pr-2 select-text">
                       {isLoadingDescription ? (
                         <div className="flex items-center gap-2">
                           <Loader size={12} className="animate-spin" />

@@ -21,14 +21,8 @@ function disableMenu() {
       false
     );
 
-    document.addEventListener(
-      "selectstart",
-      (e) => {
-        e.preventDefault();
-        return false;
-      },
-      { capture: true }
-    );
+    document.body.style.userSelect = "none";
+    document.body.style.webkitUserSelect = "none";
   }
 }
 
