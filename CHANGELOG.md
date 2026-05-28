@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.1.6](https://github.com/limboy/localtube/compare/v1.1.5...v1.1.6) - 2026-05-28
+
+### Bug Fixes
+
+- apply sidebar border color consistently to nav and video list ([6f3c875](https://github.com/limboy/localtube/commit/6f3c87579ca78352a7f9911bc85ed8e1405ce218))
+- prevent sidebar resizer from sticking after mouse release ([0f4c4bc](https://github.com/limboy/localtube/commit/0f4c4bca5d057f9a3333bf9f2d16bc8fdcf13429))
+
+### Documentation
+
+- update CHANGELOG for v1.1.5 ([1d78c94](https://github.com/limboy/localtube/commit/1d78c946cd706024d1d35dbd35fbc4c50b908b09))
+
 ## [v1.1.5](https://github.com/limboy/localtube/compare/v1.1.4...v1.1.5) - 2026-05-27
 
 ### Features
