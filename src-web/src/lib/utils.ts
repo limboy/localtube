@@ -59,7 +59,12 @@ export async function addOrUpdateChannel(channel: ChannelInfo) {
 
   if (isNew) {
     const order = await loadSidebarOrder();
-    order.push({ type: 'channel', id: channel.id });
+    const firstFolderIdx = order.findIndex(e => e.type === 'folder');
+    if (firstFolderIdx !== -1) {
+      order.splice(firstFolderIdx, 0, { type: 'channel', id: channel.id });
+    } else {
+      order.push({ type: 'channel', id: channel.id });
+    }
     await store.set("sidebarOrder", order);
   }
 
@@ -129,7 +134,12 @@ export async function addOrUpdatePlaylist(playlist: PlaylistInfo) {
 
   if (isNew) {
     const order = await loadSidebarOrder();
-    order.push({ type: 'playlist', id: playlist.id });
+    const firstFolderIdx = order.findIndex(e => e.type === 'folder');
+    if (firstFolderIdx !== -1) {
+      order.splice(firstFolderIdx, 0, { type: 'playlist', id: playlist.id });
+    } else {
+      order.push({ type: 'playlist', id: playlist.id });
+    }
     await store.set("sidebarOrder", order);
   }
 

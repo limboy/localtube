@@ -144,6 +144,7 @@ export default function VideoListPlayer({
         }
 
         if (data) {
+          setError(null);
           const seen = new Set();
           const uniqueItems = data.items.filter((item: VideoItem) => {
             if (seen.has(item.id)) return false;
