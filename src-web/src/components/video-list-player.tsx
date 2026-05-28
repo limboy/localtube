@@ -116,13 +116,20 @@ export default function VideoListPlayer({
             title: "Bookmarked Videos",
             lastUpdated: Date.now(),
             unreadCount: 0,
-            items: Array.from(bookmarks.keys()).map((videoId) => {
+            items: Array.from(bookmarks.entries()).map(([videoId, bookmark]) => {
               const video = allPlaylistItems.find((item) => item.id === videoId) || allChannelItems.find((item) => item.id === videoId);
               if (video) {
                 return {
                   ...video,
                   isBookmarked: true,
-                  bookmarkedAt: bookmarks.get(videoId)?.createdAt
+                  bookmarkedAt: bookmark.createdAt
+                };
+              }
+              if (bookmark.videoDetails) {
+                return {
+                  ...bookmark.videoDetails,
+                  isBookmarked: true,
+                  bookmarkedAt: bookmark.createdAt
                 };
               }
               return null;
@@ -364,11 +371,9 @@ export default function VideoListPlayer({
           <div className="flex flex-row gap-2 items-center">
             <UpdateIndicator />
             {/* The right sidebar trigger */}
-            {!showBookmarkedOnly && (
-              <SidebarTrigger className="shrink-0 ml-1">
-                <PanelRight size={18} strokeWidth={2} />
-              </SidebarTrigger>
-            )}
+            <SidebarTrigger className="shrink-0 ml-1">
+              <PanelRight size={18} strokeWidth={2} />
+            </SidebarTrigger>
           </div>
         </Nav>
 
@@ -384,7 +389,7 @@ export default function VideoListPlayer({
           ) : showEmptyState ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-muted-foreground">
-                <p>Select a channel or playlist to start play</p>
+                <p>{showBookmarkedOnly ? "No bookmarked videos yet" : "Select a channel or playlist to start play"}</p>
               </div>
             </div>
           ) : (
@@ -424,8 +429,7 @@ export default function VideoListPlayer({
         </div>
       </div>
 
-      {!showBookmarkedOnly && (
-        <Sidebar side="right" className="border-l border-sidebar-border">
+      <Sidebar side="right" className="border-l border-sidebar-border">
           <SidebarContent className="bg-background gap-0 overflow-hidden">
             <div data-tauri-drag-region className="h-11 flex items-center justify-between sticky top-0 bg-background z-10 w-full border-b border-sidebar-border! shrink-0">
               <div className="flex flex-row justify-between w-full px-4 items-center gap-2">
@@ -545,7 +549,6 @@ export default function VideoListPlayer({
           </SidebarContent>
           <SidebarRail />
         </Sidebar>
-      )}
     </SidebarProvider>
   );
 }

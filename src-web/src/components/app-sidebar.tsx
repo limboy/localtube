@@ -38,7 +38,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/theme-provider";
 import {
-  removeBookmark,
   cn,
   addOrUpdatePlaylist,
   removePlaylist,
@@ -673,10 +672,6 @@ export default function AppSidebar() {
 
 
 
-  const handleRemoveBookmark = async (videoId: string) => {
-    await removeBookmark(videoId);
-    await refreshSidebarData();
-  };
 
 
   const playlistsMap = useMemo(() => new Map(playlists.map(p => [p.id, p])), [playlists]);
@@ -906,6 +901,35 @@ export default function AppSidebar() {
             <SidebarGroupContent className="h-full flex flex-col" >
               <div className="flex-1 flex flex-col min-h-0 select-none sidebar-menu">
                 <SidebarGroup className="p-0">
+                  <SidebarGroupContent>
+                    <SidebarMenu className="pr-2">
+                      <SidebarMenuItem className="list-none w-full">
+                        <SidebarMenuButton
+                          asChild
+                          className={cn(
+                            "h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                            bookmarkMatch ? "bg-sidebar-accent" : ""
+                          )}
+                        >
+                          <div
+                            onClick={() => navigate({ to: '/bookmarks' })}
+                            className="flex items-center gap-2 w-full cursor-default"
+                          >
+                            <BookmarkIcon size={16} className="shrink-0" />
+                            <span>Bookmarks</span>
+                          </div>
+                        </SidebarMenuButton>
+                        {bookmarks.length > 0 && (
+                          <SidebarMenuBadge className="opacity-50">{bookmarks.length}</SidebarMenuBadge>
+                        )}
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarSeparator className="my-2" />
+
+                <SidebarGroup className="p-0">
                   <SidebarGroupLabel
                     className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70"
                     onContextMenu={collectionsHeaderContextMenu}
@@ -998,83 +1022,6 @@ export default function AppSidebar() {
                   </SidebarGroupContent>
                 </SidebarGroup>
 
-                {bookmarks.length > 0 && (
-                  <>
-                    <SidebarSeparator className="my-2" />
-
-                    <SidebarGroup className="p-0">
-                      <SidebarGroupLabel className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                        Bookmarks
-                      </SidebarGroupLabel>
-                      <SidebarGroupContent>
-                        <SidebarMenu className="pr-2">
-                          {/* Bookmarks content ... */}
-                          {bookmarks.map((bookmark) => {
-                            const searchParams = new URLSearchParams(location.search);
-                            const activeBookmarkVideoId = searchParams.get('videoId');
-                            const isActive = bookmarkMatch && activeBookmarkVideoId === bookmark.id;
-
-                            return (
-                              <SidebarMenuItem key={bookmark.id} className="group/bookmark list-none">
-                                <SidebarMenuButton
-                                  asChild
-                                  className={cn(
-                                    "h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
-                                    isActive ? "bg-sidebar-accent" : ""
-                                  )}
-                                >
-                                  <div
-                                    onClick={() => navigate({ to: '/bookmarks', search: { videoId: bookmark.id } })}
-                                    className="flex items-start gap-2 w-full cursor-default"
-                                  >
-                                    <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
-                                      {bookmark.thumbnail && (
-                                        <img
-                                          src={bookmark.thumbnail}
-                                          alt=""
-                                          className="w-full h-full object-cover"
-                                        />
-                                      )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <span className="line-clamp-1 leading-tight mb-0.5">
-                                        {bookmark.title}
-                                      </span>
-                                      <div className="flex items-center justify-between opacity-50 text-sm font-normal">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                          {bookmark.data?.title && (
-                                            <>
-                                              <span className="truncate max-w-20">
-                                                {bookmark.data.title}
-                                              </span>
-                                              {bookmark.duration && <span>•</span>}
-                                            </>
-                                          )}
-                                          {bookmark.duration && (
-                                            <span>{bookmark.duration}</span>
-                                          )}
-                                        </div>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemoveBookmark(bookmark.id);
-                                          }}
-                                          className="p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity"
-                                        >
-                                          <BookmarkIcon size={14} fill="currentColor" strokeWidth={1.5} />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            );
-                          })}
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    </SidebarGroup>
-                  </>
-                )}
               </div>
             </SidebarGroupContent>
           </SidebarGroup>
