@@ -289,14 +289,16 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"bu
   ({ className, ...props }, ref) => {
     const { open, setWidth, setIsResizing } = useSidebar();
 
-    const onMouseDown = React.useCallback(
-      (event: React.MouseEvent) => {
+    const onPointerDown = React.useCallback(
+      (event: React.PointerEvent) => {
         if (!open) return;
         event.preventDefault();
         setIsResizing(true);
-        const isRight = (event.currentTarget as HTMLElement).closest('[data-side="right"]');
+        const target = event.currentTarget as HTMLElement;
+        target.setPointerCapture(event.pointerId);
+        const isRight = target.closest('[data-side="right"]');
 
-        const onMouseMove = (event: MouseEvent) => {
+        const onPointerMove = (event: PointerEvent) => {
           if (isRight) {
             setWidth(window.innerWidth - event.clientX);
           } else {
@@ -304,16 +306,16 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"bu
           }
         };
 
-        const onMouseUp = () => {
+        const onPointerUp = () => {
           setIsResizing(false);
-          window.removeEventListener("mousemove", onMouseMove);
-          window.removeEventListener("mouseup", onMouseUp);
+          target.removeEventListener("pointermove", onPointerMove);
+          target.removeEventListener("pointerup", onPointerUp);
         };
 
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
+        target.addEventListener("pointermove", onPointerMove);
+        target.addEventListener("pointerup", onPointerUp);
       },
-      [setWidth, setIsResizing]
+      [open, setWidth, setIsResizing]
     );
 
     return (
@@ -322,7 +324,7 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"bu
         data-sidebar="rail"
         aria-label="Resize Sidebar"
         tabIndex={-1}
-        onMouseDown={onMouseDown}
+        onPointerDown={onPointerDown}
         className={cn(
           "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",
           "in-data-[side=left]:cursor-ew-resize in-data-[side=right]:cursor-ew-resize",
