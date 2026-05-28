@@ -424,9 +424,9 @@ export default function VideoListPlayer({
       </div>
 
       {!showBookmarkedOnly && (
-        <Sidebar side="right" className="border-l">
+        <Sidebar side="right" className="border-l border-sidebar-border">
           <SidebarContent className="bg-background gap-0 overflow-hidden">
-            <div data-tauri-drag-region className="h-11 flex items-center justify-between sticky top-0 bg-background z-10 w-full border-b shrink-0">
+            <div data-tauri-drag-region className="h-11 flex items-center justify-between sticky top-0 bg-background z-10 w-full border-b border-sidebar-border! shrink-0">
               <div className="flex flex-row justify-between w-full px-4 items-center gap-2">
                 <h2 className="font-semibold truncate min-w-0">
                   Videos
