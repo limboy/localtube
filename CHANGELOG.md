@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.1.7](https://github.com/limboy/localtube/compare/v1.1.6...v1.1.7) - 2026-05-28
+
+### Features
+
+- add Bookmarks button above Collections in sidebar ([6cb0f74](https://github.com/limboy/localtube/commit/6cb0f745482877f176ccbacef9678762d6df74d9))
+
+### Bug Fixes
+
+- place new channels/playlists before folders and clear stale error ([f82ef48](https://github.com/limboy/localtube/commit/f82ef4871ebdf9aa2b5d1d7e39813759b924f4d1))
+
+### Documentation
+
+- update CHANGELOG for v1.1.6 ([4556ced](https://github.com/limboy/localtube/commit/4556ced5b28b07e67160507900eb97192b85f54d))
+
 ## [v1.1.6](https://github.com/limboy/localtube/compare/v1.1.5...v1.1.6) - 2026-05-28
 
 ### Bug Fixes
