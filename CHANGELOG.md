@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.2](https://github.com/limboy/localtube/compare/v1.2.1...v1.2.2) - 2026-05-29
+
+### Bug Fixes
+
+- **sidebar:** select first item by sidebar order instead of raw array index ([a7bdbac](https://github.com/limboy/localtube/commit/a7bdbacdb7a26ed0fe290af9e39e335de3207240))
+
+### Documentation
+
+- update CHANGELOG for v1.2.1 ([f69ac62](https://github.com/limboy/localtube/commit/f69ac6262a3e5b04d929c87dbb2308b113785c59))
+
 ## [v1.2.1](https://github.com/limboy/localtube/compare/v1.2.0...v1.2.1) - 2026-05-29
 
 ### Bug Fixes
