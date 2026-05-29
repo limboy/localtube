@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.3](https://github.com/limboy/localtube/compare/v1.2.2...v1.2.3) - 2026-05-29
+
+### Bug Fixes
+
+- **bookmarks:** sort videos by bookmark time descending ([623fe3c](https://github.com/limboy/localtube/commit/623fe3cf8545fba6de7ea2b0c8fa268a233e188a))
+
+### Documentation
+
+- update CHANGELOG for v1.2.2 ([9b731e0](https://github.com/limboy/localtube/commit/9b731e0996b6fe9fdc886ee4f03318c043f2a4dc))
+
 ## [v1.2.2](https://github.com/limboy/localtube/compare/v1.2.1...v1.2.2) - 2026-05-29
 
 ### Bug Fixes
