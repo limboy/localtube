@@ -1124,12 +1124,9 @@ export default function AppSidebar() {
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="start" sideOffset={4} className="">
-                  <DropdownMenuItem onClick={toggleAlwaysOnTop} className="justify-between">
-                    <div className="flex items-center gap-2">
-                      {isAlwaysOnTop ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                      <span>{isAlwaysOnTop ? "Unpin from Top" : "Pin to Top"}</span>
-                    </div>
-                    {isAlwaysOnTop && <Check className="h-4 w-4" />}
+                  <DropdownMenuItem onClick={toggleAlwaysOnTop}>
+                    {isAlwaysOnTop ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                    <span>{isAlwaysOnTop ? "Unpin from Top" : "Pin to Top"}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuSub>
