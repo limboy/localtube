@@ -2,6 +2,7 @@ import type { ChannelInfo, VideoItem } from "@/types";
 import { addOrUpdateChannel, loadChannel, loadChannels } from "./utils";
 import { getInnertube } from "./innertube";
 import { YTNodes } from "youtubei.js";
+import { parseRelativeTime } from "./time-utils";
 
 const CHANNEL_VIDEO_CAP = 500;
 
@@ -43,7 +44,10 @@ function mapVideo(v: any): VideoItem | null {
     ? "Live"
     : v.duration?.text ?? v.length_text?.toString?.() ?? "Live";
 
-  return { id, title, thumbnail, duration };
+  const publishedText = v.published?.text ?? v.published?.toString?.() ?? "";
+  const publishedAt = parseRelativeTime(publishedText);
+
+  return { id, title, thumbnail, duration, publishedAt };
 }
 
 function mapLockupView(lockup: any): VideoItem | null {
@@ -64,7 +68,18 @@ function mapLockupView(lockup: any): VideoItem | null {
   );
   const duration: string = durationBadge?.text ?? "Live";
 
-  return { id, title, thumbnail, duration };
+  let publishedAt: number | undefined;
+  const rows = lockup.metadata?.metadata?.metadata_rows ?? [];
+  for (const row of rows) {
+    for (const part of row.metadata_parts ?? []) {
+      const text = part.text?.toString?.() ?? "";
+      const ts = parseRelativeTime(text);
+      if (ts) { publishedAt = ts; break; }
+    }
+    if (publishedAt) break;
+  }
+
+  return { id, title, thumbnail, duration, publishedAt };
 }
 
 function extractVideosFromFeed(feed: any): VideoItem[] {

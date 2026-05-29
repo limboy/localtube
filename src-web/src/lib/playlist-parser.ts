@@ -1,6 +1,7 @@
 import type { PlaylistInfo, VideoItem } from "@/types";
 import { addOrUpdatePlaylist, loadPlaylist, loadPlaylists } from "./utils";
 import { getInnertube } from "./innertube";
+import { parseRelativeTime } from "./time-utils";
 
 const PLAYLIST_VIDEO_CAP = 500;
 
@@ -30,7 +31,10 @@ function mapVideo(v: any): VideoItem | null {
     ? "Live"
     : v.duration?.text ?? v.length_text?.toString?.() ?? "Live";
 
-  return { id, title, thumbnail, duration };
+  const publishedText = v.published?.text ?? v.published?.toString?.() ?? "";
+  const publishedAt = parseRelativeTime(publishedText);
+
+  return { id, title, thumbnail, duration, publishedAt };
 }
 
 export async function parseYouTubePlaylist(playlistUrl: string): Promise<PlaylistInfo> {

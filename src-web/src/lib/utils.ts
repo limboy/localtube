@@ -527,6 +527,25 @@ export async function enrichBookmarks(
 }
 
 
+export async function loadLatestVideos(): Promise<VideoItem[]> {
+  const playlists = await loadPlaylists();
+  const channels = await loadChannels();
+
+  const seen = new Set<string>();
+  const allVideos: VideoItem[] = [];
+
+  for (const source of [...channels, ...playlists]) {
+    for (const video of source.items) {
+      if (seen.has(video.id)) continue;
+      seen.add(video.id);
+      allVideos.push(video);
+    }
+  }
+
+  allVideos.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
+  return allVideos.slice(0, 100);
+}
+
 export async function getVideoDescription(videoId: string): Promise<string> {
   const store = await getStore();
   const cache = (await store.get<Record<string, string>>("videoDescriptions")) || {};

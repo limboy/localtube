@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, Search, History } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, Search, History, Clock } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
@@ -670,6 +670,11 @@ export default function AppSidebar() {
     shouldThrow: false
   });
 
+  const latestMatch = useMatch({
+    from: "/latest",
+    shouldThrow: false
+  });
+
   const handleChannelClick = async (channelId: string, fromBookmarks = false) => {
     await markChannelAsRead(channelId);
     const newChannels = await loadChannels();
@@ -939,6 +944,23 @@ export default function AppSidebar() {
                           >
                             <History size={16} className="shrink-0" />
                             <span>History</span>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem className="list-none w-full">
+                        <SidebarMenuButton
+                          asChild
+                          className={cn(
+                            "h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                            latestMatch ? "bg-sidebar-accent" : ""
+                          )}
+                        >
+                          <div
+                            onClick={() => navigate({ to: '/latest' })}
+                            className="flex items-center gap-2 w-full cursor-default"
+                          >
+                            <Clock size={16} className="shrink-0" />
+                            <span>Latest</span>
                           </div>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

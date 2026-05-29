@@ -3,6 +3,7 @@ export interface VideoItem {
   title: string;
   thumbnail: string;
   duration: string;
+  publishedAt?: number;
 }
 
 export interface VideoListInfo {

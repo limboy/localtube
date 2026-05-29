@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LatestRouteImport } from './routes/latest'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as BookmarksRouteImport } from './routes/bookmarks'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as ChannelIndexRouteImport } from './routes/channel.index'
 import { Route as PlaylistPlaylistIdRouteImport } from './routes/playlist.$playlistId'
 import { Route as ChannelChannelIdRouteImport } from './routes/channel.$channelId'
 
+const LatestRoute = LatestRouteImport.update({
+  id: '/latest',
+  path: '/latest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
+  '/latest': typeof LatestRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/channel/': typeof ChannelIndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
+  '/latest': typeof LatestRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/channel': typeof ChannelIndexRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
+  '/latest': typeof LatestRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/channel/': typeof ChannelIndexRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bookmarks'
     | '/history'
+    | '/latest'
     | '/channel/$channelId'
     | '/playlist/$playlistId'
     | '/channel/'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bookmarks'
     | '/history'
+    | '/latest'
     | '/channel/$channelId'
     | '/playlist/$playlistId'
     | '/channel'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bookmarks'
     | '/history'
+    | '/latest'
     | '/channel/$channelId'
     | '/playlist/$playlistId'
     | '/channel/'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BookmarksRoute: typeof BookmarksRoute
   HistoryRoute: typeof HistoryRoute
+  LatestRoute: typeof LatestRoute
   ChannelChannelIdRoute: typeof ChannelChannelIdRoute
   PlaylistPlaylistIdRoute: typeof PlaylistPlaylistIdRoute
   ChannelIndexRoute: typeof ChannelIndexRoute
@@ -123,6 +136,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/latest': {
+      id: '/latest'
+      path: '/latest'
+      fullPath: '/latest'
+      preLoaderRoute: typeof LatestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history': {
       id: '/history'
       path: '/history'
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BookmarksRoute: BookmarksRoute,
   HistoryRoute: HistoryRoute,
+  LatestRoute: LatestRoute,
   ChannelChannelIdRoute: ChannelChannelIdRoute,
   PlaylistPlaylistIdRoute: PlaylistPlaylistIdRoute,
   ChannelIndexRoute: ChannelIndexRoute,
