@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, Search } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
@@ -67,6 +67,7 @@ import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlis
 import { checkAllChannelsForUpdates, parseYouTubeChannel } from "@/lib/channel-parser";
 import { isVideoUrl, parseYouTubeVideo } from "@/lib/video-parser";
 import { loadBookmarks, saveBookmarks } from "@/lib/utils";
+import SearchDialog from "@/components/search-dialog";
 // Tabs removed
 
 
@@ -282,6 +283,7 @@ function FolderItem({ folder, children, unreadCount, onContextMenu, onToggleColl
 export default function AppSidebar() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [playlists, setPlaylists] = useState<PlaylistInfo[]>([]);
   const [channels, setChannels] = useState<ChannelInfo[]>([]);
   const [folders, setFolders] = useState<FolderInfo[]>([]);
@@ -787,6 +789,14 @@ export default function AppSidebar() {
               <div className="w-26 shrink-0" />
             </div>
             <div className="flex items-center">
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="focus-visible:ring-0 focus-visible:outline-none mr-0.5"
+              >
+                <span className={cn("btn-icon")}>
+                  <Search size={18} strokeWidth={1.5} />
+                </span>
+              </button>
               <Dialog
                 open={open}
                 onOpenChange={(isOpen) => {
@@ -1076,6 +1086,7 @@ export default function AppSidebar() {
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   );
 }

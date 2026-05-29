@@ -7,6 +7,6 @@ export const Route = createFileRoute("/channel/$channelId")({
 
 function RouteComponent() {
   const { channelId } = Route.useParams();
-  const { showBookmarkedOnly, autoPlay } = Route.useSearch() as any;
-  return <VideoListPlayer channelId={channelId} showBookmarkedOnly={!!showBookmarkedOnly} autoPlay={autoPlay !== false} />;
+  const { showBookmarkedOnly, autoPlay, videoId } = Route.useSearch() as any;
+  return <VideoListPlayer channelId={channelId} showBookmarkedOnly={!!showBookmarkedOnly} autoPlay={autoPlay !== false} initialVideoId={videoId} />;
 }

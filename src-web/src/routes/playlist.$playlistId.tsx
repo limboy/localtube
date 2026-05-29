@@ -7,6 +7,6 @@ export const Route = createFileRoute("/playlist/$playlistId")({
 
 function RouteComponent() {
   const { playlistId } = Route.useParams();
-  const { showBookmarkedOnly, autoPlay } = Route.useSearch() as any;
-  return <VideoListPlayer playlistId={playlistId} showBookmarkedOnly={!!showBookmarkedOnly} autoPlay={autoPlay !== false} />;
+  const { showBookmarkedOnly, autoPlay, videoId } = Route.useSearch() as any;
+  return <VideoListPlayer playlistId={playlistId} showBookmarkedOnly={!!showBookmarkedOnly} autoPlay={autoPlay !== false} initialVideoId={videoId} />;
 }
