@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.5](https://github.com/limboy/localtube/compare/v1.2.4...v1.2.5) - 2026-05-29
+
+### Features
+
+- **latest:** add bookmark and ignore buttons to Latest video list ([12cc213](https://github.com/limboy/localtube/commit/12cc21302e1a7304630a92ed7e6fc4cc0fdc0a19))
+
+### Documentation
+
+- update CHANGELOG for v1.2.4 ([e008000](https://github.com/limboy/localtube/commit/e0080007cc325bc505aaf7996c3709b5ef482505))
+
+### Styles
+
+- tighten sidebar menu item spacing ([9e0c0e2](https://github.com/limboy/localtube/commit/9e0c0e2fa459a2f7f29c1d6a2f9a004ba5dc3ba3))
+
 ## [v1.2.4](https://github.com/limboy/localtube/compare/v1.2.3...v1.2.4) - 2026-05-29
 
 ### Bug Fixes
