@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, Search } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, Search, History } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
@@ -638,7 +638,10 @@ export default function AppSidebar() {
     shouldThrow: false
   });
 
-  // Redundant bookmarkMatch effect removed
+  const historyMatch = useMatch({
+    from: "/history",
+    shouldThrow: false
+  });
 
   const handleChannelClick = async (channelId: string, fromBookmarks = false) => {
     await markChannelAsRead(channelId);
@@ -894,6 +897,23 @@ export default function AppSidebar() {
                         {bookmarks.length > 0 && (
                           <SidebarMenuBadge className="opacity-50">{bookmarks.length}</SidebarMenuBadge>
                         )}
+                      </SidebarMenuItem>
+                      <SidebarMenuItem className="list-none w-full">
+                        <SidebarMenuButton
+                          asChild
+                          className={cn(
+                            "h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                            historyMatch ? "bg-sidebar-accent" : ""
+                          )}
+                        >
+                          <div
+                            onClick={() => navigate({ to: '/history' })}
+                            className="flex items-center gap-2 w-full cursor-default"
+                          >
+                            <History size={16} className="shrink-0" />
+                            <span>History</span>
+                          </div>
+                        </SidebarMenuButton>
                       </SidebarMenuItem>
                     </SidebarMenu>
                   </SidebarGroupContent>

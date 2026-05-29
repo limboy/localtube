@@ -22,12 +22,12 @@ export default function YTPlayer({
   autoPlay?: boolean;
 }) {
   const playerRef = useRef<IFramePlayer | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isAPIReady, setIsAPIReady] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   // Initial API loading effect
   useEffect(() => {
-    // Check if API is already loaded
     if ((window as any).YT && (window as any).YT.Player) {
       setIsAPIReady(true);
       return;
@@ -51,10 +51,13 @@ export default function YTPlayer({
 
   // Player initialization effect
   useEffect(() => {
-    if (!isAPIReady) return;
+    if (!isAPIReady || !containerRef.current) return;
 
     if (!playerRef.current) {
-      const player = new (window as any).YT.Player("player", {
+      const playerEl = document.createElement("div");
+      containerRef.current.appendChild(playerEl);
+
+      const player = new (window as any).YT.Player(playerEl, {
         height: '100%',
         width: '100%',
         host: 'https://www.youtube-nocookie.com',
@@ -87,8 +90,11 @@ export default function YTPlayer({
         playerRef.current.destroy();
         playerRef.current = null;
       }
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
+      }
     };
-  }, [isAPIReady]); // Only depend on API ready state
+  }, [isAPIReady]);
 
   // Video loading effect
   useEffect(() => {
@@ -131,5 +137,5 @@ export default function YTPlayer({
     }
   };
 
-  return <div id="player" className="w-full h-full bg-black"></div>;
+  return <div ref={containerRef} className="w-full h-full bg-black"></div>;
 }

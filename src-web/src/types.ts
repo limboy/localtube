@@ -64,6 +64,14 @@ export interface FolderInfo {
   isCollapsed: boolean;
 }
 
+export interface WatchHistoryEntry {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  duration: string;
+  watchedAt: number;
+}
+
 export type SidebarChildEntry = { type: 'playlist' | 'channel'; id: string };
 
 export type SidebarItem =

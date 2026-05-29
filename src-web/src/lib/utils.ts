@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, VideoItem, FolderInfo, SidebarItem } from "@/types";
+import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, VideoItem, FolderInfo, SidebarItem, WatchHistoryEntry } from "@/types";
 import { setupKonamiCode } from "./konami";
 import { getInnertube } from "./innertube";
 
@@ -322,6 +322,38 @@ export async function removeBookmark(videoId: string) {
     bookmarks.delete(videoId);
     await saveBookmarks(bookmarks);
   }
+}
+
+export async function loadWatchHistory(): Promise<WatchHistoryEntry[]> {
+  const store = await getStore();
+  return (await store.get<WatchHistoryEntry[]>("watchHistory")) || [];
+}
+
+export async function saveWatchHistory(history: WatchHistoryEntry[]) {
+  const store = await getStore();
+  await store.set("watchHistory", history);
+  await store.save();
+  window.dispatchEvent(new CustomEvent('store-updated'));
+}
+
+export async function addToWatchHistory(video: VideoItem) {
+  const history = await loadWatchHistory();
+  const filtered = history.filter(e => e.videoId !== video.id);
+  filtered.unshift({
+    videoId: video.id,
+    title: video.title,
+    thumbnail: video.thumbnail,
+    duration: video.duration,
+    watchedAt: Date.now(),
+  });
+  await saveWatchHistory(filtered);
+}
+
+export async function clearWatchHistory() {
+  const store = await getStore();
+  await store.set("watchHistory", []);
+  await store.save();
+  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 export async function loadSkippedVideos(): Promise<Set<string>> {

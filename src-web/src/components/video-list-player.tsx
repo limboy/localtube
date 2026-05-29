@@ -8,7 +8,8 @@ import {
   loadChannels,
   loadSkippedVideos,
   saveSkippedVideos,
-  getVideoDescription
+  getVideoDescription,
+  addToWatchHistory
 } from "@/lib/utils";
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 
@@ -51,6 +52,7 @@ export default function VideoListPlayer({
   const [skippedVideos, setSkippedVideos] = useState<Set<string>>(new Set());
   const [shouldAutoPlay, setShouldAutoPlay] = useState(autoPlay);
   const [refreshKey, setRefreshKey] = useState(0);
+  const userInitiatedRef = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -267,11 +269,13 @@ export default function VideoListPlayer({
       if (!videolist) return;
       if (loopMode === "one" && currentVideoId) {
         setShouldAutoPlay(true);
+        userInitiatedRef.current = true;
         setForceReplay((prev) => !prev);
         return;
       }
 
       setShouldAutoPlay(true);
+      userInitiatedRef.current = true;
       if (isShuffled && shuffledItems.length) {
         const idx = currentVideoId ? shuffledItems.findIndex((v) => v.id === currentVideoId) : -1;
         let nextIdx = idx + 1;
@@ -310,13 +314,20 @@ export default function VideoListPlayer({
       const el = document.getElementById(`video-item-${currentVideoId}`);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
 
-      // Fetch description
       setDescription("");
       setIsLoadingDescription(true);
       getVideoDescription(currentVideoId).then(desc => {
         setDescription(desc);
         setIsLoadingDescription(false);
       });
+
+      if (userInitiatedRef.current && videolist) {
+        const video = videolist.items.find(v => v.id === currentVideoId);
+        if (video) {
+          addToWatchHistory(video);
+        }
+        userInitiatedRef.current = false;
+      }
     }
   }, [currentVideoId]);
 
@@ -491,7 +502,12 @@ export default function VideoListPlayer({
                         video.isSkipped && "opacity-50"
                       )}
                       onClick={() => {
-                        setCurrentVideoId(video.id);
+                        if (currentVideoId === video.id) {
+                          addToWatchHistory(video);
+                        } else {
+                          userInitiatedRef.current = true;
+                          setCurrentVideoId(video.id);
+                        }
                         setShouldAutoPlay(true);
                       }}
                     >
