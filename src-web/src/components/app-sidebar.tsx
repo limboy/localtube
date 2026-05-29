@@ -782,49 +782,11 @@ export default function AppSidebar() {
     <>
       <Sidebar className="h-full">
         <SidebarHeader className="p-0">
-          <div data-tauri-drag-region className="flex items-center justify-between">
+          <div data-tauri-drag-region className="flex items-center justify-between mt-2">
             <div className="flex items-center">
               <div className="w-26 shrink-0" />
             </div>
             <div className="flex items-center">
-              {(playlists.length > 0 || channels.length > 0) ? (
-                <Tooltip open={(refreshingPlaylists || refreshingChannels) ? false : undefined}>
-                  <TooltipTrigger asChild>
-                    <div
-                      className={cn(
-                        "m-2",
-                        (refreshingPlaylists || refreshingChannels)
-                          ? "opacity-50 cursor-default p-1"
-                          : "btn-icon"
-                      )}
-                    >
-                      <button
-                        onClick={handleRefreshAll}
-                        onPointerDown={(e) => e.preventDefault()}
-                        disabled={refreshingPlaylists || refreshingChannels}
-                        className={cn(
-                          "flex items-center justify-center h-full w-full",
-                          (refreshingPlaylists || refreshingChannels) && "pointer-events-none"
-                        )}
-                      >
-                        {(refreshingPlaylists || refreshingChannels) ? (
-                          <div className="flex items-center gap-1">
-                            {refreshProgress && (
-                              <span className="text-xs">{refreshProgress.current}/{refreshProgress.total}</span>
-                            )}
-                            <Loader size={18} className="animate-spin" />
-                          </div>
-                        ) : (
-                          <RefreshCw size={18} strokeWidth={1.5} />
-                        )}
-                      </button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Refresh All
-                  </TooltipContent>
-                </Tooltip>
-              ) : null}
               <Dialog
                 open={open}
                 onOpenChange={(isOpen) => {
@@ -896,7 +858,7 @@ export default function AppSidebar() {
             </div>
           </div>
         </SidebarHeader>
-        <SidebarContent className="h-full">
+        <SidebarContent className="h-full mt-1">
           <SidebarGroup className="h-full pr-0">
             <SidebarGroupContent className="h-full flex flex-col" >
               <div className="flex-1 flex flex-col min-h-0 select-none sidebar-menu">
@@ -931,10 +893,41 @@ export default function AppSidebar() {
 
                 <SidebarGroup className="p-0">
                   <SidebarGroupLabel
-                    className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70"
+                    className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center justify-between"
                     onContextMenu={collectionsHeaderContextMenu}
                   >
                     Collections
+                    {(playlists.length > 0 || channels.length > 0) ? (
+                      <Tooltip open={(refreshingPlaylists || refreshingChannels) ? false : undefined}>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={handleRefreshAll}
+                            onPointerDown={(e) => e.preventDefault()}
+                            disabled={refreshingPlaylists || refreshingChannels}
+                            className={cn(
+                              "flex items-center justify-center",
+                              (refreshingPlaylists || refreshingChannels)
+                                ? "opacity-50 cursor-default pointer-events-none"
+                                : "hover:text-foreground transition-colors"
+                            )}
+                          >
+                            {(refreshingPlaylists || refreshingChannels) ? (
+                              <div className="flex items-center gap-1">
+                                {refreshProgress && (
+                                  <span className="text-[10px]">{refreshProgress.current}/{refreshProgress.total}</span>
+                                )}
+                                <Loader size={14} className="animate-spin" />
+                              </div>
+                            ) : (
+                              <RefreshCw size={14} strokeWidth={1.5} />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Refresh All
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="pr-2">
