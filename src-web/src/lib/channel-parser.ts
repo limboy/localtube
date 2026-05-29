@@ -217,3 +217,22 @@ export async function checkAllChannelsForUpdates(
 
   return needsUpdate;
 }
+
+export async function fullRefreshAllChannels(
+  progressCallback?: (current: number, total: number) => void
+): Promise<void> {
+  const channels = await loadChannels();
+  for (let i = 0; i < channels.length; i++) {
+    const channel = channels[i];
+    progressCallback?.(i + 1, channels.length);
+
+    const url = `https://www.youtube.com/channel/${channel.id}`;
+    const fresh = await parseYouTubeChannel(url);
+
+    await addOrUpdateChannel({
+      ...fresh,
+      unreadCount: 0,
+      lastUpdated: Date.now(),
+    });
+  }
+}

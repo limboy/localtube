@@ -144,3 +144,22 @@ export async function checkAllPlaylistsForUpdates(
   }
   return needsUpdate;
 }
+
+export async function fullRefreshAllPlaylists(
+  progressCallback?: (current: number, total: number) => void
+): Promise<void> {
+  const playlists = await loadPlaylists();
+  for (let i = 0; i < playlists.length; i++) {
+    const playlist = playlists[i];
+    progressCallback?.(i + 1, playlists.length);
+
+    const url = `https://www.youtube.com/playlist?list=${playlist.id}`;
+    const fresh = await parseYouTubePlaylist(url);
+
+    await addOrUpdatePlaylist({
+      ...fresh,
+      unreadCount: 0,
+      lastUpdated: Date.now(),
+    });
+  }
+}

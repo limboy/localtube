@@ -65,8 +65,8 @@ import { PlaylistInfo, ChannelInfo, EnrichedBookmark, FolderInfo, SidebarItem } 
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
-import { checkAllPlaylistsForUpdates, parseYouTubePlaylist } from "@/lib/playlist-parser";
-import { checkAllChannelsForUpdates, parseYouTubeChannel } from "@/lib/channel-parser";
+import { checkAllPlaylistsForUpdates, fullRefreshAllPlaylists, parseYouTubePlaylist } from "@/lib/playlist-parser";
+import { checkAllChannelsForUpdates, fullRefreshAllChannels, parseYouTubeChannel } from "@/lib/channel-parser";
 import { isVideoUrl, parseYouTubeVideo } from "@/lib/video-parser";
 import { loadBookmarks, saveBookmarks } from "@/lib/utils";
 import SearchDialog from "@/components/search-dialog";
@@ -780,7 +780,8 @@ export default function AppSidebar() {
     return items;
   }
 
-  const handleRefreshAll = async () => {
+  const handleRefreshAll = async (e: React.MouseEvent) => {
+    const fullRefresh = e.shiftKey;
     const pItemsCount = playlists.length;
     const cItemsCount = channels.length;
     const totalCount = pItemsCount + cItemsCount;
@@ -790,17 +791,29 @@ export default function AppSidebar() {
     setRefreshProgress(null);
 
     try {
-      await checkAllPlaylistsForUpdates((current) => {
-        setRefreshProgress({ current, total: totalCount });
-      });
+      if (fullRefresh) {
+        await fullRefreshAllPlaylists((current) => {
+          setRefreshProgress({ current, total: totalCount });
+        });
+      } else {
+        await checkAllPlaylistsForUpdates((current) => {
+          setRefreshProgress({ current, total: totalCount });
+        });
+      }
       const newPlaylists = await loadPlaylists();
       setPlaylists(newPlaylists);
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingPlaylists(false);
 
-      await checkAllChannelsForUpdates((current) => {
-        setRefreshProgress({ current: pItemsCount + current, total: totalCount });
-      });
+      if (fullRefresh) {
+        await fullRefreshAllChannels((current) => {
+          setRefreshProgress({ current: pItemsCount + current, total: totalCount });
+        });
+      } else {
+        await checkAllChannelsForUpdates((current) => {
+          setRefreshProgress({ current: pItemsCount + current, total: totalCount });
+        });
+      }
       const newChannels = await loadChannels();
       setChannels(newChannels);
       window.dispatchEvent(new CustomEvent('store-updated'));
