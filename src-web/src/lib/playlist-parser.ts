@@ -31,7 +31,14 @@ function mapVideo(v: any): VideoItem | null {
     ? "Live"
     : v.duration?.text ?? v.length_text?.toString?.() ?? "Live";
 
-  const publishedText = v.published?.text ?? v.published?.toString?.() ?? "";
+  const videoInfoText = v.video_info?.text ?? v.video_info?.toString?.() ?? "";
+  let publishedText = v.published?.text ?? v.published?.toString?.() ?? "";
+  if (!publishedText && videoInfoText) {
+    const parts = videoInfoText.split(/ \u2022 | \u00b7 | \u2027 | \u2022 | • /);
+    if (parts.length > 1) {
+      publishedText = parts[parts.length - 1]?.trim() || "";
+    }
+  }
   const publishedAt = parseRelativeTime(publishedText);
 
   return { id, title, thumbnail, duration, publishedAt };

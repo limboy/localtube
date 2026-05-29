@@ -17,6 +17,7 @@ import YTPlayer, { YTPlayerHandle } from "./yt-player";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { PanelRight } from "lucide-react";
 import { UpdateIndicator } from "./update-indicator";
+import { formatRelativeTime } from "@/lib/time-utils";
 
 export default function HistoryPlayer() {
   const [history, setHistory] = useState<WatchHistoryEntry[]>([]);
@@ -244,17 +245,22 @@ export default function HistoryPlayer() {
                       setShouldAutoPlay(true);
                     }}
                   >
-                    <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
+                    <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden relative">
                       <img
                         src={entry.thumbnail}
                         alt={entry.title}
                         className="w-full h-full object-cover"
                       />
+                      {entry.duration && (
+                        <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-white text-[9px] font-medium px-1 rounded-sm select-none">
+                          {entry.duration}
+                        </span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0 user-select-none" style={{ WebkitUserSelect: "none" }}>
                       <span className="line-clamp-1 text-sm leading-tight mb-0.5" title={entry.title}>{entry.title}</span>
                       <div className="flex items-center opacity-50 text-sm font-normal mt-0.5 min-w-0">
-                        <span className="truncate">{entry.duration}</span>
+                        <span className="truncate">{entry.watchedAt ? formatRelativeTime(entry.watchedAt) : ""}</span>
                       </div>
                     </div>
                   </div>

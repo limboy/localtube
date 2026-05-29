@@ -18,3 +18,36 @@ export function parseRelativeTime(text: string): number | undefined {
   if (!ms) return undefined;
   return Date.now() - amount * ms;
 }
+
+export function formatRelativeTime(timestamp: number | undefined): string {
+  if (!timestamp) return "";
+  const diff = Date.now() - timestamp;
+  if (diff < 1000) return "just now";
+
+  if (diff >= UNITS.year) {
+    const years = Math.floor(diff / UNITS.year);
+    return `${years} year${years === 1 ? "" : "s"} ago`;
+  }
+  if (diff >= UNITS.month) {
+    const months = Math.floor(diff / UNITS.month);
+    return `${months} month${months === 1 ? "" : "s"} ago`;
+  }
+  if (diff >= UNITS.week) {
+    const weeks = Math.floor(diff / UNITS.week);
+    return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  }
+  if (diff >= UNITS.day) {
+    const days = Math.floor(diff / UNITS.day);
+    return `${days} day${days === 1 ? "" : "s"} ago`;
+  }
+  if (diff >= UNITS.hour) {
+    const hours = Math.floor(diff / UNITS.hour);
+    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  }
+  if (diff >= UNITS.minute) {
+    const minutes = Math.floor(diff / UNITS.minute);
+    return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  }
+  const seconds = Math.floor(diff / UNITS.second);
+  return `${seconds} second${seconds === 1 ? "" : "s"} ago`;
+}

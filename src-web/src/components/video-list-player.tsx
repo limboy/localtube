@@ -22,6 +22,7 @@ import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import YTPlayer, { YTPlayerHandle } from "./yt-player";
 import { useNavigate } from "@tanstack/react-router";
+import { formatRelativeTime } from "@/lib/time-utils";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { PanelRight } from "lucide-react";
 import { UpdateIndicator } from "./update-indicator";
@@ -540,18 +541,23 @@ export default function VideoListPlayer({
                         setShouldAutoPlay(true);
                       }}
                     >
-                      <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden">
+                      <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden relative">
                         <img
                           src={video.thumbnail}
                           alt={video.title}
                           className="w-full h-full object-cover"
                         />
+                        {video.duration && (
+                          <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-white text-[9px] font-medium px-1 rounded-sm select-none">
+                            {video.duration}
+                          </span>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0 user-select-none" style={{ WebkitUserSelect: "none" }}>
                         <span className="line-clamp-1 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
                         <div className="flex items-center justify-between opacity-50 text-sm font-normal mt-0.5 min-w-0">
                           <div className="flex items-center gap-1.5 min-w-0 mr-2 flex-1">
-                            <span className="truncate">{video.duration}</span>
+                            <span className="truncate">{video.publishedAt ? formatRelativeTime(video.publishedAt) : ""}</span>
                           </div>
                           <div className="flex items-center gap-0.5 shrink-0">
                             {video.isSkipped ? (

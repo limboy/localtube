@@ -226,11 +226,18 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
                     onClick={() => selectResult(result)}
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
-                    <img
-                      src={result.thumbnail}
-                      alt=""
-                      className="w-16 h-9 rounded object-cover shrink-0 bg-muted"
-                    />
+                    <div className="relative w-16 h-9 shrink-0 bg-muted rounded overflow-hidden">
+                      <img
+                        src={result.thumbnail}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                      {result.duration && (
+                        <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-white text-[9px] font-medium px-1 rounded-sm select-none">
+                          {result.duration}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm line-clamp-1">{result.title}</div>
                       <div className="flex items-center gap-1 mt-0.5">
@@ -238,11 +245,6 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
                         <span className="text-xs text-muted-foreground line-clamp-1">
                           {result.sourceTitle}
                         </span>
-                        {result.duration && (
-                          <span className="text-xs text-muted-foreground ml-auto shrink-0">
-                            {result.duration}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
