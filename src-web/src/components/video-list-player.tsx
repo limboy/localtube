@@ -541,7 +541,7 @@ export default function VideoListPlayer({
                         setShouldAutoPlay(true);
                       }}
                     >
-                      <div className="w-16 h-10 flex-none bg-muted rounded overflow-hidden relative">
+                      <div className="w-24 h-14 flex-none bg-muted rounded overflow-hidden relative">
                         <img
                           src={video.thumbnail}
                           alt={video.title}
@@ -553,9 +553,9 @@ export default function VideoListPlayer({
                           </span>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0 user-select-none" style={{ WebkitUserSelect: "none" }}>
-                        <span className="line-clamp-1 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
-                        <div className="flex items-center justify-between opacity-50 text-sm font-normal mt-0.5 min-w-0">
+                      <div className="flex-1 min-w-0 user-select-none flex flex-col justify-between h-14" style={{ WebkitUserSelect: "none" }}>
+                        <span className="line-clamp-2 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
+                        <div className="flex items-center justify-between opacity-50 text-xs font-normal min-w-0">
                           <div className="flex items-center gap-1.5 min-w-0 mr-2 flex-1">
                             <span className="truncate">{video.publishedAt ? formatRelativeTime(video.publishedAt) : ""}</span>
                           </div>
