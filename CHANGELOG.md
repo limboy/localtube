@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.6](https://github.com/limboy/localtube/compare/v1.2.5...v1.2.6) - 2026-05-29
+
+### Features
+
+- display duration overlay on thumbnail and relative publication time on lists ([dad0737](https://github.com/limboy/localtube/commit/dad0737eeb28132325b13b78d25ecd6f16578582))
+- remove bookmarks count and disable autoplay on bookmarks load ([f2deced](https://github.com/limboy/localtube/commit/f2deced50fe19ba4cdab4045f1930d5560623fe7))
+- navigate to latest section on start ([c6d1c03](https://github.com/limboy/localtube/commit/c6d1c03a7c5501363a12644be6511e07130af408))
+
+### Documentation
+
+- update CHANGELOG for v1.2.5 ([4f47e43](https://github.com/limboy/localtube/commit/4f47e436464a254a11610a7d6bf5e802bdd4cb46))
+
+### Styles
+
+- change right sidebar text color to text-foreground ([0a84d31](https://github.com/limboy/localtube/commit/0a84d313d07e1435512085031712e18766205c70))
+- enlarge video list thumbnails and clamp titles to two lines ([201b0e3](https://github.com/limboy/localtube/commit/201b0e33b394e1b1bb3a9711ab12e1ef2c1e96f9))
+
+### Other Changes
+
+- Update .gitignore ([4c90fb5](https://github.com/limboy/localtube/commit/4c90fb5620e1f15abc1088e6f2b0c6b35d35b339))
+
 ## [v1.2.5](https://github.com/limboy/localtube/compare/v1.2.4...v1.2.5) - 2026-05-29
 
 ### Features
