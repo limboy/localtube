@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.0](https://github.com/limboy/localtube/compare/v1.1.7...v1.2.0) - 2026-05-29
+
+### Features
+
+- support Shift+click on Refresh All for full re-fetch ([15c946e](https://github.com/limboy/localtube/commit/15c946e713185bfa150837e12e785960eeedd436))
+- add Export/Import data in Settings menu ([85cdd9c](https://github.com/limboy/localtube/commit/85cdd9c4f4aa08e46e73c8883cbdba053c4e8c99))
+- add Latest view showing newest videos across all subscriptions ([8340ca8](https://github.com/limboy/localtube/commit/8340ca8ff065c1a4edd56eeab3c9f0b65661ea98))
+- remember and restore video playback position ([bd123ed](https://github.com/limboy/localtube/commit/bd123ed6f8cbfbe06e7b26bd089252a072150fba))
+- warn when adding a playlist or channel that already exists ([e83f370](https://github.com/limboy/localtube/commit/e83f3709ebe85f5d056fae87565bf14c53a1a147))
+- add History view with watched videos tracking ([0593243](https://github.com/limboy/localtube/commit/0593243fa54f8996b2b8a81f2a09babf9f7019bd))
+- add Spotlight-style search dialog for videos ([c7579df](https://github.com/limboy/localtube/commit/c7579df470a124acbb0b26d88fefb3013ae062cd))
+- move refresh icon to Collections header line ([2169240](https://github.com/limboy/localtube/commit/2169240bda628636ed864ac9ff204b8366ba8b0d))
+
+### Bug Fixes
+
+- add video to history when it actually plays, not when selected ([7abe694](https://github.com/limboy/localtube/commit/7abe694f19b4f9aafb6df0f5701bf2f611e53fe0))
+
+### Documentation
+
+- update CHANGELOG for v1.1.7 ([6ea6e81](https://github.com/limboy/localtube/commit/6ea6e8153c52bc2827c242d755329208032759d5))
+
+### Styles
+
+- **sidebar:** remove redundant check icon from Pin to Top menu item ([9775d86](https://github.com/limboy/localtube/commit/9775d863c0992dd388de96078a01405b6dbae961))
+- **sidebar:** adjust icon spacing in dropdown menu items ([bd0c4e5](https://github.com/limboy/localtube/commit/bd0c4e5f7526afaf1e8c6423d7a01ca8007608ce))
+
 ## [v1.1.7](https://github.com/limboy/localtube/compare/v1.1.6...v1.1.7) - 2026-05-28
 
 ### Features
