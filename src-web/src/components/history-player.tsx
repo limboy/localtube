@@ -190,7 +190,7 @@ export default function HistoryPlayer() {
         </div>
       </div>
 
-      <Sidebar side="right" className="border-l border-sidebar-border">
+      <Sidebar side="right" className="border-l border-sidebar-border text-foreground">
         <SidebarContent className="bg-background gap-0 overflow-hidden">
           <div data-tauri-drag-region className="h-11 flex items-center justify-between sticky top-0 bg-background z-10 w-full border-b border-sidebar-border! shrink-0">
             <div className="flex flex-row justify-between w-full px-4 items-center gap-2">
