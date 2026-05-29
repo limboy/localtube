@@ -49,7 +49,6 @@ import {
   addOrUpdateChannel,
   loadPlaylists,
   loadChannels,
-  enrichBookmarks,
   loadFolders,
   loadSidebarOrder,
   createFolder,
@@ -61,7 +60,7 @@ import {
   exportData,
   importData,
 } from "@/lib/utils";
-import { PlaylistInfo, ChannelInfo, EnrichedBookmark, FolderInfo, SidebarItem } from "@/types";
+import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem } from "@/types";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
@@ -316,7 +315,6 @@ export default function AppSidebar() {
   const [addingPlaylistOrChannel, setAddingPlaylistOrChannel] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
-  const [bookmarks, setBookmarks] = useState<EnrichedBookmark[]>([]);
   const lastCheckTimeRef = useRef<number>(Date.now());
 
   // Tabs effect removed
@@ -379,9 +377,6 @@ export default function AppSidebar() {
 
       const oData = await loadSidebarOrder();
       setSidebarOrder(oData);
-
-      const bData = await enrichBookmarks(pData, cData);
-      setBookmarks(bData);
     } catch (e) {
       console.error("Failed to refresh sidebar data:", e);
     }
@@ -954,9 +949,6 @@ export default function AppSidebar() {
                             <span>Bookmarks</span>
                           </div>
                         </SidebarMenuButton>
-                        {bookmarks.length > 0 && (
-                          <SidebarMenuBadge className="opacity-50">{bookmarks.length}</SidebarMenuBadge>
-                        )}
                       </SidebarMenuItem>
                       <SidebarMenuItem className="list-none w-full">
                         <SidebarMenuButton

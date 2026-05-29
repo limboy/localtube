@@ -18,6 +18,7 @@ function RouteComponent() {
     <VideoListPlayer 
       showBookmarkedOnly={true} 
       initialVideoId={videoId}
+      autoPlay={false}
     />
   )
 }
