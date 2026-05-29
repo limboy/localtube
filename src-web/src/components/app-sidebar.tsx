@@ -540,11 +540,11 @@ export default function AppSidebar() {
     setAddingPlaylistOrChannel(true);
     setError(null);
     try {
+      let urlToParse = playlistOrChannelUrl.trim();
+      if (!urlToParse.startsWith('http://') && !urlToParse.startsWith('https://')) {
+        urlToParse = 'https://' + urlToParse;
+      }
       try {
-        let urlToParse = playlistOrChannelUrl.trim();
-        if (!urlToParse.startsWith('http://') && !urlToParse.startsWith('https://')) {
-          urlToParse = 'https://' + urlToParse;
-        }
         new URL(urlToParse);
       } catch {
         throw new Error("Please enter a valid URL.");
@@ -559,6 +559,15 @@ export default function AppSidebar() {
       }
 
       if (isPlaylist) {
+        const playlistId = new URL(urlToParse).searchParams.get("list");
+        if (playlistId) {
+          const existingPlaylists = await loadPlaylists();
+          const existing = existingPlaylists.find(p => p.id === playlistId);
+          if (existing) {
+            throw new Error(`Playlist "${existing.title}" is already in your library.`);
+          }
+        }
+
         const playlist = await parseYouTubePlaylist(playlistOrChannelUrl);
         await addOrUpdatePlaylist(playlist);
 
@@ -591,7 +600,25 @@ export default function AppSidebar() {
           search: { videoId: video.id }
         });
       } else if (isChannel) {
+        const directMatch = urlToParse.match(/\/channel\/(UC[\w-]+)/);
+        if (directMatch) {
+          const existingChannels = await loadChannels();
+          const existing = existingChannels.find(c => c.id === directMatch[1]);
+          if (existing) {
+            throw new Error(`Channel "${existing.title}" is already in your library.`);
+          }
+        }
+
         const channel = await parseYouTubeChannel(playlistOrChannelUrl);
+
+        if (!directMatch) {
+          const existingChannels = await loadChannels();
+          const existing = existingChannels.find(c => c.id === channel.id);
+          if (existing) {
+            throw new Error(`Channel "${existing.title}" is already in your library.`);
+          }
+        }
+
         await addOrUpdateChannel(channel);
 
         await refreshSidebarData();
