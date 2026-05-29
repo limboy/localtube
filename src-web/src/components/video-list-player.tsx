@@ -145,8 +145,8 @@ export default function VideoListPlayer({
                 };
               }
               return null;
-            }).filter((item): item is VideoItem & { bookmarkedAt: number } => item !== null)
-              .sort((a, b) => b.bookmarkedAt - a.bookmarkedAt);
+            }).filter((item) => item !== null)
+              .sort((a, b) => (b.bookmarkedAt ?? 0) - (a.bookmarkedAt ?? 0));
           const videoList: VideoListInfo = {
             id: "bookmarks",
             title: "Bookmarked Videos",
