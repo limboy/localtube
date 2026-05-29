@@ -501,20 +501,28 @@ export default function AppSidebar() {
   const hasLoadedRef = useRef(false);
   useEffect(() => {
     if (hasLoadedRef.current) return;
-    if (playlists.length > 0 || channels.length > 0) {
-      if (location.pathname === '/' || location.pathname === '/playlist' || location.pathname === '/channel') {
-        const firstPlaylist = playlists[0];
-        const firstChannel = channels[0];
-        if (firstPlaylist) {
-          handlePlaylistClick(firstPlaylist.id);
-          hasLoadedRef.current = true;
-        } else if (firstChannel) {
-          handleChannelClick(firstChannel.id);
-          hasLoadedRef.current = true;
+    if (sidebarOrder.length === 0) return;
+    if (location.pathname === '/' || location.pathname === '/playlist' || location.pathname === '/channel') {
+      let firstItem: { type: 'playlist' | 'channel'; id: string } | null = null;
+      for (const entry of sidebarOrder) {
+        if (entry.type === 'playlist' || entry.type === 'channel') {
+          firstItem = entry;
+          break;
+        }
+        if (entry.type === 'folder' && entry.children.length > 0) {
+          firstItem = entry.children[0];
+          break;
         }
       }
+      if (firstItem?.type === 'playlist') {
+        handlePlaylistClick(firstItem.id);
+        hasLoadedRef.current = true;
+      } else if (firstItem?.type === 'channel') {
+        handleChannelClick(firstItem.id);
+        hasLoadedRef.current = true;
+      }
     }
-  }, [playlists, channels, location.pathname]);
+  }, [sidebarOrder, location.pathname]);
 
 
 
