@@ -3,6 +3,9 @@ import {
   loadWatchHistory,
   clearWatchHistory,
   getVideoDescription,
+  loadPlaybackPosition,
+  savePlaybackPosition,
+  clearPlaybackPosition,
 } from "@/lib/utils";
 import { WatchHistoryEntry } from "@/types";
 
@@ -10,7 +13,7 @@ import { Loader, Trash2 } from "lucide-react";
 
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
-import YTPlayer from "./yt-player";
+import YTPlayer, { YTPlayerHandle } from "./yt-player";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { PanelRight } from "lucide-react";
 import { UpdateIndicator } from "./update-indicator";
@@ -20,10 +23,22 @@ export default function HistoryPlayer() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
+  const [startSeconds, setStartSeconds] = useState<number | undefined>(undefined);
   const [description, setDescription] = useState<string>("");
   const [isLoadingDescription, setIsLoadingDescription] = useState(false);
 
+  const playerRef = useRef<YTPlayerHandle>(null);
   const playNextVideoRef = useRef<() => void>(() => {});
+
+  const switchVideo = async (videoId: string | null) => {
+    if (videoId) {
+      const pos = await loadPlaybackPosition(videoId);
+      setStartSeconds(pos ? pos.position : undefined);
+    } else {
+      setStartSeconds(undefined);
+    }
+    setCurrentVideoId(videoId);
+  };
 
   useEffect(() => {
     async function fetchHistory() {
@@ -31,7 +46,7 @@ export default function HistoryPlayer() {
       const data = await loadWatchHistory();
       setHistory(data);
       if (data.length > 0 && !currentVideoId) {
-        setCurrentVideoId(data[0].videoId);
+        await switchVideo(data[0].videoId);
       }
       setIsLoading(false);
     }
@@ -60,7 +75,7 @@ export default function HistoryPlayer() {
       const idx = history.findIndex(e => e.videoId === currentVideoId);
       const nextIdx = idx + 1;
       if (nextIdx < history.length) {
-        setCurrentVideoId(history[nextIdx].videoId);
+        switchVideo(history[nextIdx].videoId);
         setShouldAutoPlay(true);
       }
     };
@@ -78,6 +93,19 @@ export default function HistoryPlayer() {
         setIsLoadingDescription(false);
       });
     }
+  }, [currentVideoId]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (playerRef.current && currentVideoId) {
+        const time = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
+        if (time > 0 && duration > 0) {
+          savePlaybackPosition(currentVideoId, time, duration);
+        }
+      }
+    }, 5000);
+    return () => clearInterval(interval);
   }, [currentVideoId]);
 
   const handleClearHistory = async () => {
@@ -123,10 +151,15 @@ export default function HistoryPlayer() {
             <div className="p-4 w-full bg-background flex flex-col">
               <div className="aspect-video relative">
                 <YTPlayer
+                  ref={playerRef}
                   videoId={currentVideoId}
-                  onVideoEnd={() => playNextVideoRef.current()}
+                  onVideoEnd={() => {
+                    if (currentVideoId) clearPlaybackPosition(currentVideoId);
+                    playNextVideoRef.current();
+                  }}
                   forceReplay={false}
                   autoPlay={shouldAutoPlay}
+                  startSeconds={startSeconds}
                 />
               </div>
               {currentVideo && (
@@ -207,7 +240,7 @@ export default function HistoryPlayer() {
                       currentVideoId === entry.videoId && "bg-accent"
                     )}
                     onClick={() => {
-                      setCurrentVideoId(entry.videoId);
+                      switchVideo(entry.videoId);
                       setShouldAutoPlay(true);
                     }}
                   >

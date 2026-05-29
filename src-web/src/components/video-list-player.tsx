@@ -9,7 +9,10 @@ import {
   loadSkippedVideos,
   saveSkippedVideos,
   getVideoDescription,
-  addToWatchHistory
+  addToWatchHistory,
+  loadPlaybackPosition,
+  savePlaybackPosition,
+  clearPlaybackPosition,
 } from "@/lib/utils";
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 
@@ -17,7 +20,7 @@ import { Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "luc
 
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
-import YTPlayer from "./yt-player";
+import YTPlayer, { YTPlayerHandle } from "./yt-player";
 import { useNavigate } from "@tanstack/react-router";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { PanelRight } from "lucide-react";
@@ -52,8 +55,20 @@ export default function VideoListPlayer({
   const [skippedVideos, setSkippedVideos] = useState<Set<string>>(new Set());
   const [shouldAutoPlay, setShouldAutoPlay] = useState(autoPlay);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [startSeconds, setStartSeconds] = useState<number | undefined>(undefined);
   const userInitiatedRef = useRef(false);
+  const playerRef = useRef<YTPlayerHandle>(null);
   const navigate = useNavigate();
+
+  const switchVideo = async (videoId: string | null) => {
+    if (videoId) {
+      const pos = await loadPlaybackPosition(videoId);
+      setStartSeconds(pos ? pos.position : undefined);
+    } else {
+      setStartSeconds(undefined);
+    }
+    setCurrentVideoId(videoId);
+  };
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -141,7 +156,7 @@ export default function VideoListPlayer({
           if (isSourceChange) {
             const processedVideos = processVideoList(videoList.items, bookmarks, showBookmarkedOnly);
             const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
-            setCurrentVideoId(initialVideoId || firstNonSkipped?.id || null);
+            await switchVideo(initialVideoId || firstNonSkipped?.id || null);
           }
           return;
         }
@@ -166,7 +181,7 @@ export default function VideoListPlayer({
           if (isSourceChange) {
             const processedVideos = processVideoList(uniqueItems, bookmarks, showBookmarkedOnly);
             const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
-            setCurrentVideoId(initialVideoId || firstNonSkipped?.id || null);
+            await switchVideo(initialVideoId || firstNonSkipped?.id || null);
           }
         } else if (playlistId || channelId) {
           if (isSourceChange) setError("Playlist or channel not found");
@@ -187,7 +202,7 @@ export default function VideoListPlayer({
       const videoExists = items.some((item) => item.id === currentVideoId);
       if (!videoExists) {
         if (!initialVideoId) {
-          setCurrentVideoId(items[0]?.id || null);
+          switchVideo(items[0]?.id || null);
         }
       }
     }
@@ -195,7 +210,7 @@ export default function VideoListPlayer({
 
   useEffect(() => {
     if (initialVideoId) {
-      setCurrentVideoId(initialVideoId);
+      switchVideo(initialVideoId);
     }
   }, [initialVideoId]);
 
@@ -279,31 +294,27 @@ export default function VideoListPlayer({
       if (isShuffled && shuffledItems.length) {
         const idx = currentVideoId ? shuffledItems.findIndex((v) => v.id === currentVideoId) : -1;
         let nextIdx = idx + 1;
-        // Find next non-skipped video
         while (nextIdx < shuffledItems.length && skippedVideos.has(shuffledItems[nextIdx].id)) {
           nextIdx++;
         }
-        // If we reached the end and loop mode is all, start from beginning
         if (nextIdx >= shuffledItems.length && loopMode === "all") {
           nextIdx = shuffledItems.findIndex(v => !skippedVideos.has(v.id));
         }
         if (nextIdx >= 0 && nextIdx < shuffledItems.length) {
-          setCurrentVideoId(shuffledItems[nextIdx].id);
+          switchVideo(shuffledItems[nextIdx].id);
         }
       } else {
         const items = processVideoList(videolist.items, bookmarkedVideos, showBookmarkedOnly);
         const currentIndex = items.findIndex((item) => item.id === currentVideoId);
         let nextIndex = currentIndex + 1;
-        // Find next non-skipped video
         while (nextIndex < items.length && skippedVideos.has(items[nextIndex].id)) {
           nextIndex++;
         }
-        // If we reached the end and loop mode is all, start from beginning
         if (nextIndex >= items.length && loopMode === "all") {
           nextIndex = items.findIndex(v => !skippedVideos.has(v.id));
         }
         if (nextIndex >= 0 && nextIndex < items.length) {
-          setCurrentVideoId(items[nextIndex].id);
+          switchVideo(items[nextIndex].id);
         }
       }
     };
@@ -329,6 +340,19 @@ export default function VideoListPlayer({
         userInitiatedRef.current = false;
       }
     }
+  }, [currentVideoId]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (playerRef.current && currentVideoId) {
+        const time = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
+        if (time > 0 && duration > 0) {
+          savePlaybackPosition(currentVideoId, time, duration);
+        }
+      }
+    }, 5000);
+    return () => clearInterval(interval);
   }, [currentVideoId]);
 
   const toggleBookmark = async (videoId: string, event: React.MouseEvent) => {
@@ -407,10 +431,15 @@ export default function VideoListPlayer({
             <div className="p-4 w-full bg-background flex flex-col">
               <div className="aspect-video relative">
                 <YTPlayer
+                  ref={playerRef}
                   videoId={currentVideoId || ""}
-                  onVideoEnd={() => playNextVideoRef.current()}
+                  onVideoEnd={() => {
+                    if (currentVideoId) clearPlaybackPosition(currentVideoId);
+                    playNextVideoRef.current();
+                  }}
                   forceReplay={forceReplay}
                   autoPlay={shouldAutoPlay}
+                  startSeconds={startSeconds}
                 />
               </div>
               {currentVideoId && (
@@ -506,7 +535,7 @@ export default function VideoListPlayer({
                           addToWatchHistory(video);
                         } else {
                           userInitiatedRef.current = true;
-                          setCurrentVideoId(video.id);
+                          switchVideo(video.id);
                         }
                         setShouldAutoPlay(true);
                       }}

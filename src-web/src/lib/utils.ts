@@ -369,6 +369,43 @@ export async function saveSkippedVideos(skippedVideos: Set<string>) {
   window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
+export interface PlaybackPosition {
+  position: number;
+  duration: number;
+  updatedAt: number;
+}
+
+export async function loadPlaybackPosition(videoId: string): Promise<PlaybackPosition | null> {
+  const store = await getStore();
+  const positions = (await store.get<Record<string, PlaybackPosition>>("playbackPositions")) || {};
+  return positions[videoId] || null;
+}
+
+export async function savePlaybackPosition(videoId: string, position: number, duration: number) {
+  if (duration <= 0) return;
+  const store = await getStore();
+  const positions = (await store.get<Record<string, PlaybackPosition>>("playbackPositions")) || {};
+  const nearEnd = (duration - position) < 10;
+  if (position < 5 || nearEnd) {
+    if (positions[videoId]) {
+      delete positions[videoId];
+      await store.set("playbackPositions", positions);
+    }
+    return;
+  }
+  positions[videoId] = { position, duration, updatedAt: Date.now() };
+  await store.set("playbackPositions", positions);
+}
+
+export async function clearPlaybackPosition(videoId: string) {
+  const store = await getStore();
+  const positions = (await store.get<Record<string, PlaybackPosition>>("playbackPositions")) || {};
+  if (positions[videoId]) {
+    delete positions[videoId];
+    await store.set("playbackPositions", positions);
+  }
+}
+
 export function disableInspectShortcut() {
   document.addEventListener(
     "keydown",

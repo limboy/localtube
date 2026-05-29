@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
 
 interface YTPlayerEvent {
   data: number;
@@ -6,25 +6,41 @@ interface YTPlayerEvent {
 
 interface IFramePlayer {
   loadVideoById: (params: { videoId: string }) => void;
+  cueVideoById: (params: { videoId: string }) => void;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
   destroy: () => void;
 }
 
-export default function YTPlayer({
-  videoId,
-  onVideoEnd,
-  forceReplay = false,
-  autoPlay = true
-}: {
+export interface YTPlayerHandle {
+  getCurrentTime: () => number;
+  getDuration: () => number;
+}
+
+const YTPlayer = forwardRef<YTPlayerHandle, {
   videoId: string;
   onVideoEnd?: () => void;
   forceReplay?: boolean;
   autoPlay?: boolean;
-}) {
+  startSeconds?: number;
+}>(function YTPlayer({
+  videoId,
+  onVideoEnd,
+  forceReplay = false,
+  autoPlay = true,
+  startSeconds,
+}, ref) {
   const playerRef = useRef<IFramePlayer | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAPIReady, setIsAPIReady] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const pendingSeekRef = useRef<number | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    getCurrentTime: () => playerRef.current?.getCurrentTime() ?? 0,
+    getDuration: () => playerRef.current?.getDuration() ?? 0,
+  }));
 
   // Initial API loading effect
   useEffect(() => {
@@ -96,12 +112,17 @@ export default function YTPlayer({
     };
   }, [isAPIReady]);
 
+  const startSecondsRef = useRef(startSeconds);
+  startSecondsRef.current = startSeconds;
+
   // Video loading effect
   useEffect(() => {
     if (playerRef.current && videoId && isPlayerReady) {
       if (forceReplay) {
+        pendingSeekRef.current = null;
         playerRef.current.seekTo(0, true);
       } else {
+        pendingSeekRef.current = startSecondsRef.current ?? null;
         if (autoPlay) {
           playerRef.current.loadVideoById({ videoId });
         } else {
@@ -115,6 +136,7 @@ export default function YTPlayer({
     console.log('Player ready:', playerRef.current);
     setIsPlayerReady(true);
     if (videoId && playerRef.current) {
+      pendingSeekRef.current = startSecondsRef.current ?? null;
       if (autoPlay) {
         playerRef.current.loadVideoById({ videoId });
       } else {
@@ -132,10 +154,18 @@ export default function YTPlayer({
   };
 
   const onPlayerStateChange = (event: YTPlayerEvent) => {
+    // YT.PlayerState.PLAYING === 1
+    if (event.data === 1 && pendingSeekRef.current !== null) {
+      const seekTo = pendingSeekRef.current;
+      pendingSeekRef.current = null;
+      playerRef.current?.seekTo(seekTo, true);
+    }
     if (event.data === 0 && onVideoEnd) {
       onVideoEnd();
     }
   };
 
   return <div ref={containerRef} className="w-full h-full bg-black"></div>;
-}
+});
+
+export default YTPlayer;
