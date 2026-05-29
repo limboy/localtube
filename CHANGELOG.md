@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.4](https://github.com/limboy/localtube/compare/v1.2.3...v1.2.4) - 2026-05-29
+
+### Bug Fixes
+
+- **bookmarks:** fix TypeScript errors in bookmark sorting filter ([4086266](https://github.com/limboy/localtube/commit/4086266b87181905fede1ba92f16367117b01f11))
+
+### Documentation
+
+- update CHANGELOG for v1.2.3 ([b93fcc9](https://github.com/limboy/localtube/commit/b93fcc9731ff9f2e388b80307114a1f9af3b2819))
+
 ## [v1.2.3](https://github.com/limboy/localtube/compare/v1.2.2...v1.2.3) - 2026-05-29
 
 ### Bug Fixes
