@@ -332,13 +332,7 @@ export default function VideoListPlayer({
         setIsLoadingDescription(false);
       });
 
-      if (userInitiatedRef.current && videolist) {
-        const video = videolist.items.find(v => v.id === currentVideoId);
-        if (video) {
-          addToWatchHistory(video);
-        }
-        userInitiatedRef.current = false;
-      }
+      userInitiatedRef.current = false;
     }
   }, [currentVideoId]);
 
@@ -437,6 +431,12 @@ export default function VideoListPlayer({
                     if (currentVideoId) clearPlaybackPosition(currentVideoId);
                     playNextVideoRef.current();
                   }}
+                  onPlay={() => {
+                    if (currentVideoId && videolist) {
+                      const video = videolist.items.find(v => v.id === currentVideoId);
+                      if (video) addToWatchHistory(video);
+                    }
+                  }}
                   forceReplay={forceReplay}
                   autoPlay={shouldAutoPlay}
                   startSeconds={startSeconds}
@@ -531,9 +531,7 @@ export default function VideoListPlayer({
                         video.isSkipped && "opacity-50"
                       )}
                       onClick={() => {
-                        if (currentVideoId === video.id) {
-                          addToWatchHistory(video);
-                        } else {
+                        if (currentVideoId !== video.id) {
                           userInitiatedRef.current = true;
                           switchVideo(video.id);
                         }

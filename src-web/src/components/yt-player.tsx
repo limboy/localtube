@@ -21,12 +21,14 @@ export interface YTPlayerHandle {
 const YTPlayer = forwardRef<YTPlayerHandle, {
   videoId: string;
   onVideoEnd?: () => void;
+  onPlay?: () => void;
   forceReplay?: boolean;
   autoPlay?: boolean;
   startSeconds?: number;
 }>(function YTPlayer({
   videoId,
   onVideoEnd,
+  onPlay,
   forceReplay = false,
   autoPlay = true,
   startSeconds,
@@ -36,6 +38,7 @@ const YTPlayer = forwardRef<YTPlayerHandle, {
   const [isAPIReady, setIsAPIReady] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const pendingSeekRef = useRef<number | null>(null);
+  const playFiredRef = useRef(false);
 
   useImperativeHandle(ref, () => ({
     getCurrentTime: () => playerRef.current?.getCurrentTime() ?? 0,
@@ -120,9 +123,11 @@ const YTPlayer = forwardRef<YTPlayerHandle, {
     if (playerRef.current && videoId && isPlayerReady) {
       if (forceReplay) {
         pendingSeekRef.current = null;
+        playFiredRef.current = false;
         playerRef.current.seekTo(0, true);
       } else {
         pendingSeekRef.current = startSecondsRef.current ?? null;
+        playFiredRef.current = false;
         if (autoPlay) {
           playerRef.current.loadVideoById({ videoId });
         } else {
@@ -153,12 +158,21 @@ const YTPlayer = forwardRef<YTPlayerHandle, {
     // console.log("autoplay blocked: " + event.data);
   };
 
+  const onPlayRef = useRef(onPlay);
+  onPlayRef.current = onPlay;
+
   const onPlayerStateChange = (event: YTPlayerEvent) => {
     // YT.PlayerState.PLAYING === 1
-    if (event.data === 1 && pendingSeekRef.current !== null) {
-      const seekTo = pendingSeekRef.current;
-      pendingSeekRef.current = null;
-      playerRef.current?.seekTo(seekTo, true);
+    if (event.data === 1) {
+      if (pendingSeekRef.current !== null) {
+        const seekTo = pendingSeekRef.current;
+        pendingSeekRef.current = null;
+        playerRef.current?.seekTo(seekTo, true);
+      }
+      if (!playFiredRef.current) {
+        playFiredRef.current = true;
+        onPlayRef.current?.();
+      }
     }
     if (event.data === 0 && onVideoEnd) {
       onVideoEnd();
