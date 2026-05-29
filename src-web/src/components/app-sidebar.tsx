@@ -937,7 +937,7 @@ export default function AppSidebar() {
                         <SidebarMenuButton
                           asChild
                           className={cn(
-                            "h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                            "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
                             bookmarkMatch ? "bg-sidebar-accent" : ""
                           )}
                         >
@@ -957,7 +957,7 @@ export default function AppSidebar() {
                         <SidebarMenuButton
                           asChild
                           className={cn(
-                            "h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                            "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
                             historyMatch ? "bg-sidebar-accent" : ""
                           )}
                         >
@@ -974,7 +974,7 @@ export default function AppSidebar() {
                         <SidebarMenuButton
                           asChild
                           className={cn(
-                            "h-auto py-2 w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                            "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
                             latestMatch ? "bg-sidebar-accent" : ""
                           )}
                         >
