@@ -1123,10 +1123,10 @@ export default function AppSidebar() {
                     <span>Settings</span>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="start" sideOffset={4} className="w-56">
-                  <DropdownMenuItem onClick={toggleAlwaysOnTop} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {isAlwaysOnTop ? <PinOff className="mr-2 h-4 w-4" /> : <Pin className="mr-2 h-4 w-4" />}
+                <DropdownMenuContent side="top" align="start" sideOffset={4} className="">
+                  <DropdownMenuItem onClick={toggleAlwaysOnTop} className="justify-between">
+                    <div className="flex items-center gap-2">
+                      {isAlwaysOnTop ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                       <span>{isAlwaysOnTop ? "Unpin from Top" : "Pin to Top"}</span>
                     </div>
                     {isAlwaysOnTop && <Check className="h-4 w-4" />}
@@ -1134,28 +1134,28 @@ export default function AppSidebar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger className="flex items-center">
-                      <SunMoon className="mr-2 h-4 w-4" />
+                      <SunMoon className="h-4 w-4" />
                       <span>Switch theme</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
                       <DropdownMenuSubContent>
                         <DropdownMenuItem onClick={() => setTheme("system")} className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <Monitor className="mr-2 h-4 w-4" />
+                            <Monitor className="h-4 w-4 mr-2" />
                             <span>System</span>
                           </div>
                           {theme === "system" && <Check className="h-4 w-4" />}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <Sun className="mr-2 h-4 w-4" />
+                            <Sun className="h-4 w-4 mr-2" />
                             <span>Light</span>
                           </div>
                           {theme === "light" && <Check className="h-4 w-4" />}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <Moon className="mr-2 h-4 w-4" />
+                            <Moon className="h-4 w-4 mr-2" />
                             <span>Dark</span>
                           </div>
                           {theme === "dark" && <Check className="h-4 w-4" />}
@@ -1165,14 +1165,14 @@ export default function AppSidebar() {
                   </DropdownMenuSub>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => exportData()}>
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download className="h-4 w-4" />
                     <span>Export Data</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={async () => {
                     const ok = await importData();
                     if (ok) window.location.reload();
                   }}>
-                    <Upload className="mr-2 h-4 w-4" />
+                    <Upload className="h-4 w-4" />
                     <span>Import Data</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
