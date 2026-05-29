@@ -26,6 +26,12 @@ const api = {
   setAlwaysOnTop: (flag: boolean) =>
     ipcRenderer.invoke("window:setAlwaysOnTop", flag) as Promise<void>,
 
+  saveFile: (content: string, defaultName: string) =>
+    ipcRenderer.invoke("dialog:saveFile", content, defaultName) as Promise<boolean>,
+
+  openFile: () =>
+    ipcRenderer.invoke("dialog:openFile") as Promise<string | null>,
+
   updater: {
     install: () => ipcRenderer.invoke("updater:install") as Promise<void>,
   },

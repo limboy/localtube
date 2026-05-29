@@ -40,6 +40,8 @@ export interface ElectronAPI {
   confirm(message: string, options?: ConfirmOptions): Promise<boolean>;
   showContextMenu(items: ContextMenuItem[], position?: { x: number; y: number }): Promise<string | null>;
   setAlwaysOnTop(flag: boolean): Promise<void>;
+  saveFile(content: string, defaultName: string): Promise<boolean>;
+  openFile(): Promise<string | null>;
   updater: {
     install(): Promise<void>;
   };

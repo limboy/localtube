@@ -406,6 +406,74 @@ export async function clearPlaybackPosition(videoId: string) {
   }
 }
 
+export async function exportData(): Promise<boolean> {
+  const playlists = await loadPlaylists();
+  const channels = await loadChannels();
+  const folders = await loadFolders();
+  const sidebarOrder = await loadSidebarOrder();
+  const data = { playlists, channels, folders, sidebarOrder };
+  const json = JSON.stringify(data, null, 2);
+  return window.electron.saveFile(json, "localtube-export.json");
+}
+
+export async function importData(): Promise<boolean> {
+  const content = await window.electron.openFile();
+  if (!content) return false;
+
+  let data: unknown;
+  try {
+    data = JSON.parse(content);
+  } catch {
+    return false;
+  }
+
+  if (!data || typeof data !== "object") return false;
+  const obj = data as Record<string, unknown>;
+  if (!Array.isArray(obj.playlists) || !Array.isArray(obj.channels)) return false;
+
+  const existingPlaylists = await loadPlaylists();
+  const existingChannels = await loadChannels();
+  const existingFolders = await loadFolders();
+  const existingOrder = await loadSidebarOrder();
+
+  const playlistIds = new Set(existingPlaylists.map(p => p.id));
+  const channelIds = new Set(existingChannels.map(c => c.id));
+
+  const newPlaylists = (obj.playlists as PlaylistInfo[]).filter(p => !playlistIds.has(p.id));
+  const newChannels = (obj.channels as ChannelInfo[]).filter(c => !channelIds.has(c.id));
+
+  const s = store;
+  await s.set("playlists", [...existingPlaylists, ...newPlaylists]);
+  await s.set("channels", [...existingChannels, ...newChannels]);
+
+  if (Array.isArray(obj.folders)) {
+    const folderIds = new Set(existingFolders.map(f => f.id));
+    const newFolders = (obj.folders as FolderInfo[]).filter(f => !folderIds.has(f.id));
+    await s.set("folders", [...existingFolders, ...newFolders]);
+  }
+
+  if (Array.isArray(obj.sidebarOrder)) {
+    const existingIds = new Set<string>();
+    for (const item of existingOrder) {
+      existingIds.add(item.id);
+      if (item.type === "folder") {
+        for (const child of item.children) existingIds.add(child.id);
+      }
+    }
+    const newItems = (obj.sidebarOrder as SidebarItem[]).filter(item => !existingIds.has(item.id));
+    const firstFolderIdx = existingOrder.findIndex(e => e.type === "folder");
+    if (firstFolderIdx !== -1) {
+      existingOrder.splice(firstFolderIdx, 0, ...newItems);
+    } else {
+      existingOrder.push(...newItems);
+    }
+    await s.set("sidebarOrder", existingOrder);
+  }
+
+  window.dispatchEvent(new CustomEvent("store-updated"));
+  return true;
+}
+
 export function disableInspectShortcut() {
   document.addEventListener(
     "keydown",

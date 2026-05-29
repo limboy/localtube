@@ -1,5 +1,6 @@
 import { BrowserWindow, Menu, MenuItem, dialog, ipcMain, net, shell } from "electron";
 import Store from "electron-store";
+import * as fs from "fs";
 import type { ConfirmOptions, ContextMenuItem, FetchInit, FetchResult } from "./types";
 
 export const store = new Store({ name: "app-data" });
@@ -129,5 +130,26 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
     const win = getWindow();
     win?.setAlwaysOnTop(flag);
     store.set("alwaysOnTop", flag);
+  });
+
+  ipcMain.handle("dialog:saveFile", async (_e, content: string, defaultName: string) => {
+    const win = getWindow();
+    const result = await dialog.showSaveDialog(win ?? undefined!, {
+      defaultPath: defaultName,
+      filters: [{ name: "JSON Files", extensions: ["json"] }],
+    });
+    if (result.canceled || !result.filePath) return false;
+    fs.writeFileSync(result.filePath, content, "utf-8");
+    return true;
+  });
+
+  ipcMain.handle("dialog:openFile", async () => {
+    const win = getWindow();
+    const result = await dialog.showOpenDialog(win ?? undefined!, {
+      filters: [{ name: "JSON Files", extensions: ["json"] }],
+      properties: ["openFile"],
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return fs.readFileSync(result.filePaths[0], "utf-8");
   });
 }

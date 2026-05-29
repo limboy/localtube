@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, Search, History, Clock } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, Search, History, Clock, Download, Upload } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
@@ -58,6 +58,8 @@ import {
   setFolderCollapsed,
   moveItemToFolder,
   moveItemToTopLevel,
+  exportData,
+  importData,
 } from "@/lib/utils";
 import { PlaylistInfo, ChannelInfo, EnrichedBookmark, FolderInfo, SidebarItem } from "@/types";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
@@ -1148,6 +1150,18 @@ export default function AppSidebar() {
                       </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => exportData()}>
+                    <Download className="mr-2 h-4 w-4" />
+                    <span>Export Data</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={async () => {
+                    const ok = await importData();
+                    if (ok) window.location.reload();
+                  }}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    <span>Import Data</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuItem>
