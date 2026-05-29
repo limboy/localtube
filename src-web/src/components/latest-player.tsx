@@ -5,10 +5,14 @@ import {
   loadPlaybackPosition,
   savePlaybackPosition,
   clearPlaybackPosition,
+  loadBookmarks,
+  saveBookmarks,
+  loadSkippedVideos,
+  saveSkippedVideos,
 } from "@/lib/utils";
-import { VideoItem } from "@/types";
+import { VideoItem, BookmarkData } from "@/types";
 
-import { Loader } from "lucide-react";
+import { Loader, BookmarkIcon, Eye, EyeOff } from "lucide-react";
 
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
@@ -25,6 +29,8 @@ export default function LatestPlayer() {
   const [startSeconds, setStartSeconds] = useState<number | undefined>(undefined);
   const [description, setDescription] = useState<string>("");
   const [isLoadingDescription, setIsLoadingDescription] = useState(false);
+  const [bookmarkedVideos, setBookmarkedVideos] = useState<Map<string, BookmarkData>>(new Map());
+  const [skippedVideos, setSkippedVideos] = useState<Set<string>>(new Set());
 
   const playerRef = useRef<YTPlayerHandle>(null);
   const playNextVideoRef = useRef<() => void>(() => {});
@@ -57,8 +63,14 @@ export default function LatestPlayer() {
     const handleUpdate = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(async () => {
-        const data = await loadLatestVideos();
+        const [data, bookmarks, skipped] = await Promise.all([
+          loadLatestVideos(),
+          loadBookmarks(),
+          loadSkippedVideos(),
+        ]);
         setVideos(data);
+        setBookmarkedVideos(bookmarks);
+        setSkippedVideos(skipped);
       }, 50);
     };
     window.addEventListener('store-updated', handleUpdate);
@@ -106,6 +118,50 @@ export default function LatestPlayer() {
     }, 5000);
     return () => clearInterval(interval);
   }, [currentVideoId]);
+
+  useEffect(() => {
+    async function loadState() {
+      const [bookmarks, skipped] = await Promise.all([loadBookmarks(), loadSkippedVideos()]);
+      setBookmarkedVideos(bookmarks);
+      setSkippedVideos(skipped);
+    }
+    loadState();
+  }, []);
+
+  const toggleBookmark = async (videoId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const newBookmarks = new Map(bookmarkedVideos);
+    if (newBookmarks.has(videoId)) {
+      newBookmarks.delete(videoId);
+    } else {
+      newBookmarks.set(videoId, { createdAt: Date.now() });
+    }
+    setBookmarkedVideos(newBookmarks);
+    await saveBookmarks(newBookmarks);
+  };
+
+  const handleSkipVideo = async (videoId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const newSkipped = new Set(skippedVideos).add(videoId);
+    setSkippedVideos(newSkipped);
+    await saveSkippedVideos(newSkipped);
+    if (videoId === currentVideoId) {
+      playNextVideoRef.current();
+    }
+  };
+
+  const handleUnskipVideo = async (videoId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const newSkipped = new Set(skippedVideos);
+    newSkipped.delete(videoId);
+    setSkippedVideos(newSkipped);
+    await saveSkippedVideos(newSkipped);
+  };
+
+  const displayVideos = videos.map(video => ({
+    ...video,
+    isSkipped: skippedVideos.has(video.id),
+  }));
 
   const currentVideo = videos.find(v => v.id === currentVideoId);
 
@@ -207,13 +263,14 @@ export default function LatestPlayer() {
               </div>
             ) : (
               <div className="grid gap-0.5">
-                {videos.map((video) => (
+                {displayVideos.map((video) => (
                   <div
                     key={video.id}
                     id={`video-item-${video.id}`}
                     className={cn(
                       "flex items-start gap-2 w-full hover:bg-accent p-2 rounded group/video cursor-default",
-                      currentVideoId === video.id && "bg-accent"
+                      currentVideoId === video.id && "bg-accent",
+                      video.isSkipped && "opacity-50"
                     )}
                     onClick={() => {
                       switchVideo(video.id);
@@ -229,8 +286,41 @@ export default function LatestPlayer() {
                     </div>
                     <div className="flex-1 min-w-0 user-select-none" style={{ WebkitUserSelect: "none" }}>
                       <span className="line-clamp-1 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
-                      <div className="flex items-center opacity-50 text-sm font-normal mt-0.5 min-w-0">
-                        <span className="truncate">{video.duration}</span>
+                      <div className="flex items-center justify-between opacity-50 text-sm font-normal mt-0.5 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0 mr-2 flex-1">
+                          <span className="truncate">{video.duration}</span>
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          {video.isSkipped ? (
+                            <button
+                              onClick={(e) => handleUnskipVideo(video.id, e)}
+                              className="p-0.5 rounded hover:bg-accent-foreground/20 opacity-80"
+                            >
+                              <Eye size={14} strokeWidth={1.5} />
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={(e) => handleSkipVideo(video.id, e)}
+                                className={cn(
+                                  "p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity",
+                                  "opacity-0 group-hover/video:opacity-80"
+                                )}
+                              >
+                                <EyeOff size={14} strokeWidth={1.5} />
+                              </button>
+                              <button
+                                onClick={(e) => toggleBookmark(video.id, e)}
+                                className={cn(
+                                  "p-0.5 rounded hover:bg-accent-foreground/20 transition-opacity",
+                                  bookmarkedVideos.has(video.id) ? "" : "opacity-0 group-hover/video:opacity-100"
+                                )}
+                              >
+                                <BookmarkIcon size={14} fill={bookmarkedVideos.has(video.id) ? "currentColor" : "none"} strokeWidth={1.5} />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
