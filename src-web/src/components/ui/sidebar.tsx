@@ -71,24 +71,15 @@ const SidebarProvider = React.forwardRef<
     // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen);
     const [width, setWidth] = React.useState(() => {
-      if (typeof window !== "undefined") {
-        const savedWidth = localStorage.getItem(`${storageKey}_width`);
-        if (savedWidth) {
-          const loadedWidth = parseInt(savedWidth, 10);
-          return Math.min(Math.max(loadedWidth, minWidth), maxWidth);
+      if (typeof window !== "undefined" && window.electron?.store?.getSync) {
+        const savedWidth = window.electron.store.getSync<number>(`${storageKey}_width`);
+        if (savedWidth != null) {
+          return Math.min(Math.max(savedWidth, minWidth), maxWidth);
         }
       }
       return defaultWidth;
     });
     const [isResizing, setIsResizing] = React.useState(false);
-
-    React.useEffect(() => {
-      const savedWidth = localStorage.getItem(`${storageKey}_width`);
-      if (savedWidth) {
-        const loadedWidth = parseInt(savedWidth, 10);
-        setWidth(Math.min(Math.max(loadedWidth, minWidth), maxWidth));
-      }
-    }, [storageKey, minWidth, maxWidth]);
 
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
@@ -113,7 +104,7 @@ const SidebarProvider = React.forwardRef<
     const handleSetWidth = React.useCallback((value: number) => {
       const newWidth = Math.min(Math.max(value, minWidth), maxWidth);
       setWidth(newWidth);
-      localStorage.setItem(`${storageKey}_width`, newWidth.toString());
+      window.electron?.store?.set(`${storageKey}_width`, newWidth);
     }, [storageKey, minWidth, maxWidth]);
 
     // Adds a keyboard shortcut to toggle the sidebar.
