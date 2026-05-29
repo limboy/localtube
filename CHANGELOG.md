@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.1](https://github.com/limboy/localtube/compare/v1.2.0...v1.2.1) - 2026-05-29
+
+### Bug Fixes
+
+- **sidebar:** persist width via electron-store instead of localStorage ([1649c4a](https://github.com/limboy/localtube/commit/1649c4a7f7f8661cdea18f849a3082bb79364970))
+
+### Documentation
+
+- update CHANGELOG for v1.2.0 ([82ffc22](https://github.com/limboy/localtube/commit/82ffc22ad9a5dcb1e6f2de6bfa5a323acf1d6179))
+
 ## [v1.2.0](https://github.com/limboy/localtube/compare/v1.1.7...v1.2.0) - 2026-05-29
 
 ### Features
