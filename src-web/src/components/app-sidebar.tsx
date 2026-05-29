@@ -501,8 +501,13 @@ export default function AppSidebar() {
   const hasLoadedRef = useRef(false);
   useEffect(() => {
     if (hasLoadedRef.current) return;
+    if (location.pathname === '/') {
+      navigate({ to: '/latest' });
+      hasLoadedRef.current = true;
+      return;
+    }
     if (sidebarOrder.length === 0) return;
-    if (location.pathname === '/' || location.pathname === '/playlist' || location.pathname === '/channel') {
+    if (location.pathname === '/playlist' || location.pathname === '/channel') {
       let firstItem: { type: 'playlist' | 'channel'; id: string } | null = null;
       for (const entry of sidebarOrder) {
         if (entry.type === 'playlist' || entry.type === 'channel') {

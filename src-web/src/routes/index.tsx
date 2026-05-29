@@ -12,8 +12,7 @@ function Index() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // We let AppSidebar handle the initial navigation to the first collection.
-    // If no collections exist, it will stay here or we can handle fallback in AppSidebar.
+    navigate({ to: "/latest" });
   }, [navigate]);
 
   return (
