@@ -128,12 +128,7 @@ export default function VideoListPlayer({
           const channels = await loadChannels();
           const allPlaylistItems = playlists.flatMap(p => p.items);
           const allChannelItems = channels.flatMap(c => c.items);
-          const videoList: VideoListInfo = {
-            id: "bookmarks",
-            title: "Bookmarked Videos",
-            lastUpdated: Date.now(),
-            unreadCount: 0,
-            items: Array.from(bookmarks.entries()).map(([videoId, bookmark]) => {
+          const bookmarkItems = Array.from(bookmarks.entries()).map(([videoId, bookmark]) => {
               const video = allPlaylistItems.find((item) => item.id === videoId) || allChannelItems.find((item) => item.id === videoId);
               if (video) {
                 return {
@@ -150,7 +145,14 @@ export default function VideoListPlayer({
                 };
               }
               return null;
-            }).filter((item) => item !== null) as VideoItem[]
+            }).filter((item): item is VideoItem & { bookmarkedAt: number } => item !== null)
+              .sort((a, b) => b.bookmarkedAt - a.bookmarkedAt);
+          const videoList: VideoListInfo = {
+            id: "bookmarks",
+            title: "Bookmarked Videos",
+            lastUpdated: Date.now(),
+            unreadCount: 0,
+            items: bookmarkItems
           };
           setVideoList(videoList);
           if (isSourceChange) {
