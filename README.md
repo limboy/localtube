@@ -2,7 +2,7 @@
 
 LocalTube is a modern, high-performance desktop application for browsing YouTube playlists, channels, and videos with a focus on a clean, premium user experience. Built with Electron and React, it provides a distraction-free way to consume content from your favorite creators.
 
-![Screenshot1](./assets/screenshot1.png)
+![Screenshot1](./assets/screenshot2.webp)
 
 ## ✨ Features
 
