@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, Search, History, Clock, Download, Upload } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, Download, Upload } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
@@ -246,7 +246,11 @@ function FolderItem({ folder, children, unreadCount, onContextMenu, onToggleColl
             onContextMenu={(e) => onContextMenu(e, folder.id)}
           >
             <ChevronRight size={14} className={cn("shrink-0 transition-transform duration-200", !folder.isCollapsed && "rotate-90")} />
-            <Folder size={16} className="shrink-0 text-muted-foreground" />
+            {folder.isCollapsed ? (
+              <Folder size={16} className="shrink-0 text-muted-foreground" />
+            ) : (
+              <FolderOpen size={16} className="shrink-0 text-muted-foreground" />
+            )}
             {isRenaming ? (
               <input
                 ref={inputRef}
