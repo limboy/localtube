@@ -128,7 +128,7 @@ function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: Pl
         </div>
       </SidebarMenuButton>
       {playlist.unreadCount > 0 && (
-        <SidebarMenuBadge className="bg-muted text-sidebar-foreground/50 mr-0.5">
+        <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
           {playlist.unreadCount}
         </SidebarMenuBadge>
       )}
@@ -192,7 +192,7 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
         </div>
       </SidebarMenuButton>
       {channel.unreadCount > 0 && (
-        <SidebarMenuBadge className="bg-muted text-sidebar-foreground/50 mr-0.5">
+        <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
           {channel.unreadCount}
         </SidebarMenuBadge>
       )}
@@ -266,7 +266,7 @@ function FolderItem({ folder, children, unreadCount, onContextMenu, onToggleColl
           </SidebarMenuButton>
         </CollapsibleTrigger>
         {!isRenaming && unreadCount > 0 && (
-          <SidebarMenuBadge className="bg-muted text-sidebar-foreground/50 mr-0.5">
+          <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
             {unreadCount}
           </SidebarMenuBadge>
         )}
