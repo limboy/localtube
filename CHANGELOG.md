@@ -3,6 +3,22 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.7](https://github.com/limboy/localtube/compare/v1.2.6...v1.2.7) - 2026-06-06
+
+### Features
+
+- show open folder icon when sidebar folder is expanded ([da9ef58](https://github.com/limboy/localtube/commit/da9ef58fa9ff8c9dbe8dbd4cfa2bc84c44697d32))
+- move refresh icon to sidebar header next to search ([59ebbf1](https://github.com/limboy/localtube/commit/59ebbf1b976d0ae415e770af07b8ce68ed58733a))
+
+### Documentation
+
+- update screenshot in README ([42b513b](https://github.com/limboy/localtube/commit/42b513b3a62a440ff9ab8a7887c68d27be0f15bf))
+- update CHANGELOG for v1.2.6 ([eeff99e](https://github.com/limboy/localtube/commit/eeff99edf65a061bb1c524dcad3d4e156250a1e4))
+
+### Styles
+
+- remove background from sidebar unread count badge ([803fa1c](https://github.com/limboy/localtube/commit/803fa1ced6c3cde23aca9db4984b942fca717dc9))
+
 ## [v1.2.6](https://github.com/limboy/localtube/compare/v1.2.5...v1.2.6) - 2026-05-29
 
 ### Features
