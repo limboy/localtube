@@ -54,7 +54,15 @@ export async function parseYouTubeVideo(url: string): Promise<VideoItem> {
   const yt = await getInnertube();
   const info = await yt.getBasicInfo(videoId);
   
-  const title = info.basic_info.title ?? "Unknown Video";
+  if (!info.basic_info.title) {
+    const status = info.playability_status?.status;
+    const reason = info.playability_status?.reason;
+    throw new Error(
+      `Couldn't load video details${reason ? ` (${reason})` : status ? ` (${status})` : ""}. Please try again.`
+    );
+  }
+
+  const title = info.basic_info.title;
   const thumbs = info.basic_info.thumbnail ?? [];
   const thumbnail = thumbs[thumbs.length - 1]?.url ?? thumbs[0]?.url ?? "";
   const duration = info.basic_info.duration ? formatDuration(info.basic_info.duration) : "Live";
