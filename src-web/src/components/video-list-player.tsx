@@ -21,6 +21,7 @@ import { Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "luc
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import YTPlayer, { YTPlayerHandle } from "./yt-player";
+import { VideoDescription } from "./video-description";
 import { useNavigate } from "@tanstack/react-router";
 import { formatRelativeTime } from "@/lib/time-utils";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
@@ -460,8 +461,13 @@ export default function VideoListPlayer({
                           <Loader size={12} className="animate-spin" />
                           <span>Loading...</span>
                         </div>
+                      ) : description ? (
+                        <VideoDescription
+                          text={description}
+                          onSeek={(seconds) => playerRef.current?.seekTo(seconds)}
+                        />
                       ) : (
-                        description || "No description available"
+                        "No description available"
                       )}
                     </div>
                   </div>

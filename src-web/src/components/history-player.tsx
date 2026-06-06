@@ -14,6 +14,7 @@ import { Loader, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Nav from "./nav";
 import YTPlayer, { YTPlayerHandle } from "./yt-player";
+import { VideoDescription } from "./video-description";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { PanelRight } from "lucide-react";
 import { UpdateIndicator } from "./update-indicator";
@@ -178,8 +179,13 @@ export default function HistoryPlayer() {
                           <Loader size={12} className="animate-spin" />
                           <span>Loading...</span>
                         </div>
+                      ) : description ? (
+                        <VideoDescription
+                          text={description}
+                          onSeek={(seconds) => playerRef.current?.seekTo(seconds)}
+                        />
                       ) : (
-                        description || "No description available"
+                        "No description available"
                       )}
                     </div>
                   </div>

@@ -16,6 +16,7 @@ interface IFramePlayer {
 export interface YTPlayerHandle {
   getCurrentTime: () => number;
   getDuration: () => number;
+  seekTo: (seconds: number) => void;
 }
 
 const YTPlayer = forwardRef<YTPlayerHandle, {
@@ -43,6 +44,7 @@ const YTPlayer = forwardRef<YTPlayerHandle, {
   useImperativeHandle(ref, () => ({
     getCurrentTime: () => playerRef.current?.getCurrentTime() ?? 0,
     getDuration: () => playerRef.current?.getDuration() ?? 0,
+    seekTo: (seconds: number) => playerRef.current?.seekTo(seconds, true),
   }));
 
   // Initial API loading effect
