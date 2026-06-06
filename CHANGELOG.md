@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.8](https://github.com/limboy/localtube/compare/v1.2.7...v1.2.8) - 2026-06-06
+
+### Features
+
+- make timestamps in video description clickable to seek ([aa01dc1](https://github.com/limboy/localtube/commit/aa01dc1515e69bb6be706d7680f06d0fde6c0b2b))
+
+### Bug Fixes
+
+- surface video metadata fetch failures instead of saving placeholder ([74f64cc](https://github.com/limboy/localtube/commit/74f64cc9048003ee6e3faf9c83338316094fe76c))
+
+### Documentation
+
+- update CHANGELOG for v1.2.7 ([2887c75](https://github.com/limboy/localtube/commit/2887c7543d23e3fd204d2c401fb8a97e600c5997))
+
 ## [v1.2.7](https://github.com/limboy/localtube/compare/v1.2.6...v1.2.7) - 2026-06-06
 
 ### Features
