@@ -44,9 +44,9 @@ import {
   isPlaylistUrl,
   isChannelUrl,
   removeChannel,
-  markPlaylistAsRead,
-  markChannelAsRead,
-  markAllLatestAsRead,
+  markPlaylistAsSeen,
+  markChannelAsSeen,
+  markAllLatestAsSeen,
   markAllUnseenAsSeen,
   addOrUpdateChannel,
   loadPlaylists,
@@ -396,16 +396,16 @@ export default function AppSidebar() {
     const unlistenFocus = window.electron.onWindowFocus(focusHandler);
 
     const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
-      if (eventId === "mark-latest-read") {
-        await markAllLatestAsRead();
+      if (eventId === "mark-latest-seen") {
+        await markAllLatestAsSeen();
       } else if (eventId === "mark-all-unseen-seen") {
         await markAllUnseenAsSeen();
-      } else if (eventId.startsWith("mark-playlist-read-")) {
-        const playlistId = eventId.replace("mark-playlist-read-", "");
-        await markPlaylistAsRead(playlistId);
-      } else if (eventId.startsWith("mark-channel-read-")) {
-        const channelId = eventId.replace("mark-channel-read-", "");
-        await markChannelAsRead(channelId);
+      } else if (eventId.startsWith("mark-playlist-seen-")) {
+        const playlistId = eventId.replace("mark-playlist-seen-", "");
+        await markPlaylistAsSeen(playlistId);
+      } else if (eventId.startsWith("mark-channel-seen-")) {
+        const channelId = eventId.replace("mark-channel-seen-", "");
+        await markChannelAsSeen(channelId);
       } else if (eventId.startsWith("view-playlist-in-browser-")) {
         const playlistId = eventId.replace("view-playlist-in-browser-", "");
         await window.electron.openUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
@@ -551,7 +551,7 @@ export default function AppSidebar() {
         menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(playlistId, 'playlist') });
         menuItems.push({ type: "separator" });
       }
-      menuItems.push({ id: `mark-playlist-read-${playlistId}`, label: "Mark as Seen" });
+      menuItems.push({ id: `mark-playlist-seen-${playlistId}`, label: "Mark as Seen" });
       menuItems.push({ type: "separator" });
       menuItems.push({ id: `view-playlist-in-browser-${playlistId}`, label: "View In Browser" });
       menuItems.push({ type: "separator" });
@@ -722,7 +722,7 @@ export default function AppSidebar() {
         menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(channelId, 'channel') });
         menuItems.push({ type: "separator" });
       }
-      menuItems.push({ id: `mark-channel-read-${channelId}`, label: "Mark as Seen" });
+      menuItems.push({ id: `mark-channel-seen-${channelId}`, label: "Mark as Seen" });
       menuItems.push({ type: "separator" });
       menuItems.push({ id: `view-channel-in-browser-${channelId}`, label: "View In Browser" });
       menuItems.push({ type: "separator" });
@@ -778,7 +778,7 @@ export default function AppSidebar() {
     event.preventDefault();
     try {
       await window.electron.showContextMenu([
-        { id: "mark-latest-read", label: "Mark as Seen" }
+        { id: "mark-latest-seen", label: "Mark as Seen" }
       ]);
     } catch (error) {
       console.error("Error creating latest context menu:", error);
