@@ -184,6 +184,27 @@ export async function markAllLatestAsRead() {
   window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
+// Mark every unseen video across all sources as seen (used by the "All Unseen" view).
+export async function markAllUnseenAsSeen() {
+  const store = await getStore();
+
+  const playlists = await loadPlaylists();
+  for (const p of playlists) {
+    p.items.forEach((v) => { v.unseen = false; });
+    p.unreadCount = 0;
+  }
+  await store.set("playlists", playlists);
+
+  const channels = await loadChannels();
+  for (const c of channels) {
+    c.items.forEach((v) => { v.unseen = false; });
+    c.unreadCount = 0;
+  }
+  await store.set("channels", channels);
+
+  window.dispatchEvent(new CustomEvent('store-updated'));
+}
+
 export async function addOrUpdatePlaylist(playlist: PlaylistInfo) {
   const data = await loadPlaylists();
   const store = await getStore();
@@ -683,6 +704,26 @@ export async function loadLatestVideos(): Promise<VideoItem[]> {
 
   allVideos.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
   return allVideos.slice(0, 100);
+}
+
+// All unseen videos across every source, deduped and sorted newest-first (uncapped).
+export async function loadUnseenVideos(): Promise<VideoItem[]> {
+  const playlists = await loadPlaylists();
+  const channels = await loadChannels();
+
+  const seen = new Set<string>();
+  const allVideos: VideoItem[] = [];
+
+  for (const source of [...channels, ...playlists]) {
+    for (const video of source.items) {
+      if (seen.has(video.id)) continue;
+      seen.add(video.id);
+      if (video.unseen) allVideos.push(video);
+    }
+  }
+
+  allVideos.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
+  return allVideos;
 }
 
 export async function getVideoDescription(videoId: string): Promise<string> {
