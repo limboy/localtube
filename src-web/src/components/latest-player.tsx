@@ -1,6 +1,7 @@
 import {
   cn,
   loadLatestVideos,
+  loadUnseenVideos,
   getVideoDescription,
   loadPlaybackPosition,
   savePlaybackPosition,
@@ -24,7 +25,13 @@ import { PanelRight } from "lucide-react";
 import { UpdateIndicator } from "./update-indicator";
 import { formatRelativeTime } from "@/lib/time-utils";
 
-export default function LatestPlayer() {
+export default function LatestPlayer({
+  onlyUnseen = false,
+  title = "Latest",
+}: {
+  onlyUnseen?: boolean;
+  title?: string;
+} = {}) {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
@@ -51,7 +58,7 @@ export default function LatestPlayer() {
   useEffect(() => {
     async function fetchVideos() {
       setIsLoading(true);
-      const data = await loadLatestVideos();
+      const data = onlyUnseen ? await loadUnseenVideos() : await loadLatestVideos();
       setVideos(data);
       if (data.length > 0 && !currentVideoId) {
         await switchVideo(data[0].id);
@@ -66,12 +73,19 @@ export default function LatestPlayer() {
     const handleUpdate = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(async () => {
-        const [data, bookmarks, skipped] = await Promise.all([
-          loadLatestVideos(),
+        const [bookmarks, skipped] = await Promise.all([
           loadBookmarks(),
           loadSkippedVideos(),
         ]);
-        setVideos(data);
+        if (onlyUnseen) {
+          // Keep the list membership stable for the session so the video being
+          // watched doesn't vanish when it gets marked seen — just refresh the dots.
+          const fresh = await loadUnseenVideos();
+          const unseenIds = new Set(fresh.map((v) => v.id));
+          setVideos((prev) => prev.map((v) => ({ ...v, unseen: unseenIds.has(v.id) })));
+        } else {
+          setVideos(await loadLatestVideos());
+        }
         setBookmarkedVideos(bookmarks);
         setSkippedVideos(skipped);
       }, 50);
@@ -190,7 +204,7 @@ export default function LatestPlayer() {
           ) : !currentVideoId ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-muted-foreground">
-                <p>No videos yet. Subscribe to channels or playlists first.</p>
+                <p>{onlyUnseen ? "No unseen videos." : "No videos yet. Subscribe to channels or playlists first."}</p>
               </div>
             </div>
           ) : (
@@ -245,7 +259,7 @@ export default function LatestPlayer() {
           <div data-tauri-drag-region className="h-11 flex items-center justify-between sticky top-0 bg-background z-10 w-full border-b border-sidebar-border! shrink-0">
             <div className="flex flex-row justify-between w-full px-4 items-center gap-2">
               <h2 className="font-semibold truncate min-w-0">
-                Latest
+                {title}
                 {!isLoading && videos.length > 0 && (
                   <span className="text-sm text-muted-foreground ml-2 font-normal truncate">
                     {currentVideoId

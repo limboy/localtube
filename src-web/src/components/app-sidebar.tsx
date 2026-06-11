@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, Download, Upload } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, Download, Upload, Inbox } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
@@ -47,6 +47,7 @@ import {
   markPlaylistAsRead,
   markChannelAsRead,
   markAllLatestAsRead,
+  markAllUnseenAsSeen,
   addOrUpdateChannel,
   loadPlaylists,
   loadChannels,
@@ -397,6 +398,8 @@ export default function AppSidebar() {
     const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
       if (eventId === "mark-latest-read") {
         await markAllLatestAsRead();
+      } else if (eventId === "mark-all-unseen-seen") {
+        await markAllUnseenAsSeen();
       } else if (eventId.startsWith("mark-playlist-read-")) {
         const playlistId = eventId.replace("mark-playlist-read-", "");
         await markPlaylistAsRead(playlistId);
@@ -548,7 +551,7 @@ export default function AppSidebar() {
         menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(playlistId, 'playlist') });
         menuItems.push({ type: "separator" });
       }
-      menuItems.push({ id: `mark-playlist-read-${playlistId}`, label: "Mark as Read" });
+      menuItems.push({ id: `mark-playlist-read-${playlistId}`, label: "Mark as Seen" });
       menuItems.push({ type: "separator" });
       menuItems.push({ id: `view-playlist-in-browser-${playlistId}`, label: "View In Browser" });
       menuItems.push({ type: "separator" });
@@ -696,6 +699,11 @@ export default function AppSidebar() {
     shouldThrow: false
   });
 
+  const allUnseenMatch = useMatch({
+    from: "/all-unseen",
+    shouldThrow: false
+  });
+
   const handleChannelClick = async (channelId: string, fromBookmarks = false) => {
     navigate({
       to: "/channel/$channelId",
@@ -714,7 +722,7 @@ export default function AppSidebar() {
         menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(channelId, 'channel') });
         menuItems.push({ type: "separator" });
       }
-      menuItems.push({ id: `mark-channel-read-${channelId}`, label: "Mark as Read" });
+      menuItems.push({ id: `mark-channel-read-${channelId}`, label: "Mark as Seen" });
       menuItems.push({ type: "separator" });
       menuItems.push({ id: `view-channel-in-browser-${channelId}`, label: "View In Browser" });
       menuItems.push({ type: "separator" });
@@ -752,14 +760,39 @@ export default function AppSidebar() {
     return allVideos.slice(0, 100).filter((v) => v.unseen).length;
   }, [channels, playlists]);
 
+  // Total unseen videos across every source (uncapped), deduped by video id.
+  const allUnseenCount = useMemo(() => {
+    const seen = new Set<string>();
+    let count = 0;
+    for (const source of [...channels, ...playlists]) {
+      for (const v of source.items) {
+        if (seen.has(v.id)) continue;
+        seen.add(v.id);
+        if (v.unseen) count++;
+      }
+    }
+    return count;
+  }, [channels, playlists]);
+
   async function latestContextMenuHandler(event: React.MouseEvent) {
     event.preventDefault();
     try {
       await window.electron.showContextMenu([
-        { id: "mark-latest-read", label: "Mark as Read" }
+        { id: "mark-latest-read", label: "Mark as Seen" }
       ]);
     } catch (error) {
       console.error("Error creating latest context menu:", error);
+    }
+  }
+
+  async function allUnseenContextMenuHandler(event: React.MouseEvent) {
+    event.preventDefault();
+    try {
+      await window.electron.showContextMenu([
+        { id: "mark-all-unseen-seen", label: "Mark as Seen" }
+      ]);
+    } catch (error) {
+      console.error("Error creating all-unseen context menu:", error);
     }
   }
 
@@ -1049,6 +1082,29 @@ export default function AppSidebar() {
                         {latestUnreadCount > 0 && (
                           <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
                             {latestUnreadCount}
+                          </SidebarMenuBadge>
+                        )}
+                      </SidebarMenuItem>
+                      <SidebarMenuItem className="list-none w-full">
+                        <SidebarMenuButton
+                          asChild
+                          className={cn(
+                            "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                            allUnseenMatch ? "bg-sidebar-accent" : ""
+                          )}
+                        >
+                          <div
+                            onClick={() => navigate({ to: '/all-unseen' })}
+                            onContextMenu={allUnseenContextMenuHandler}
+                            className="flex items-center gap-2 w-full cursor-default"
+                          >
+                            <Inbox size={16} className="shrink-0" />
+                            <span>All Unseen</span>
+                          </div>
+                        </SidebarMenuButton>
+                        {allUnseenCount > 0 && (
+                          <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
+                            {allUnseenCount}
                           </SidebarMenuBadge>
                         )}
                       </SidebarMenuItem>
