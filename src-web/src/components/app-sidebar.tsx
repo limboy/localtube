@@ -46,6 +46,7 @@ import {
   removeChannel,
   markPlaylistAsRead,
   markChannelAsRead,
+  markAllLatestAsRead,
   addOrUpdateChannel,
   loadPlaylists,
   loadChannels,
@@ -60,7 +61,7 @@ import {
   exportData,
   importData,
 } from "@/lib/utils";
-import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem } from "@/types";
+import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem, VideoItem } from "@/types";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 import { checkAllPlaylistsForUpdates, fullRefreshAllPlaylists, parseYouTubePlaylist } from "@/lib/playlist-parser";
@@ -394,7 +395,15 @@ export default function AppSidebar() {
     const unlistenFocus = window.electron.onWindowFocus(focusHandler);
 
     const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
-      if (eventId.startsWith("view-playlist-in-browser-")) {
+      if (eventId === "mark-latest-read") {
+        await markAllLatestAsRead();
+      } else if (eventId.startsWith("mark-playlist-read-")) {
+        const playlistId = eventId.replace("mark-playlist-read-", "");
+        await markPlaylistAsRead(playlistId);
+      } else if (eventId.startsWith("mark-channel-read-")) {
+        const channelId = eventId.replace("mark-channel-read-", "");
+        await markChannelAsRead(channelId);
+      } else if (eventId.startsWith("view-playlist-in-browser-")) {
         const playlistId = eventId.replace("view-playlist-in-browser-", "");
         await window.electron.openUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
       } else if (eventId.startsWith("view-channel-in-browser-")) {
@@ -539,6 +548,8 @@ export default function AppSidebar() {
         menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(playlistId, 'playlist') });
         menuItems.push({ type: "separator" });
       }
+      menuItems.push({ id: `mark-playlist-read-${playlistId}`, label: "Mark as Read" });
+      menuItems.push({ type: "separator" });
       menuItems.push({ id: `view-playlist-in-browser-${playlistId}`, label: "View In Browser" });
       menuItems.push({ type: "separator" });
       menuItems.push({ id: `delete-playlist-${playlistId}`, label: "Delete" });
@@ -653,9 +664,6 @@ export default function AppSidebar() {
   };
 
   const handlePlaylistClick = async (playlistId: string, fromBookmarks = false) => {
-    await markPlaylistAsRead(playlistId);
-    const newPlaylists = await loadPlaylists();
-    setPlaylists(newPlaylists);
     navigate({
       to: "/playlist/$playlistId",
       params: { playlistId },
@@ -689,9 +697,6 @@ export default function AppSidebar() {
   });
 
   const handleChannelClick = async (channelId: string, fromBookmarks = false) => {
-    await markChannelAsRead(channelId);
-    const newChannels = await loadChannels();
-    setChannels(newChannels);
     navigate({
       to: "/channel/$channelId",
       params: { channelId },
@@ -709,6 +714,8 @@ export default function AppSidebar() {
         menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(channelId, 'channel') });
         menuItems.push({ type: "separator" });
       }
+      menuItems.push({ id: `mark-channel-read-${channelId}`, label: "Mark as Read" });
+      menuItems.push({ type: "separator" });
       menuItems.push({ id: `view-channel-in-browser-${channelId}`, label: "View In Browser" });
       menuItems.push({ type: "separator" });
       menuItems.push({ id: `delete-channel-${channelId}`, label: "Delete" });
@@ -727,6 +734,34 @@ export default function AppSidebar() {
   const playlistsMap = useMemo(() => new Map(playlists.map(p => [p.id, p])), [playlists]);
   const channelsMap = useMemo(() => new Map(channels.map(c => [c.id, c])), [channels]);
   const foldersMap = useMemo(() => new Map(folders.map(f => [f.id, f])), [folders]);
+
+  // Count of unseen videos among the videos the Latest view actually shows: the
+  // same dedupe + sort-by-date + cap as loadLatestVideos, so old videos from a
+  // stale channel that fall outside the list don't inflate the badge.
+  const latestUnreadCount = useMemo(() => {
+    const seen = new Set<string>();
+    const allVideos: VideoItem[] = [];
+    for (const source of [...channels, ...playlists]) {
+      for (const v of source.items) {
+        if (seen.has(v.id)) continue;
+        seen.add(v.id);
+        allVideos.push(v);
+      }
+    }
+    allVideos.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
+    return allVideos.slice(0, 100).filter((v) => v.unseen).length;
+  }, [channels, playlists]);
+
+  async function latestContextMenuHandler(event: React.MouseEvent) {
+    event.preventDefault();
+    try {
+      await window.electron.showContextMenu([
+        { id: "mark-latest-read", label: "Mark as Read" }
+      ]);
+    } catch (error) {
+      console.error("Error creating latest context menu:", error);
+    }
+  }
 
   const isItemInFolder = (itemId: string, itemType: 'playlist' | 'channel'): boolean => {
     return sidebarOrder.some(e => e.type === 'folder' && e.children.some(c => c.type === itemType && c.id === itemId));
@@ -1004,12 +1039,18 @@ export default function AppSidebar() {
                         >
                           <div
                             onClick={() => navigate({ to: '/latest' })}
+                            onContextMenu={latestContextMenuHandler}
                             className="flex items-center gap-2 w-full cursor-default"
                           >
                             <Clock size={16} className="shrink-0" />
                             <span>Latest</span>
                           </div>
                         </SidebarMenuButton>
+                        {latestUnreadCount > 0 && (
+                          <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
+                            {latestUnreadCount}
+                          </SidebarMenuBadge>
+                        )}
                       </SidebarMenuItem>
                     </SidebarMenu>
                   </SidebarGroupContent>

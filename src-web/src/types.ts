@@ -4,6 +4,7 @@ export interface VideoItem {
   thumbnail: string;
   duration: string;
   publishedAt?: number;
+  unseen?: boolean;
 }
 
 export interface VideoListInfo {

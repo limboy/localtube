@@ -142,13 +142,14 @@ export async function parseYouTubeChannel(channelUrl: string): Promise<ChannelIn
   const thumbnail = await fetchAvatarAsDataUrl(avatarUrl);
 
   const items = await collectChannelVideos(channelId);
+  const unseenItems = items.map((v) => ({ ...v, unseen: true }));
 
   return {
-    unreadCount: 0,
+    unreadCount: unseenItems.length,
     id: metadata.external_id ?? channelId,
     title: metadata.title ?? "",
     thumbnail,
-    items,
+    items: unseenItems,
     lastUpdated: Date.now(),
   };
 }
@@ -203,7 +204,9 @@ export async function checkAllChannelsForUpdates(
     const { items: firstPage, thumbnail, title } = await fetchChannelFirstPage(channel.id, channel.thumbnail);
 
     const storedIds = new Set(channel.items.map((v) => v.id));
-    const newVideos = firstPage.filter((v) => !storedIds.has(v.id));
+    const newVideos = firstPage
+      .filter((v) => !storedIds.has(v.id))
+      .map((v) => ({ ...v, unseen: true }));
 
     if (newVideos.length > 0) {
       needsUpdate = true;
@@ -216,7 +219,7 @@ export async function checkAllChannelsForUpdates(
       title: title || channel.title,
       thumbnail: thumbnail ?? channel.thumbnail,
       items: mergedItems,
-      unreadCount: (channel.unreadCount || 0) + newVideos.length,
+      unreadCount: mergedItems.filter((v) => v.unseen).length,
       lastUpdated: Date.now(),
     };
     await addOrUpdateChannel(updated);
@@ -238,6 +241,7 @@ export async function fullRefreshAllChannels(
 
     await addOrUpdateChannel({
       ...fresh,
+      items: fresh.items.map((v) => ({ ...v, unseen: false })),
       unreadCount: 0,
       lastUpdated: Date.now(),
     });
