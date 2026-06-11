@@ -447,7 +447,7 @@ export default function AppSidebar() {
         setRenamingFolderId(folderId);
       } else if (eventId.startsWith("delete-folder-")) {
         const folderId = eventId.replace("delete-folder-", "");
-        const confirmed = await window.electron.confirm("Delete this folder? Items inside will be moved to the top level.", {
+        const confirmed = await window.electron.confirm("Delete this folder? All playlists and channels inside it will also be deleted.", {
           title: "Delete Folder",
           kind: "warning",
           okLabel: "Delete"

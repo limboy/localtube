@@ -233,25 +233,32 @@ export async function renameFolder(folderId: string, newName: string) {
 export async function removeFolder(folderId: string) {
   const folders = await loadFolders();
   const order = await loadSidebarOrder();
+  const store = await getStore();
 
   const idx = order.findIndex(e => e.type === 'folder' && e.id === folderId);
   if (idx !== -1) {
     const entry = order[idx];
     if (entry.type === 'folder') {
-      const promoted: SidebarItem[] = entry.children.map(c => ({ type: c.type, id: c.id }));
-      order.splice(idx, 1);
-      const firstFolderIdx = order.findIndex(e => e.type === 'folder');
-      if (firstFolderIdx !== -1) {
-        order.splice(firstFolderIdx, 0, ...promoted);
-      } else {
-        order.push(...promoted);
+      const playlistIds = new Set(entry.children.filter(c => c.type === 'playlist').map(c => c.id));
+      const channelIds = new Set(entry.children.filter(c => c.type === 'channel').map(c => c.id));
+
+      if (playlistIds.size > 0) {
+        const playlists = await loadPlaylists();
+        await store.set("playlists", playlists.filter(p => !playlistIds.has(p.id)));
       }
+      if (channelIds.size > 0) {
+        const channels = await loadChannels();
+        await store.set("channels", channels.filter(c => !channelIds.has(c.id)));
+      }
+
+      order.splice(idx, 1);
     }
   }
 
   const newFolders = folders.filter(f => f.id !== folderId);
   await saveFolders(newFolders);
   await saveSidebarOrder(order);
+  await store.save();
 }
 
 export async function setFolderCollapsed(folderId: string, collapsed: boolean) {
