@@ -3,6 +3,18 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.9](https://github.com/limboy/localtube/compare/v1.2.8...v1.2.9) - 2026-06-11
+
+### Features
+
+- add All Unseen view and rename mark actions to "Seen" ([65a4f7f](https://github.com/limboy/localtube/commit/65a4f7f67c842c3ac9da35362b64f594487ddf5b))
+- track unseen videos per-item instead of clearing on click ([b92963f](https://github.com/limboy/localtube/commit/b92963f2dc7c01e6deb7d00e0b81450bb5ff4348))
+- delete items inside a folder when deleting the folder ([1e427f0](https://github.com/limboy/localtube/commit/1e427f0b9043981de58c3fd83e90431dd77d1233))
+
+### Refactoring
+
+- rename mark-read identifiers to mark-seen ([c5152c6](https://github.com/limboy/localtube/commit/c5152c601dab6bbd17c5a7489b194f5566035953))
+
 ## [v1.2.8](https://github.com/limboy/localtube/compare/v1.2.7...v1.2.8) - 2026-06-06
 
 ### Features
