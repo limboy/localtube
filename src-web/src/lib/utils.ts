@@ -33,7 +33,7 @@ export async function loadChannel(channelId: string) {
   return data.find((p) => p.id === channelId);
 }
 
-export async function markChannelAsRead(channelId: string) {
+export async function markChannelAsSeen(channelId: string) {
   const data = await loadChannels();
   const index = data.findIndex((p) => p.id === channelId);
   if (index !== -1) {
@@ -110,7 +110,7 @@ export async function loadPlaylists() {
   return (await store.get<PlaylistInfo[]>("playlists")) || [];
 }
 
-export async function markPlaylistAsRead(playlistId: string) {
+export async function markPlaylistAsSeen(playlistId: string) {
   const data = await loadPlaylists();
   const store = await getStore();
   const index = data.findIndex((p) => p.id === playlistId);
@@ -162,7 +162,7 @@ export async function markVideoAsSeen(videoId: string) {
 
 // Mark only the videos shown in the "Latest" view as seen (the same capped/sorted
 // set as loadLatestVideos), leaving older videos outside that list untouched.
-export async function markAllLatestAsRead() {
+export async function markAllLatestAsSeen() {
   const store = await getStore();
   const latest = await loadLatestVideos();
   const latestIds = new Set(latest.map((v) => v.id));
