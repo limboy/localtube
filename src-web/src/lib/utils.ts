@@ -37,6 +37,7 @@ export async function markChannelAsRead(channelId: string) {
   const data = await loadChannels();
   const index = data.findIndex((p) => p.id === channelId);
   if (index !== -1) {
+    data[index].items.forEach((v) => { v.unseen = false; });
     data[index].unreadCount = 0;
   }
 
@@ -114,9 +115,72 @@ export async function markPlaylistAsRead(playlistId: string) {
   const store = await getStore();
   const index = data.findIndex((p) => p.id === playlistId);
   if (index !== -1) {
+    data[index].items.forEach((v) => { v.unseen = false; });
     data[index].unreadCount = 0;
   }
   await store.set("playlists", data);
+  window.dispatchEvent(new CustomEvent('store-updated'));
+}
+
+// Mark a single video as seen across every playlist/channel it appears in,
+// recomputing each source's unread count. Used when a video is clicked/played.
+export async function markVideoAsSeen(videoId: string) {
+  const store = await getStore();
+  let changed = false;
+
+  const playlists = await loadPlaylists();
+  for (const p of playlists) {
+    let touched = false;
+    for (const v of p.items) {
+      if (v.id === videoId && v.unseen) { v.unseen = false; touched = true; }
+    }
+    if (touched) {
+      p.unreadCount = p.items.filter((v) => v.unseen).length;
+      changed = true;
+    }
+  }
+  if (changed) await store.set("playlists", playlists);
+
+  let channelsChanged = false;
+  const channels = await loadChannels();
+  for (const c of channels) {
+    let touched = false;
+    for (const v of c.items) {
+      if (v.id === videoId && v.unseen) { v.unseen = false; touched = true; }
+    }
+    if (touched) {
+      c.unreadCount = c.items.filter((v) => v.unseen).length;
+      channelsChanged = true;
+    }
+  }
+  if (channelsChanged) await store.set("channels", channels);
+
+  if (changed || channelsChanged) {
+    window.dispatchEvent(new CustomEvent('store-updated'));
+  }
+}
+
+// Mark only the videos shown in the "Latest" view as seen (the same capped/sorted
+// set as loadLatestVideos), leaving older videos outside that list untouched.
+export async function markAllLatestAsRead() {
+  const store = await getStore();
+  const latest = await loadLatestVideos();
+  const latestIds = new Set(latest.map((v) => v.id));
+
+  const playlists = await loadPlaylists();
+  for (const p of playlists) {
+    p.items.forEach((v) => { if (latestIds.has(v.id)) v.unseen = false; });
+    p.unreadCount = p.items.filter((v) => v.unseen).length;
+  }
+  await store.set("playlists", playlists);
+
+  const channels = await loadChannels();
+  for (const c of channels) {
+    c.items.forEach((v) => { if (latestIds.has(v.id)) v.unseen = false; });
+    c.unreadCount = c.items.filter((v) => v.unseen).length;
+  }
+  await store.set("channels", channels);
+
   window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
