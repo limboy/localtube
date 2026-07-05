@@ -12,6 +12,37 @@ function extractPlaylistId(url: string): string {
 }
 
 function mapVideo(v: any): VideoItem | null {
+  if (v?.type === 'LockupView') {
+    if (v.content_type !== 'VIDEO') return null;
+    const id = v.content_id;
+    if (!id) return null;
+
+    const title = typeof v.metadata?.title === "string" ? v.metadata.title : v.metadata?.title?.toString?.() ?? "";
+    if (!title) return null;
+
+    const sources = v.content_image?.image || [];
+    const thumbnail = sources[0]?.url || "";
+
+    const bottomOverlay = v.content_image?.overlays?.find(
+      (o: any) => o.type === 'ThumbnailBottomOverlayView'
+    );
+    const duration = bottomOverlay?.badges?.[0]?.text || "Live";
+
+    const rows = v.metadata?.metadata?.metadata_rows || [];
+    let publishedText = "";
+    if (rows.length > 0) {
+      const parts = rows[0].metadata_parts || [];
+      if (parts.length > 1) {
+        publishedText = parts[parts.length - 1]?.text?.text || parts[parts.length - 1]?.text?.toString() || "";
+      } else if (parts.length === 1) {
+        publishedText = parts[0]?.text?.text || parts[0]?.text?.toString() || "";
+      }
+    }
+    const publishedAt = parseRelativeTime(publishedText);
+
+    return { id, title, thumbnail, duration, publishedAt };
+  }
+
   const id: string | undefined = v?.video_id ?? v?.id;
   if (!id) return null;
 
@@ -44,6 +75,20 @@ function mapVideo(v: any): VideoItem | null {
   return { id, title, thumbnail, duration, publishedAt };
 }
 
+function getPlaylistVideos(playlist: any): any[] {
+  if (playlist.items && playlist.items.length > 0) {
+    return playlist.items;
+  }
+  const memo = playlist.memo;
+  if (memo) {
+    const lockups = memo.get('LockupView');
+    if (lockups && lockups.length > 0) {
+      return lockups;
+    }
+  }
+  return [];
+}
+
 export async function parseYouTubePlaylist(playlistUrl: string): Promise<PlaylistInfo> {
   const playlistId = extractPlaylistId(playlistUrl);
   const yt = await getInnertube();
@@ -57,7 +102,8 @@ export async function parseYouTubePlaylist(playlistUrl: string): Promise<Playlis
   const items: VideoItem[] = [];
 
   while (true) {
-    for (const v of playlist.items) {
+    const playlistVideos = getPlaylistVideos(playlist);
+    for (const v of playlistVideos) {
       const mapped = mapVideo(v);
       if (mapped) items.push(mapped);
       if (items.length >= PLAYLIST_VIDEO_CAP) break;
@@ -89,7 +135,8 @@ export async function checkForPlaylistUpdates(playlistId: string): Promise<Boole
   const yt = await getInnertube();
   const playlist = await yt.getPlaylist(playlistId);
 
-  for (const v of playlist.items) {
+  const playlistVideos = getPlaylistVideos(playlist);
+  for (const v of playlistVideos) {
     const mapped = mapVideo(v);
     if (!mapped) continue;
     if (!stored?.items.some((video) => video.id === mapped.id)) {
@@ -110,7 +157,8 @@ async function fetchPlaylistFirstPage(
     headerThumbs[headerThumbs.length - 1]?.url ?? headerThumbs[0]?.url;
 
   const items: VideoItem[] = [];
-  for (const v of playlist.items) {
+  const playlistVideos = getPlaylistVideos(playlist);
+  for (const v of playlistVideos) {
     const mapped = mapVideo(v);
     if (mapped) items.push(mapped);
   }
