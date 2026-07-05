@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.10](https://github.com/limboy/localtube/compare/v1.2.9...v1.2.10) - 2026-07-06
+
+### Features
+
+- add All Unseen view and rename mark actions to "Seen" ([4819eea](https://github.com/limboy/localtube/commit/4819eeaba217b2554fb77516acf4fcb45d680c51))
+- track unseen videos per-item instead of clearing on click ([eab7aa1](https://github.com/limboy/localtube/commit/eab7aa11d0d45bacf990cbcec42c5e394ec94f8f))
+- delete items inside a folder when deleting the folder ([5ae0f4e](https://github.com/limboy/localtube/commit/5ae0f4e9bbe1173d8c6924943b85451324b0a4d5))
+
+### Bug Fixes
+
+- support parsing youtube course playlists ([044aaab](https://github.com/limboy/localtube/commit/044aaab71917acb03e04660bb77be59a33e37c12))
+
+### Refactoring
+
+- rename mark-read identifiers to mark-seen ([76f61e5](https://github.com/limboy/localtube/commit/76f61e556b7959618c6c8404d7cc71a795db1fef))
+
+### Documentation
+
+- update CHANGELOG for v1.2.9 ([041e6f7](https://github.com/limboy/localtube/commit/041e6f792098cfc902ce8a1f9b9fd2c63293db74))
+- update CHANGELOG for v1.2.8 ([6773556](https://github.com/limboy/localtube/commit/67735566ea3923b1ab2f03508170da777afcfd81))
+
 ## [v1.2.9](https://github.com/limboy/localtube/compare/v1.2.8...v1.2.9) - 2026-06-11
 
 ### Features
