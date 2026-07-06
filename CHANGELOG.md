@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.11](https://github.com/limboy/localtube/compare/v1.2.10...v1.2.11) - 2026-07-06
+
+### Documentation
+
+- update CHANGELOG for v1.2.10 ([26675e6](https://github.com/limboy/localtube/commit/26675e69abb41c6c4e318c6dac0d4a9a37980f01))
+
 ## [v1.2.10](https://github.com/limboy/localtube/compare/v1.2.9...v1.2.10) - 2026-07-06
 
 ### Features
