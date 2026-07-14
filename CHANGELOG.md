@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.12](https://github.com/limboy/localtube/compare/v1.2.11...v1.2.12) - 2026-07-15
+
+### Documentation
+
+- update CHANGELOG for v1.2.11 ([341f006](https://github.com/limboy/localtube/commit/341f0061b31885038b557e7a5069231c760fa585))
+
+### Other Changes
+
+- Handle refresh failures with per-item recovery and toast feedback ([112d72c](https://github.com/limboy/localtube/commit/112d72c3aa65b5a0eb26c992536fdcab1e9cc025))
+
 ## [v1.2.11](https://github.com/limboy/localtube/compare/v1.2.10...v1.2.11) - 2026-07-06
 
 ### Documentation
