@@ -24,6 +24,13 @@ export interface ChannelInfo extends VideoListInfo {
   type?: 'channel';
 }
 
+export interface RefreshFailure {
+  type: 'playlist' | 'channel';
+  id: string;
+  title: string;
+  error: unknown;
+}
+
 export interface PlayerState {
   isPlaying: boolean;
   currentVideoIndex: number;
@@ -80,6 +87,5 @@ export type SidebarItem =
   | { type: 'playlist'; id: string }
   | { type: 'channel'; id: string }
   | { type: 'folder'; id: string; children: SidebarChildEntry[] };
-
 
 

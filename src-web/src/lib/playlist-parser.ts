@@ -1,4 +1,4 @@
-import type { PlaylistInfo, VideoItem } from "@/types";
+import type { PlaylistInfo, RefreshFailure, VideoItem } from "@/types";
 import { addOrUpdatePlaylist, loadPlaylist, loadPlaylists } from "./utils";
 import { getInnertube } from "./innertube";
 import { parseRelativeTime } from "./time-utils";
@@ -171,7 +171,8 @@ async function fetchPlaylistFirstPage(
 }
 
 export async function checkAllPlaylistsForUpdates(
-  progressCallback?: (current: number, total: number) => void
+  progressCallback?: (current: number, total: number) => void,
+  failureCallback?: (failure: RefreshFailure) => void
 ): Promise<Boolean> {
   const playlists = await loadPlaylists();
   let needsUpdate = false;
@@ -179,47 +180,70 @@ export async function checkAllPlaylistsForUpdates(
     const playlist = playlists[i];
     progressCallback?.(i + 1, playlists.length);
 
-    const { items: firstPage, thumbnail } = await fetchPlaylistFirstPage(playlist.id);
+    try {
+      const { items: firstPage, thumbnail } = await fetchPlaylistFirstPage(playlist.id);
 
-    const storedIds = new Set(playlist.items.map((v) => v.id));
-    const newVideos = firstPage
-      .filter((v) => !storedIds.has(v.id))
-      .map((v) => ({ ...v, unseen: true }));
+      const storedIds = new Set(playlist.items.map((v) => v.id));
+      const newVideos = firstPage
+        .filter((v) => !storedIds.has(v.id))
+        .map((v) => ({ ...v, unseen: true }));
 
-    if (newVideos.length > 0) {
-      needsUpdate = true;
+      if (newVideos.length > 0) {
+        needsUpdate = true;
+      }
+
+      const mergedItems = [...newVideos, ...playlist.items].slice(0, PLAYLIST_VIDEO_CAP);
+
+      const updatedPlaylist = {
+        ...playlist,
+        items: mergedItems,
+        thumbnail: thumbnail ?? playlist.thumbnail,
+        unreadCount: mergedItems.filter((v) => v.unseen).length,
+        lastUpdated: Date.now(),
+      };
+      await addOrUpdatePlaylist(updatedPlaylist);
+    } catch (error) {
+      const failure: RefreshFailure = {
+        type: 'playlist',
+        id: playlist.id,
+        title: playlist.title,
+        error,
+      };
+      console.error(`Failed to refresh playlist "${playlist.title}" (${playlist.id})`, error);
+      failureCallback?.(failure);
     }
-
-    const mergedItems = [...newVideos, ...playlist.items].slice(0, PLAYLIST_VIDEO_CAP);
-
-    const updatedPlaylist = {
-      ...playlist,
-      items: mergedItems,
-      thumbnail: thumbnail ?? playlist.thumbnail,
-      unreadCount: mergedItems.filter((v) => v.unseen).length,
-      lastUpdated: Date.now(),
-    };
-    await addOrUpdatePlaylist(updatedPlaylist);
   }
   return needsUpdate;
 }
 
 export async function fullRefreshAllPlaylists(
-  progressCallback?: (current: number, total: number) => void
+  progressCallback?: (current: number, total: number) => void,
+  failureCallback?: (failure: RefreshFailure) => void
 ): Promise<void> {
   const playlists = await loadPlaylists();
   for (let i = 0; i < playlists.length; i++) {
     const playlist = playlists[i];
     progressCallback?.(i + 1, playlists.length);
 
-    const url = `https://www.youtube.com/playlist?list=${playlist.id}`;
-    const fresh = await parseYouTubePlaylist(url);
+    try {
+      const url = `https://www.youtube.com/playlist?list=${playlist.id}`;
+      const fresh = await parseYouTubePlaylist(url);
 
-    await addOrUpdatePlaylist({
-      ...fresh,
-      items: fresh.items.map((v) => ({ ...v, unseen: false })),
-      unreadCount: 0,
-      lastUpdated: Date.now(),
-    });
+      await addOrUpdatePlaylist({
+        ...fresh,
+        items: fresh.items.map((v) => ({ ...v, unseen: false })),
+        unreadCount: 0,
+        lastUpdated: Date.now(),
+      });
+    } catch (error) {
+      const failure: RefreshFailure = {
+        type: 'playlist',
+        id: playlist.id,
+        title: playlist.title,
+        error,
+      };
+      console.error(`Failed to fully refresh playlist "${playlist.title}" (${playlist.id})`, error);
+      failureCallback?.(failure);
+    }
   }
 }

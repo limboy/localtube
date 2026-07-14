@@ -1,4 +1,4 @@
-import type { ChannelInfo, VideoItem } from "@/types";
+import type { ChannelInfo, RefreshFailure, VideoItem } from "@/types";
 import { addOrUpdateChannel, loadChannel, loadChannels } from "./utils";
 import { getInnertube } from "./innertube";
 import { YTNodes } from "youtubei.js";
@@ -193,7 +193,8 @@ async function fetchChannelFirstPage(
 }
 
 export async function checkAllChannelsForUpdates(
-  progressCallback?: (current: number, total: number) => void
+  progressCallback?: (current: number, total: number) => void,
+  failureCallback?: (failure: RefreshFailure) => void
 ): Promise<Boolean> {
   const channels = await loadChannels();
   let needsUpdate = false;
@@ -201,49 +202,72 @@ export async function checkAllChannelsForUpdates(
     const channel = channels[i];
     progressCallback?.(i + 1, channels.length);
 
-    const { items: firstPage, thumbnail, title } = await fetchChannelFirstPage(channel.id, channel.thumbnail);
+    try {
+      const { items: firstPage, thumbnail, title } = await fetchChannelFirstPage(channel.id, channel.thumbnail);
 
-    const storedIds = new Set(channel.items.map((v) => v.id));
-    const newVideos = firstPage
-      .filter((v) => !storedIds.has(v.id))
-      .map((v) => ({ ...v, unseen: true }));
+      const storedIds = new Set(channel.items.map((v) => v.id));
+      const newVideos = firstPage
+        .filter((v) => !storedIds.has(v.id))
+        .map((v) => ({ ...v, unseen: true }));
 
-    if (newVideos.length > 0) {
-      needsUpdate = true;
+      if (newVideos.length > 0) {
+        needsUpdate = true;
+      }
+
+      const mergedItems = [...newVideos, ...channel.items].slice(0, CHANNEL_VIDEO_CAP);
+
+      const updated: ChannelInfo = {
+        ...channel,
+        title: title || channel.title,
+        thumbnail: thumbnail ?? channel.thumbnail,
+        items: mergedItems,
+        unreadCount: mergedItems.filter((v) => v.unseen).length,
+        lastUpdated: Date.now(),
+      };
+      await addOrUpdateChannel(updated);
+    } catch (error) {
+      const failure: RefreshFailure = {
+        type: 'channel',
+        id: channel.id,
+        title: channel.title,
+        error,
+      };
+      console.error(`Failed to refresh channel "${channel.title}" (${channel.id})`, error);
+      failureCallback?.(failure);
     }
-
-    const mergedItems = [...newVideos, ...channel.items].slice(0, CHANNEL_VIDEO_CAP);
-
-    const updated: ChannelInfo = {
-      ...channel,
-      title: title || channel.title,
-      thumbnail: thumbnail ?? channel.thumbnail,
-      items: mergedItems,
-      unreadCount: mergedItems.filter((v) => v.unseen).length,
-      lastUpdated: Date.now(),
-    };
-    await addOrUpdateChannel(updated);
   }
 
   return needsUpdate;
 }
 
 export async function fullRefreshAllChannels(
-  progressCallback?: (current: number, total: number) => void
+  progressCallback?: (current: number, total: number) => void,
+  failureCallback?: (failure: RefreshFailure) => void
 ): Promise<void> {
   const channels = await loadChannels();
   for (let i = 0; i < channels.length; i++) {
     const channel = channels[i];
     progressCallback?.(i + 1, channels.length);
 
-    const url = `https://www.youtube.com/channel/${channel.id}`;
-    const fresh = await parseYouTubeChannel(url);
+    try {
+      const url = `https://www.youtube.com/channel/${channel.id}`;
+      const fresh = await parseYouTubeChannel(url);
 
-    await addOrUpdateChannel({
-      ...fresh,
-      items: fresh.items.map((v) => ({ ...v, unseen: false })),
-      unreadCount: 0,
-      lastUpdated: Date.now(),
-    });
+      await addOrUpdateChannel({
+        ...fresh,
+        items: fresh.items.map((v) => ({ ...v, unseen: false })),
+        unreadCount: 0,
+        lastUpdated: Date.now(),
+      });
+    } catch (error) {
+      const failure: RefreshFailure = {
+        type: 'channel',
+        id: channel.id,
+        title: channel.title,
+        error,
+      };
+      console.error(`Failed to fully refresh channel "${channel.title}" (${channel.id})`, error);
+      failureCallback?.(failure);
+    }
   }
 }

@@ -62,7 +62,7 @@ import {
   exportData,
   importData,
 } from "@/lib/utils";
-import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem, VideoItem } from "@/types";
+import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem, VideoItem, RefreshFailure } from "@/types";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 import { checkAllPlaylistsForUpdates, fullRefreshAllPlaylists, parseYouTubePlaylist } from "@/lib/playlist-parser";
@@ -70,6 +70,7 @@ import { checkAllChannelsForUpdates, fullRefreshAllChannels, parseYouTubeChannel
 import { isVideoUrl, parseYouTubeVideo } from "@/lib/video-parser";
 import { loadBookmarks, saveBookmarks } from "@/lib/utils";
 import SearchDialog from "@/components/search-dialog";
+import { toast } from "@/hooks/use-toast";
 // Tabs removed
 
 
@@ -864,6 +865,8 @@ export default function AppSidebar() {
     const pItemsCount = playlists.length;
     const cItemsCount = channels.length;
     const totalCount = pItemsCount + cItemsCount;
+    const failures: RefreshFailure[] = [];
+    const recordFailure = (failure: RefreshFailure) => failures.push(failure);
 
     setRefreshingPlaylists(true);
     setRefreshingChannels(true);
@@ -873,11 +876,11 @@ export default function AppSidebar() {
       if (fullRefresh) {
         await fullRefreshAllPlaylists((current) => {
           setRefreshProgress({ current, total: totalCount });
-        });
+        }, recordFailure);
       } else {
         await checkAllPlaylistsForUpdates((current) => {
           setRefreshProgress({ current, total: totalCount });
-        });
+        }, recordFailure);
       }
       const newPlaylists = await loadPlaylists();
       setPlaylists(newPlaylists);
@@ -887,11 +890,11 @@ export default function AppSidebar() {
       if (fullRefresh) {
         await fullRefreshAllChannels((current) => {
           setRefreshProgress({ current: pItemsCount + current, total: totalCount });
-        });
+        }, recordFailure);
       } else {
         await checkAllChannelsForUpdates((current) => {
           setRefreshProgress({ current: pItemsCount + current, total: totalCount });
-        });
+        }, recordFailure);
       }
       const newChannels = await loadChannels();
       setChannels(newChannels);
@@ -899,10 +902,31 @@ export default function AppSidebar() {
       setRefreshingChannels(false);
 
       await refreshSidebarData();
+
+      if (failures.length > 0) {
+        const visibleFailures = failures
+          .slice(0, 3)
+          .map(({ title, type }) => `${title} (${type})`);
+        const remainingCount = failures.length - visibleFailures.length;
+        const description = remainingCount > 0
+          ? `${visibleFailures.join(', ')}, and ${remainingCount} more could not be refreshed.`
+          : `${visibleFailures.join(', ')} could not be refreshed.`;
+
+        toast({
+          variant: 'destructive',
+          title: `Refresh finished with ${failures.length} ${failures.length === 1 ? 'failure' : 'failures'}`,
+          description,
+        });
+      }
     } catch (e) {
       console.error("Refresh all failed", e);
       setRefreshingPlaylists(false);
       setRefreshingChannels(false);
+      toast({
+        variant: 'destructive',
+        title: 'Refresh failed',
+        description: 'An unexpected error stopped the refresh. Please try again.',
+      });
     } finally {
       setRefreshProgress(null);
     }
