@@ -945,14 +945,7 @@ export default function AppSidebar() {
                   </span>
                 </button>
               ) : null}
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="focus-visible:ring-0 focus-visible:outline-none mr-0.5"
-              >
-                <span className={cn("btn-icon")}>
-                  <Search size={18} strokeWidth={1.5} />
-                </span>
-              </button>
+
               <Dialog
                 open={open}
                 onOpenChange={(isOpen) => {
@@ -1194,10 +1187,10 @@ export default function AppSidebar() {
         </SidebarContent>
         <SidebarFooter className="">
           <SidebarMenu>
-            <SidebarMenuItem>
+            <SidebarMenuItem className="flex flex-row items-center gap-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton className="w-full justify-start hover:bg-sidebar-accent text-sidebar-foreground">
+                  <SidebarMenuButton className="flex-1 justify-start hover:bg-sidebar-accent text-sidebar-foreground">
                     <Settings className="h-4 w-4" />
                     <span>Settings</span>
                   </SidebarMenuButton>
@@ -1253,6 +1246,12 @@ export default function AppSidebar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <SidebarMenuButton
+                onClick={() => setSearchOpen(true)}
+                className="w-9 h-9 shrink-0 justify-center hover:bg-sidebar-accent text-sidebar-foreground"
+              >
+                <Search className="h-4 w-4" />
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
