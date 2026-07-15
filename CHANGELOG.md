@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.13](https://github.com/limboy/localtube/compare/v1.2.12...v1.2.13) - 2026-07-16
+
+### Features
+
+- remove All Unseen button and add Mark All as Seen options ([01b4cc7](https://github.com/limboy/localtube/commit/01b4cc7f3c45bae0ae2d8b3fdbf0a6a3e77f93de))
+
+### Documentation
+
+- update CHANGELOG for v1.2.12 ([010daa1](https://github.com/limboy/localtube/commit/010daa1e3af945519ba2136ee7fd3c7d1248f811))
+
+### Styles
+
+- move search icon to the bottom right ([f949986](https://github.com/limboy/localtube/commit/f94998685b55592e497fc3168665eeb9f2c34251))
+
 ## [v1.2.12](https://github.com/limboy/localtube/compare/v1.2.11...v1.2.12) - 2026-07-15
 
 ### Documentation
