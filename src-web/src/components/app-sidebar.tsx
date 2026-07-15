@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, Download, Upload, Inbox } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, Download, Upload } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
@@ -46,7 +46,7 @@ import {
   removeChannel,
   markPlaylistAsSeen,
   markChannelAsSeen,
-  markAllLatestAsSeen,
+  markFolderAsSeen,
   markAllUnseenAsSeen,
   addOrUpdateChannel,
   loadPlaylists,
@@ -398,8 +398,6 @@ export default function AppSidebar() {
 
     const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
       if (eventId === "mark-latest-seen") {
-        await markAllLatestAsSeen();
-      } else if (eventId === "mark-all-unseen-seen") {
         await markAllUnseenAsSeen();
       } else if (eventId.startsWith("mark-playlist-seen-")) {
         const playlistId = eventId.replace("mark-playlist-seen-", "");
@@ -407,6 +405,9 @@ export default function AppSidebar() {
       } else if (eventId.startsWith("mark-channel-seen-")) {
         const channelId = eventId.replace("mark-channel-seen-", "");
         await markChannelAsSeen(channelId);
+      } else if (eventId.startsWith("mark-folder-seen-")) {
+        const folderId = eventId.replace("mark-folder-seen-", "");
+        await markFolderAsSeen(folderId);
       } else if (eventId.startsWith("view-playlist-in-browser-")) {
         const playlistId = eventId.replace("view-playlist-in-browser-", "");
         await window.electron.openUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
@@ -700,10 +701,7 @@ export default function AppSidebar() {
     shouldThrow: false
   });
 
-  const allUnseenMatch = useMatch({
-    from: "/all-unseen",
-    shouldThrow: false
-  });
+
 
   const handleChannelClick = async (channelId: string, fromBookmarks = false) => {
     navigate({
@@ -761,41 +759,20 @@ export default function AppSidebar() {
     return allVideos.slice(0, 100).filter((v) => v.unseen).length;
   }, [channels, playlists]);
 
-  // Total unseen videos across every source (uncapped), deduped by video id.
-  const allUnseenCount = useMemo(() => {
-    const seen = new Set<string>();
-    let count = 0;
-    for (const source of [...channels, ...playlists]) {
-      for (const v of source.items) {
-        if (seen.has(v.id)) continue;
-        seen.add(v.id);
-        if (v.unseen) count++;
-      }
-    }
-    return count;
-  }, [channels, playlists]);
+
 
   async function latestContextMenuHandler(event: React.MouseEvent) {
     event.preventDefault();
     try {
       await window.electron.showContextMenu([
-        { id: "mark-latest-seen", label: "Mark as Seen" }
+        { id: "mark-latest-seen", label: "Mark All as Seen" }
       ]);
     } catch (error) {
       console.error("Error creating latest context menu:", error);
     }
   }
 
-  async function allUnseenContextMenuHandler(event: React.MouseEvent) {
-    event.preventDefault();
-    try {
-      await window.electron.showContextMenu([
-        { id: "mark-all-unseen-seen", label: "Mark as Seen" }
-      ]);
-    } catch (error) {
-      console.error("Error creating all-unseen context menu:", error);
-    }
-  }
+
 
   const isItemInFolder = (itemId: string, itemType: 'playlist' | 'channel'): boolean => {
     return sidebarOrder.some(e => e.type === 'folder' && e.children.some(c => c.type === itemType && c.id === itemId));
@@ -828,6 +805,8 @@ export default function AppSidebar() {
     event.stopPropagation();
     try {
       await window.electron.showContextMenu([
+        { id: `mark-folder-seen-${folderId}`, label: "Mark All as Seen" },
+        { type: "separator" },
         { id: `rename-folder-${folderId}`, label: "Rename" },
         { type: "separator" },
         { id: `delete-folder-${folderId}`, label: "Delete Folder" }
@@ -1109,29 +1088,7 @@ export default function AppSidebar() {
                           </SidebarMenuBadge>
                         )}
                       </SidebarMenuItem>
-                      <SidebarMenuItem className="list-none w-full">
-                        <SidebarMenuButton
-                          asChild
-                          className={cn(
-                            "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
-                            allUnseenMatch ? "bg-sidebar-accent" : ""
-                          )}
-                        >
-                          <div
-                            onClick={() => navigate({ to: '/all-unseen' })}
-                            onContextMenu={allUnseenContextMenuHandler}
-                            className="flex items-center gap-2 w-full cursor-default"
-                          >
-                            <Inbox size={16} className="shrink-0" />
-                            <span>All Unseen</span>
-                          </div>
-                        </SidebarMenuButton>
-                        {allUnseenCount > 0 && (
-                          <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
-                            {allUnseenCount}
-                          </SidebarMenuBadge>
-                        )}
-                      </SidebarMenuItem>
+
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>

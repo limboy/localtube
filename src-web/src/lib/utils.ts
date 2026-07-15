@@ -205,6 +205,51 @@ export async function markAllUnseenAsSeen() {
   window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
+// Mark all unseen videos in the playlists and channels within a folder as seen.
+export async function markFolderAsSeen(folderId: string) {
+  const order = await loadSidebarOrder();
+  const entry = order.find(e => e.type === 'folder' && e.id === folderId);
+  if (!entry || entry.type !== 'folder') return;
+
+  const playlistIds = new Set(entry.children.filter(c => c.type === 'playlist').map(c => c.id));
+  const channelIds = new Set(entry.children.filter(c => c.type === 'channel').map(c => c.id));
+  const store = await getStore();
+  let changed = false;
+
+  if (playlistIds.size > 0) {
+    const playlists = await loadPlaylists();
+    playlists.forEach(p => {
+      if (playlistIds.has(p.id)) {
+        p.items.forEach(v => { v.unseen = false; });
+        p.unreadCount = 0;
+        changed = true;
+      }
+    });
+    if (changed) {
+      await store.set("playlists", playlists);
+    }
+  }
+
+  let channelsChanged = false;
+  if (channelIds.size > 0) {
+    const channels = await loadChannels();
+    channels.forEach(c => {
+      if (channelIds.has(c.id)) {
+        c.items.forEach(v => { v.unseen = false; });
+        c.unreadCount = 0;
+        channelsChanged = true;
+      }
+    });
+    if (channelsChanged) {
+      await store.set("channels", channels);
+    }
+  }
+
+  if (changed || channelsChanged) {
+    window.dispatchEvent(new CustomEvent('store-updated'));
+  }
+}
+
 export async function addOrUpdatePlaylist(playlist: PlaylistInfo) {
   const data = await loadPlaylists();
   const store = await getStore();

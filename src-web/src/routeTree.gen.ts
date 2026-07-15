@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LatestRouteImport } from './routes/latest'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as BookmarksRouteImport } from './routes/bookmarks'
-import { Route as AllUnseenRouteImport } from './routes/all-unseen'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlaylistIndexRouteImport } from './routes/playlist.index'
 import { Route as ChannelIndexRouteImport } from './routes/channel.index'
@@ -32,11 +31,6 @@ const HistoryRoute = HistoryRouteImport.update({
 const BookmarksRoute = BookmarksRouteImport.update({
   id: '/bookmarks',
   path: '/bookmarks',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AllUnseenRoute = AllUnseenRouteImport.update({
-  id: '/all-unseen',
-  path: '/all-unseen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -67,7 +61,6 @@ const ChannelChannelIdRoute = ChannelChannelIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/all-unseen': typeof AllUnseenRoute
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
   '/latest': typeof LatestRoute
@@ -78,7 +71,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/all-unseen': typeof AllUnseenRoute
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
   '/latest': typeof LatestRoute
@@ -90,7 +82,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/all-unseen': typeof AllUnseenRoute
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
   '/latest': typeof LatestRoute
@@ -103,7 +94,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/all-unseen'
     | '/bookmarks'
     | '/history'
     | '/latest'
@@ -114,7 +104,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/all-unseen'
     | '/bookmarks'
     | '/history'
     | '/latest'
@@ -125,7 +114,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/all-unseen'
     | '/bookmarks'
     | '/history'
     | '/latest'
@@ -137,7 +125,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AllUnseenRoute: typeof AllUnseenRoute
   BookmarksRoute: typeof BookmarksRoute
   HistoryRoute: typeof HistoryRoute
   LatestRoute: typeof LatestRoute
@@ -168,13 +155,6 @@ declare module '@tanstack/react-router' {
       path: '/bookmarks'
       fullPath: '/bookmarks'
       preLoaderRoute: typeof BookmarksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/all-unseen': {
-      id: '/all-unseen'
-      path: '/all-unseen'
-      fullPath: '/all-unseen'
-      preLoaderRoute: typeof AllUnseenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -217,7 +197,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AllUnseenRoute: AllUnseenRoute,
   BookmarksRoute: BookmarksRoute,
   HistoryRoute: HistoryRoute,
   LatestRoute: LatestRoute,
