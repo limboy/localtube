@@ -1048,6 +1048,7 @@ export default function AppSidebar() {
 
   async function playlistClickHandler(event: React.MouseEvent, playlistId: string) {
     event.preventDefault();
+    event.stopPropagation();
     try {
       const menuItems: Array<{ id?: string; label?: string; type?: "normal" | "separator"; submenu?: Array<{ id?: string; label?: string; type?: "normal" | "separator" }> }> = [];
       menuItems.push({ id: "new-folder", label: "New Folder" });
@@ -1221,6 +1222,7 @@ export default function AppSidebar() {
 
   async function channelClickHandler(event: React.MouseEvent, channelId: string) {
     event.preventDefault();
+    event.stopPropagation();
     try {
       const menuItems: Array<{ id?: string; label?: string; type?: "normal" | "separator"; submenu?: Array<{ id?: string; label?: string; type?: "normal" | "separator" }> }> = [];
       menuItems.push({ id: "new-folder", label: "New Folder" });
@@ -1308,8 +1310,9 @@ export default function AppSidebar() {
     }
   }
 
-  async function collectionsHeaderContextMenu(event: React.MouseEvent) {
+  async function collectionsContextMenuHandler(event: React.MouseEvent) {
     event.preventDefault();
+    event.stopPropagation();
     try {
       await window.electron.showContextMenu([
         { id: "new-folder", label: "New Folder" }
@@ -1635,10 +1638,12 @@ export default function AppSidebar() {
 
                 <SidebarSeparator className="my-2" />
 
-                <SidebarGroup className="p-0">
+                <SidebarGroup
+                  className="p-0 flex-1 min-h-0"
+                  onContextMenu={collectionsContextMenuHandler}
+                >
                   <SidebarGroupLabel
                     className="px-2 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center justify-between"
-                    onContextMenu={collectionsHeaderContextMenu}
                   >
                     Collections
                     {(playlists.length > 0 || channels.length > 0) ? (
