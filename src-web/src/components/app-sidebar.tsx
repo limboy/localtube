@@ -915,11 +915,21 @@ export default function AppSidebar() {
                   setOpen(isOpen);
                 }}
               >
-                <DialogTrigger className="focus-visible:ring-0 focus-visible:outline-none mr-2">
-                  <span className={cn("btn-icon")}>
-                    <Plus size={18} strokeWidth={1.5} />
-                  </span>
-                </DialogTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DialogTrigger
+                      className="focus-visible:ring-0 focus-visible:outline-none mr-2"
+                      aria-label="Add Playlist, Channel, or Video"
+                    >
+                      <span className={cn("btn-icon")}>
+                        <Plus size={18} strokeWidth={1.5} />
+                      </span>
+                    </DialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Add Playlist, Channel, or Video
+                  </TooltipContent>
+                </Tooltip>
                 <DialogContent forceMount showCloseButton={false}>
                   <DialogHeader>
                     <DialogTitle className="text-foreground">
