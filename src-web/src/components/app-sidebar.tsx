@@ -63,6 +63,7 @@ import {
 } from "@/lib/utils";
 import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem, RefreshFailure } from "@/types";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 import { checkAllPlaylistsForUpdates, fullRefreshAllPlaylists, parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { checkAllChannelsForUpdates, fullRefreshAllChannels, parseYouTubeChannel } from "@/lib/channel-parser";
@@ -907,31 +908,6 @@ export default function AppSidebar() {
               <div className="w-26 shrink-0" />
             </div>
             <div className="flex items-center">
-              {(playlists.length > 0 || channels.length > 0) ? (
-                <button
-                  onClick={handleRefreshAll}
-                  onPointerDown={(e) => e.preventDefault()}
-                  disabled={refreshingPlaylists || refreshingChannels}
-                  className={cn(
-                    "focus-visible:ring-0 focus-visible:outline-none mr-0.5",
-                    (refreshingPlaylists || refreshingChannels) && "pointer-events-none"
-                  )}
-                >
-                  <span className={cn("btn-icon", (refreshingPlaylists || refreshingChannels) && "opacity-50")}>
-                    {(refreshingPlaylists || refreshingChannels) ? (
-                      <div className="flex items-center gap-1">
-                        {refreshProgress && (
-                          <span className="text-[10px]">{refreshProgress.current}/{refreshProgress.total}</span>
-                        )}
-                        <Loader size={18} className="animate-spin" />
-                      </div>
-                    ) : (
-                      <RefreshCw size={18} strokeWidth={1.5} />
-                    )}
-                  </span>
-                </button>
-              ) : null}
-
               <Dialog
                 open={open}
                 onOpenChange={(isOpen) => {
@@ -1096,6 +1072,37 @@ export default function AppSidebar() {
                     onContextMenu={collectionsHeaderContextMenu}
                   >
                     Collections
+                    {(playlists.length > 0 || channels.length > 0) ? (
+                      <Tooltip open={(refreshingPlaylists || refreshingChannels) ? false : undefined}>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={handleRefreshAll}
+                            onPointerDown={(e) => e.preventDefault()}
+                            disabled={refreshingPlaylists || refreshingChannels}
+                            className={cn(
+                              "flex items-center justify-center",
+                              (refreshingPlaylists || refreshingChannels)
+                                ? "opacity-50 cursor-default pointer-events-none"
+                                : "hover:text-foreground transition-colors"
+                            )}
+                          >
+                            {(refreshingPlaylists || refreshingChannels) ? (
+                              <div className="flex items-center gap-1">
+                                {refreshProgress && (
+                                  <span className="text-[10px]">{refreshProgress.current}/{refreshProgress.total}</span>
+                                )}
+                                <Loader size={14} className="animate-spin" />
+                              </div>
+                            ) : (
+                              <RefreshCw size={14} strokeWidth={1.5} />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Refresh All
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="pr-2">
