@@ -1089,23 +1089,24 @@ export default function AppSidebar() {
                             onClick={handleRefreshAll}
                             onPointerDown={(e) => e.preventDefault()}
                             disabled={refreshingPlaylists || refreshingChannels}
+                            aria-label="Refresh All"
                             className={cn(
-                              "flex items-center justify-center",
-                              (refreshingPlaylists || refreshingChannels)
-                                ? "opacity-50 cursor-default pointer-events-none"
-                                : "hover:text-foreground transition-colors"
+                              "focus-visible:ring-0 focus-visible:outline-none",
+                              (refreshingPlaylists || refreshingChannels) && "pointer-events-none"
                             )}
                           >
-                            {(refreshingPlaylists || refreshingChannels) ? (
-                              <div className="flex items-center gap-1">
-                                {refreshProgress && (
-                                  <span className="text-[10px]">{refreshProgress.current}/{refreshProgress.total}</span>
-                                )}
-                                <Loader size={14} className="animate-spin" />
-                              </div>
-                            ) : (
-                              <RefreshCw size={14} strokeWidth={1.5} />
-                            )}
+                            <span className={cn("btn-icon", (refreshingPlaylists || refreshingChannels) && "opacity-50")}>
+                              {(refreshingPlaylists || refreshingChannels) ? (
+                                <span className="flex items-center gap-1">
+                                  {refreshProgress && (
+                                    <span className="text-[10px]">{refreshProgress.current}/{refreshProgress.total}</span>
+                                  )}
+                                  <Loader size={14} className="animate-spin" />
+                                </span>
+                              ) : (
+                                <RefreshCw size={14} strokeWidth={1.5} />
+                              )}
+                            </span>
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>
