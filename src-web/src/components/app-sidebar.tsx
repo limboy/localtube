@@ -138,6 +138,39 @@ const sidebarCollisionDetection: CollisionDetection = (args) => {
     });
     if (folderCollision) {
       const folderData = folderCollision.data?.droppableContainer.data.current;
+      const folderEntry = args.droppableContainers.find((container) => {
+        const entryData = container.data.current;
+        return isSidebarDragEntryData(entryData)
+          && entryData.itemType === "folder"
+          && isSidebarDropData(folderData)
+          && sidebarFolderContainerId(entryData.itemId) === folderData.containerId;
+      });
+      const folderEntryRect = folderEntry ? args.droppableRects.get(folderEntry.id) : null;
+      const folderRect = args.droppableRects.get(folderCollision.id);
+      const hasTopLevelEntryBelow = folderEntryRect
+        ? args.droppableContainers.some((container) => {
+          const entryData = container.data.current;
+          const entryRect = args.droppableRects.get(container.id);
+          return container.id !== args.active.id
+            && isSidebarDragEntryData(entryData)
+            && entryData.containerId === TOP_LEVEL_SIDEBAR_CONTAINER
+            && Boolean(entryRect && entryRect.top > folderEntryRect.top);
+        })
+        : false;
+
+      // The enclosing folder normally means "append". For the final top-level
+      // folder, reserve its lower edge so there is still a reachable boundary
+      // for inserting an item after the folder.
+      if (
+        folderEntry
+        && folderRect
+        && args.pointerCoordinates
+        && !hasTopLevelEntryBelow
+        && args.pointerCoordinates.y >= folderRect.bottom - 8
+      ) {
+        return [{ id: folderEntry.id }];
+      }
+
       const allFolderChildren = args.droppableContainers.filter((container) => {
         const entryData = container.data.current;
         return isSidebarDragEntryData(entryData)
