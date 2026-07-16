@@ -24,7 +24,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
 import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, CircleDot, Download, Upload } from "lucide-react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  pointerWithin,
+  useDndContext,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragMoveEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +75,7 @@ import {
   loadChannels,
   loadFolders,
   loadSidebarOrder,
+  saveSidebarOrder,
   createFolder,
   renameFolder,
   removeFolder,
@@ -71,19 +95,290 @@ import { isVideoUrl, parseYouTubeVideo } from "@/lib/video-parser";
 import { loadBookmarks, saveBookmarks } from "@/lib/utils";
 import SearchDialog from "@/components/search-dialog";
 import { toast } from "@/hooks/use-toast";
+import {
+  TOP_LEVEL_SIDEBAR_CONTAINER,
+  isSidebarDragEntryData,
+  isSidebarDropData,
+  reorderSidebarItems,
+  sidebarEntryId,
+  sidebarFolderContainerId,
+  sidebarFolderTargetId,
+  type SidebarDragEntryData,
+  type SidebarDropContainerData,
+} from "@/lib/sidebar-sort";
 // Tabs removed
 
 
 
+const sidebarCollisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  if (pointerCollisions.length === 0) return closestCenter(args);
+
+  const activeData = args.active.data.current;
+  if (!isSidebarDragEntryData(activeData)) return pointerCollisions;
+
+  const entryCollisions = pointerCollisions.filter((collision) => {
+    const dropData = collision.data?.droppableContainer.data.current;
+    return isSidebarDragEntryData(dropData);
+  });
+
+  if (activeData.itemType === "folder") {
+    const topLevelEntry = entryCollisions.find((collision) => {
+      const dropData = collision.data?.droppableContainer.data.current;
+      return isSidebarDragEntryData(dropData)
+        && dropData.containerId === TOP_LEVEL_SIDEBAR_CONTAINER;
+    });
+    if (topLevelEntry) return [topLevelEntry];
+  } else {
+    const folderCollision = pointerCollisions.find((collision) => {
+      const dropData = collision.data?.droppableContainer.data.current;
+      return isSidebarDropData(dropData)
+        && dropData.kind === "sidebar-container"
+        && dropData.dropArea === "folder";
+    });
+    if (folderCollision) {
+      const folderData = folderCollision.data?.droppableContainer.data.current;
+      const allFolderChildren = args.droppableContainers.filter((container) => {
+        const entryData = container.data.current;
+        return isSidebarDragEntryData(entryData)
+          && isSidebarDropData(folderData)
+          && entryData.containerId === folderData.containerId;
+      });
+      const activeChildCollision = entryCollisions.find((collision) => (
+        collision.id === args.active.id
+        && allFolderChildren.some((container) => container.id === collision.id)
+      ));
+      if (activeChildCollision) return [activeChildCollision];
+
+      const folderChildren = allFolderChildren.filter((container) => container.id !== args.active.id);
+      const directChildCollision = entryCollisions.find((collision) => (
+        folderChildren.some((container) => container.id === collision.id)
+      ));
+      if (directChildCollision) return [directChildCollision];
+
+      // Row gaps still belong to the sortable child region. Without this check,
+      // the enclosing folder wins in the half-gap between two adjacent rows and
+      // incorrectly previews an append operation.
+      if (args.pointerCoordinates && folderChildren.length > 0) {
+        const childRects = allFolderChildren
+          .map((container) => args.droppableRects.get(container.id))
+          .filter((rect): rect is NonNullable<typeof rect> => Boolean(rect));
+        if (childRects.length > 0) {
+          const firstChildTop = Math.min(...childRects.map((rect) => rect.top));
+          const lastChildBottom = Math.max(...childRects.map((rect) => rect.bottom));
+          if (args.pointerCoordinates.y >= firstChildTop && args.pointerCoordinates.y <= lastChildBottom) {
+            const nearestChild = closestCenter({
+              ...args,
+              droppableContainers: folderChildren,
+            });
+            if (nearestChild.length > 0) return nearestChild;
+          }
+        }
+      }
+
+      return [folderCollision];
+    }
+
+    if (entryCollisions.length > 0) return [entryCollisions[0]];
+  }
+
+  const containerCollision = pointerCollisions.find((collision) => {
+    const dropData = collision.data?.droppableContainer.data.current;
+    return isSidebarDropData(dropData) && dropData.kind === "sidebar-container";
+  });
+  if (!containerCollision) return pointerCollisions;
+
+  const containerData = containerCollision.data?.droppableContainer.data.current;
+  if (!isSidebarDropData(containerData)) return [containerCollision];
+  const closestEntryInContainer = closestCenter({
+    ...args,
+    droppableContainers: args.droppableContainers.filter((container) => {
+      const dropData = container.data.current;
+      return isSidebarDragEntryData(dropData) && dropData.containerId === containerData.containerId;
+    }),
+  });
+  return closestEntryInContainer.length > 0 ? closestEntryInContainer : [containerCollision];
+};
+
+type SidebarDropIndicator = {
+  containerId: string;
+  target: { type: SidebarItem["type"]; id: string } | null;
+  position: "before" | "after" | "end";
+};
+
+function SidebarDropLine({
+  position,
+  indented = false,
+  atContainerStart = false,
+}: {
+  position: "before" | "after";
+  indented?: boolean;
+  atContainerStart?: boolean;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none absolute right-0 z-30 h-0.5 bg-current text-primary",
+        indented ? "left-8" : "left-3",
+        position === "before"
+          ? (atContainerStart ? "top-1" : "-top-px")
+          : "bottom-1",
+      )}
+    >
+      <span className="absolute left-0 top-1/2 block size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-current">
+        <span className="absolute inset-0.5 rounded-full bg-sidebar" />
+      </span>
+    </div>
+  );
+}
+
+function shouldInsertAfter(event: DragMoveEvent) {
+  const activatorEvent = event.activatorEvent;
+  const pointerY = "clientY" in activatorEvent && typeof activatorEvent.clientY === "number"
+    ? activatorEvent.clientY + event.delta.y
+    : null;
+  if (pointerY !== null) {
+    return pointerY > event.over!.rect.top + event.over!.rect.height / 2;
+  }
+
+  const translatedRect = event.active.rect.current.translated;
+  return translatedRect
+    ? translatedRect.top + translatedRect.height / 2 > event.over!.rect.top + event.over!.rect.height / 2
+    : false;
+}
+
+function projectSidebarDrop(event: DragMoveEvent): SidebarDropIndicator | null {
+  if (!event.over) return null;
+  const activeData = event.active.data.current;
+  const overData = event.over.data.current;
+  if (!isSidebarDragEntryData(activeData) || !isSidebarDropData(overData)) return null;
+
+  if (overData.kind === "sidebar-entry") {
+    if (activeData.itemType === overData.itemType && activeData.itemId === overData.itemId) return null;
+    return {
+      containerId: overData.containerId,
+      target: { type: overData.itemType, id: overData.itemId },
+      position: shouldInsertAfter(event) ? "after" : "before",
+    };
+  }
+
+  if (overData.dropArea === "folder") return null;
+
+  return {
+    containerId: overData.containerId,
+    target: null,
+    position: "end",
+  };
+}
+
+function normalizeSidebarDropIndicator(
+  indicator: SidebarDropIndicator | null,
+  order: SidebarItem[],
+): SidebarDropIndicator | null {
+  if (!indicator?.target || indicator.position !== "after") return indicator;
+
+  const entries = indicator.containerId === TOP_LEVEL_SIDEBAR_CONTAINER
+    ? order
+    : order.find(
+      (entry): entry is Extract<SidebarItem, { type: "folder" }> =>
+        entry.type === "folder" && sidebarFolderContainerId(entry.id) === indicator.containerId,
+    )?.children;
+  if (!entries) return indicator;
+
+  const targetIndex = entries.findIndex(
+    (entry) => entry.type === indicator.target!.type && entry.id === indicator.target!.id,
+  );
+  if (targetIndex === -1) return indicator;
+
+  const nextEntry = entries[targetIndex + 1];
+  return nextEntry
+    ? {
+      containerId: indicator.containerId,
+      target: { type: nextEntry.type, id: nextEntry.id },
+      position: "before",
+    }
+    : {
+      containerId: indicator.containerId,
+      target: null,
+      position: "end",
+    };
+}
+
+interface SidebarDragPreviewProps {
+  entry: SidebarDragEntryData;
+  playlistsMap: Map<string, PlaylistInfo>;
+  channelsMap: Map<string, ChannelInfo>;
+  foldersMap: Map<string, FolderInfo>;
+}
+
+function SidebarDragPreview({ entry, playlistsMap, channelsMap, foldersMap }: SidebarDragPreviewProps) {
+  let icon: React.ReactNode;
+  let title: string;
+
+  if (entry.itemType === "playlist") {
+    const playlist = playlistsMap.get(entry.itemId);
+    if (!playlist) return null;
+    title = playlist.title;
+    icon = playlist.thumbnail ? (
+      <img src={playlist.thumbnail} alt="" className="h-5 w-5 shrink-0 rounded object-cover" />
+    ) : (
+      <List size={16} className="shrink-0 text-muted-foreground" />
+    );
+  } else if (entry.itemType === "channel") {
+    const channel = channelsMap.get(entry.itemId);
+    if (!channel) return null;
+    title = channel.title;
+    icon = channel.thumbnail ? (
+      <img src={channel.thumbnail} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover" />
+    ) : (
+      <CircleUserRound size={16} className="shrink-0 text-muted-foreground" />
+    );
+  } else {
+    const folder = foldersMap.get(entry.itemId);
+    if (!folder) return null;
+    title = folder.name;
+    icon = folder.isCollapsed ? (
+      <Folder size={16} className="shrink-0 text-muted-foreground" />
+    ) : (
+      <FolderOpen size={16} className="shrink-0 text-muted-foreground" />
+    );
+  }
+
+  return (
+    <div className="flex h-8 w-full items-center gap-2 overflow-hidden rounded-md bg-sidebar-accent px-2 text-sm text-sidebar-foreground shadow-lg ring-1 ring-sidebar-border">
+      {icon}
+      <span className="truncate">{title}</span>
+    </div>
+  );
+}
+
+
 interface PlaylistItemProps {
   playlist: PlaylistInfo;
+  containerId: string;
+  isFirstInContainer: boolean;
+  dropIndicator?: "before" | "after";
   isActive: boolean;
   onPlaylistClick: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, id: string) => void;
 }
 
-function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: PlaylistItemProps) {
+function PlaylistItem({ playlist, containerId, isFirstInContainer, dropIndicator, isActive, onPlaylistClick, onContextMenu }: PlaylistItemProps) {
   const [imgError, setImgError] = useState(false);
+  const { active } = useDndContext();
+  const isSidebarDragActive = isSidebarDragEntryData(active?.data.current);
+  const dragData: SidebarDragEntryData = {
+    kind: "sidebar-entry",
+    itemType: "playlist",
+    itemId: playlist.id,
+    containerId,
+  };
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+  } = useSortable({ id: sidebarEntryId("playlist", playlist.id), data: dragData });
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onPlaylistClick(playlist.id);
@@ -97,12 +392,28 @@ function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: Pl
   };
 
   return (
-    <SidebarMenuItem className="list-none w-full">
+    <SidebarMenuItem
+      ref={setNodeRef}
+      className="list-none w-full touch-none"
+      {...attributes}
+      {...listeners}
+    >
+      {dropIndicator && (
+        <SidebarDropLine
+          position={dropIndicator}
+          atContainerStart={isFirstInContainer && dropIndicator === "before"}
+        />
+      )}
       <SidebarMenuButton key={playlist.id} asChild>
         <div
           className={cn(
             "group/playlist w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-            isActive ? "bg-sidebar-accent" : ""
+            isActive ? "bg-sidebar-accent" : "",
+            isSidebarDragActive && (
+              isActive
+                ? "hover:bg-sidebar-accent! active:bg-sidebar-accent!"
+                : "hover:bg-transparent! active:bg-transparent!"
+            ),
           )}
           onMouseDown={handleMouseDown}
         >
@@ -141,13 +452,29 @@ function PlaylistItem({ playlist, isActive, onPlaylistClick, onContextMenu }: Pl
 
 interface ChannelItemProps {
   channel: ChannelInfo;
+  containerId: string;
+  isFirstInContainer: boolean;
+  dropIndicator?: "before" | "after";
   isActive: boolean;
   onChannelClick: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, id: string) => void;
 }
 
-function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: ChannelItemProps) {
+function ChannelItem({ channel, containerId, isFirstInContainer, dropIndicator, isActive, onChannelClick, onContextMenu }: ChannelItemProps) {
   const [imgError, setImgError] = useState(false);
+  const { active } = useDndContext();
+  const isSidebarDragActive = isSidebarDragEntryData(active?.data.current);
+  const dragData: SidebarDragEntryData = {
+    kind: "sidebar-entry",
+    itemType: "channel",
+    itemId: channel.id,
+    containerId,
+  };
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+  } = useSortable({ id: sidebarEntryId("channel", channel.id), data: dragData });
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChannelClick(channel.id);
@@ -161,12 +488,28 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
   };
 
   return (
-    <SidebarMenuItem className="list-none w-full">
+    <SidebarMenuItem
+      ref={setNodeRef}
+      className="list-none w-full touch-none"
+      {...attributes}
+      {...listeners}
+    >
+      {dropIndicator && (
+        <SidebarDropLine
+          position={dropIndicator}
+          atContainerStart={isFirstInContainer && dropIndicator === "before"}
+        />
+      )}
       <SidebarMenuButton key={channel.id} asChild>
         <div
           className={cn(
             "group/channel w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-            isActive ? "bg-sidebar-accent" : ""
+            isActive ? "bg-sidebar-accent" : "",
+            isSidebarDragActive && (
+              isActive
+                ? "hover:bg-sidebar-accent! active:bg-sidebar-accent!"
+                : "hover:bg-transparent! active:bg-transparent!"
+            ),
           )}
           onMouseDown={handleMouseDown}
         >
@@ -207,7 +550,11 @@ function ChannelItem({ channel, isActive, onChannelClick, onContextMenu }: Chann
 
 interface FolderItemProps {
   folder: FolderInfo;
+  childEntries: Extract<SidebarItem, { type: 'folder' }>["children"];
   children: React.ReactNode;
+  isFirstInContainer: boolean;
+  dropIndicator?: "before" | "after";
+  showEndDropIndicator: boolean;
   unreadCount: number;
   onContextMenu: (e: React.MouseEvent, folderId: string) => void;
   onToggleCollapse: (folderId: string, collapsed: boolean) => void;
@@ -216,10 +563,61 @@ interface FolderItemProps {
   onRenameCancel: () => void;
 }
 
-function FolderItem({ folder, children, unreadCount, onContextMenu, onToggleCollapse, renamingFolderId, onRenameCommit, onRenameCancel }: FolderItemProps) {
+function FolderItem({
+  folder,
+  childEntries,
+  children,
+  isFirstInContainer,
+  dropIndicator,
+  showEndDropIndicator,
+  unreadCount,
+  onContextMenu,
+  onToggleCollapse,
+  renamingFolderId,
+  onRenameCommit,
+  onRenameCancel,
+}: FolderItemProps) {
   const [renameValue, setRenameValue] = useState(folder.name);
   const inputRef = useRef<HTMLInputElement>(null);
   const isRenaming = renamingFolderId === folder.id;
+  const containerId = sidebarFolderContainerId(folder.id);
+  const dragData: SidebarDragEntryData = {
+    kind: "sidebar-entry",
+    itemType: "folder",
+    itemId: folder.id,
+    containerId: TOP_LEVEL_SIDEBAR_CONTAINER,
+  };
+  const {
+    attributes,
+    listeners,
+    setActivatorNodeRef,
+    setNodeRef,
+  } = useSortable({
+    id: sidebarEntryId("folder", folder.id),
+    data: dragData,
+    disabled: isRenaming,
+  });
+  const { active } = useDndContext();
+  const activeData = active?.data.current;
+  const isDraggingFolder = isSidebarDragEntryData(activeData) && activeData.itemType === "folder";
+  const folderDropData: SidebarDropContainerData = {
+    kind: "sidebar-container",
+    containerId,
+    dropArea: "folder",
+  };
+  const {
+    isOver: isOverFolder,
+    setNodeRef: setFolderDropRef,
+  } = useDroppable({
+    id: sidebarFolderTargetId(folder.id),
+    data: folderDropData,
+    disabled: isDraggingFolder,
+  });
+  const setFolderHeaderRef = useCallback((node: HTMLLIElement | null) => {
+    setNodeRef(node);
+    setActivatorNodeRef(node);
+  }, [setNodeRef, setActivatorNodeRef]);
+  const canAcceptDrop = isSidebarDragEntryData(activeData) && activeData.itemType !== "folder";
 
   useEffect(() => {
     if (isRenaming) {
@@ -241,49 +639,117 @@ function FolderItem({ folder, children, unreadCount, onContextMenu, onToggleColl
   };
 
   return (
-    <Collapsible open={!folder.isCollapsed} onOpenChange={(open) => onToggleCollapse(folder.id, !open)}>
-      <SidebarMenuItem className="list-none w-full">
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            className="w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5"
-            onContextMenu={(e) => onContextMenu(e, folder.id)}
+    <div
+      ref={setFolderDropRef}
+      className={cn(
+        "relative w-full touch-none rounded-lg",
+        canAcceptDrop && isOverFolder && "bg-primary/10 ring-2 ring-inset ring-primary",
+      )}
+    >
+      {dropIndicator && (
+        <SidebarDropLine
+          position={dropIndicator}
+          atContainerStart={isFirstInContainer && dropIndicator === "before"}
+        />
+      )}
+      {showEndDropIndicator && folder.isCollapsed && <SidebarDropLine position="after" indented />}
+      <Collapsible open={!folder.isCollapsed} onOpenChange={(open) => onToggleCollapse(folder.id, !open)}>
+        <SidebarMenuItem
+          ref={setFolderHeaderRef}
+          className="list-none w-full rounded-md"
+          {...attributes}
+          {...listeners}
+        >
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+              className={cn(
+                "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
+                canAcceptDrop && isOverFolder
+                  && "bg-transparent! hover:bg-transparent! data-[state=open]:bg-transparent! data-[state=open]:hover:bg-transparent!",
+              )}
+              onContextMenu={(e) => onContextMenu(e, folder.id)}
+            >
+              <ChevronRight size={14} className={cn("shrink-0 transition-transform duration-200", !folder.isCollapsed && "rotate-90")} />
+              {folder.isCollapsed ? (
+                <Folder size={16} className="shrink-0 text-muted-foreground" />
+              ) : (
+                <FolderOpen size={16} className="shrink-0 text-muted-foreground" />
+              )}
+              {isRenaming ? (
+                <input
+                  ref={inputRef}
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                    if (e.key === 'Escape') { e.preventDefault(); onRenameCancel(); }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-1 bg-transparent border-b border-foreground/30 outline-none text-sm py-0 px-0"
+                />
+              ) : (
+                <span className="line-clamp-1 font-normal">{folder.name}</span>
+              )}
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          {!isRenaming && unreadCount > 0 && (
+            <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
+              {unreadCount}
+            </SidebarMenuBadge>
+          )}
+        </SidebarMenuItem>
+        <CollapsibleContent>
+          <SortableContext
+            items={childEntries.map((entry) => sidebarEntryId(entry.type, entry.id))}
+            strategy={verticalListSortingStrategy}
           >
-            <ChevronRight size={14} className={cn("shrink-0 transition-transform duration-200", !folder.isCollapsed && "rotate-90")} />
-            {folder.isCollapsed ? (
-              <Folder size={16} className="shrink-0 text-muted-foreground" />
-            ) : (
-              <FolderOpen size={16} className="shrink-0 text-muted-foreground" />
-            )}
-            {isRenaming ? (
-              <input
-                ref={inputRef}
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onBlur={commitRename}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
-                  if (e.key === 'Escape') { e.preventDefault(); onRenameCancel(); }
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className="flex-1 bg-transparent border-b border-foreground/30 outline-none text-sm py-0 px-0"
-              />
-            ) : (
-              <span className="line-clamp-1 font-normal">{folder.name}</span>
-            )}
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        {!isRenaming && unreadCount > 0 && (
-          <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
-            {unreadCount}
-          </SidebarMenuBadge>
+            <SidebarMenu
+              className="relative pl-6 pr-0 rounded-md"
+            >
+              {children}
+              {showEndDropIndicator && !folder.isCollapsed && <SidebarDropLine position="after" indented />}
+            </SidebarMenu>
+          </SortableContext>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+interface SortableCollectionMenuProps {
+  entries: SidebarItem[];
+  showEndDropIndicator: boolean;
+  children: React.ReactNode;
+}
+
+function SortableCollectionMenu({ entries, showEndDropIndicator, children }: SortableCollectionMenuProps) {
+  const dropData: SidebarDropContainerData = {
+    kind: "sidebar-container",
+    containerId: TOP_LEVEL_SIDEBAR_CONTAINER,
+    dropArea: "top-level",
+  };
+  const { isOver, setNodeRef } = useDroppable({
+    id: TOP_LEVEL_SIDEBAR_CONTAINER,
+    data: dropData,
+  });
+
+  return (
+    <SortableContext
+      items={entries.map((entry) => sidebarEntryId(entry.type, entry.id))}
+      strategy={verticalListSortingStrategy}
+    >
+      <SidebarMenu
+        ref={setNodeRef}
+        className={cn(
+          "relative pr-2 rounded-md",
+          isOver && "bg-sidebar-accent/40",
         )}
-      </SidebarMenuItem>
-      <CollapsibleContent>
-        <SidebarMenu className="pl-6 pr-0">
-          {children}
-        </SidebarMenu>
-      </CollapsibleContent>
-    </Collapsible>
+      >
+        {children}
+        {showEndDropIndicator && <SidebarDropLine position="after" />}
+      </SidebarMenu>
+    </SortableContext>
   );
 }
 
@@ -296,8 +762,14 @@ export default function AppSidebar() {
   const [folders, setFolders] = useState<FolderInfo[]>([]);
   const [sidebarOrder, setSidebarOrder] = useState<SidebarItem[]>([]);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [activeSidebarEntry, setActiveSidebarEntry] = useState<SidebarDragEntryData | null>(null);
+  const [sidebarDropIndicator, setSidebarDropIndicator] = useState<SidebarDropIndicator | null>(null);
   const { theme, setTheme } = useTheme();
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
+  const sidebarSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -826,6 +1298,60 @@ export default function AppSidebar() {
     return items;
   }
 
+  const handleSidebarDragStart = (event: DragStartEvent) => {
+    const activeData = event.active.data.current;
+    if (!isSidebarDragEntryData(activeData)) return;
+    setActiveSidebarEntry(activeData);
+    setSidebarDropIndicator(null);
+  };
+
+  const handleSidebarDragEnd = (event: DragEndEvent) => {
+    setActiveSidebarEntry(null);
+    setSidebarDropIndicator(null);
+    if (!event.over) return;
+
+    const activeData = event.active.data.current;
+    const overData = event.over.data.current;
+    if (!isSidebarDragEntryData(activeData) || !isSidebarDropData(overData)) return;
+
+    const insertAfter = shouldInsertAfter(event);
+    const nextOrder = reorderSidebarItems(sidebarOrder, activeData, overData, insertAfter);
+    if (nextOrder === sidebarOrder) return;
+
+    setSidebarOrder(nextOrder);
+    void saveSidebarOrder(nextOrder).catch((error) => {
+      console.error("Failed to save sidebar order:", error);
+      toast({
+        variant: "destructive",
+        title: "Could not reorder sidebar",
+        description: "Your previous sidebar order has been restored.",
+      });
+      void refreshSidebarData();
+    });
+  };
+
+  const handleSidebarDragMove = (event: DragMoveEvent) => {
+    setSidebarDropIndicator(
+      normalizeSidebarDropIndicator(projectSidebarDrop(event), sidebarOrder),
+    );
+  };
+
+  const dropIndicatorFor = (
+    containerId: string,
+    itemType: SidebarItem["type"],
+    itemId: string,
+  ): "before" | "after" | undefined => {
+    if (sidebarDropIndicator?.containerId !== containerId || !sidebarDropIndicator.target) return undefined;
+    if (sidebarDropIndicator.target.type !== itemType || sidebarDropIndicator.target.id !== itemId) return undefined;
+    return sidebarDropIndicator.position === "end" ? undefined : sidebarDropIndicator.position;
+  };
+
+  const showsEndDropIndicator = (containerId: string) => (
+    sidebarDropIndicator?.containerId === containerId
+    && sidebarDropIndicator.target === null
+    && sidebarDropIndicator.position === "end"
+  );
+
   const handleRefreshAll = async (e: React.MouseEvent) => {
     const fullRefresh = e.shiftKey;
     const pItemsCount = playlists.length;
@@ -1116,8 +1642,22 @@ export default function AppSidebar() {
                     ) : null}
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
-                    <SidebarMenu className="pr-2">
-                      {sidebarOrder.map((entry) => {
+                    <DndContext
+                      sensors={sidebarSensors}
+                      collisionDetection={sidebarCollisionDetection}
+                      onDragStart={handleSidebarDragStart}
+                      onDragMove={handleSidebarDragMove}
+                      onDragCancel={() => {
+                        setActiveSidebarEntry(null);
+                        setSidebarDropIndicator(null);
+                      }}
+                      onDragEnd={handleSidebarDragEnd}
+                    >
+                      <SortableCollectionMenu
+                        entries={sidebarOrder}
+                        showEndDropIndicator={showsEndDropIndicator(TOP_LEVEL_SIDEBAR_CONTAINER)}
+                      >
+                      {sidebarOrder.map((entry, entryIndex) => {
                         if (entry.type === 'folder') {
                           const folder = foldersMap.get(entry.id);
                           if (!folder) return null;
@@ -1130,6 +1670,10 @@ export default function AppSidebar() {
                             <FolderItem
                               key={`folder-${entry.id}`}
                               folder={folder}
+                              childEntries={entry.children}
+                              isFirstInContainer={entryIndex === 0}
+                              dropIndicator={dropIndicatorFor(TOP_LEVEL_SIDEBAR_CONTAINER, "folder", entry.id)}
+                              showEndDropIndicator={showsEndDropIndicator(sidebarFolderContainerId(entry.id))}
                               unreadCount={folderUnread}
                               onContextMenu={folderContextMenuHandler}
                               onToggleCollapse={handleFolderToggleCollapse}
@@ -1137,7 +1681,7 @@ export default function AppSidebar() {
                               onRenameCommit={handleFolderRenameCommit}
                               onRenameCancel={handleFolderRenameCancel}
                             >
-                              {entry.children.map((child) => {
+                              {entry.children.map((child, childIndex) => {
                                 if (child.type === 'playlist') {
                                   const playlist = playlistsMap.get(child.id);
                                   if (!playlist) return null;
@@ -1145,6 +1689,9 @@ export default function AppSidebar() {
                                     <PlaylistItem
                                       key={playlist.id}
                                       playlist={playlist}
+                                      containerId={sidebarFolderContainerId(entry.id)}
+                                      isFirstInContainer={childIndex === 0}
+                                      dropIndicator={dropIndicatorFor(sidebarFolderContainerId(entry.id), "playlist", playlist.id)}
                                       isActive={playlistMatch?.params.playlistId === playlist.id}
                                       onPlaylistClick={handlePlaylistClick}
                                       onContextMenu={playlistClickHandler}
@@ -1158,6 +1705,9 @@ export default function AppSidebar() {
                                     <ChannelItem
                                       key={channel.id}
                                       channel={channel}
+                                      containerId={sidebarFolderContainerId(entry.id)}
+                                      isFirstInContainer={childIndex === 0}
+                                      dropIndicator={dropIndicatorFor(sidebarFolderContainerId(entry.id), "channel", channel.id)}
                                       isActive={channelMatch?.params.channelId === channel.id}
                                       onChannelClick={handleChannelClick}
                                       onContextMenu={channelClickHandler}
@@ -1176,6 +1726,9 @@ export default function AppSidebar() {
                             <PlaylistItem
                               key={playlist.id}
                               playlist={playlist}
+                              containerId={TOP_LEVEL_SIDEBAR_CONTAINER}
+                              isFirstInContainer={entryIndex === 0}
+                              dropIndicator={dropIndicatorFor(TOP_LEVEL_SIDEBAR_CONTAINER, "playlist", playlist.id)}
                               isActive={playlistMatch?.params.playlistId === playlist.id}
                               onPlaylistClick={handlePlaylistClick}
                               onContextMenu={playlistClickHandler}
@@ -1189,6 +1742,9 @@ export default function AppSidebar() {
                             <ChannelItem
                               key={channel.id}
                               channel={channel}
+                              containerId={TOP_LEVEL_SIDEBAR_CONTAINER}
+                              isFirstInContainer={entryIndex === 0}
+                              dropIndicator={dropIndicatorFor(TOP_LEVEL_SIDEBAR_CONTAINER, "channel", channel.id)}
                               isActive={channelMatch?.params.channelId === channel.id}
                               onChannelClick={handleChannelClick}
                               onContextMenu={channelClickHandler}
@@ -1197,7 +1753,26 @@ export default function AppSidebar() {
                         }
                         return null;
                       })}
-                    </SidebarMenu>
+                      </SortableCollectionMenu>
+                      {typeof document !== "undefined" && createPortal(
+                        <DragOverlay
+                          adjustScale={false}
+                          dropAnimation={null}
+                          zIndex={50}
+                          className="pointer-events-none"
+                        >
+                          {activeSidebarEntry && (
+                            <SidebarDragPreview
+                              entry={activeSidebarEntry}
+                              playlistsMap={playlistsMap}
+                              channelsMap={channelsMap}
+                              foldersMap={foldersMap}
+                            />
+                          )}
+                        </DragOverlay>,
+                        document.body,
+                      )}
+                    </DndContext>
                   </SidebarGroupContent>
                 </SidebarGroup>
 
