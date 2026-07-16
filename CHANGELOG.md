@@ -3,6 +3,22 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.14](https://github.com/limboy/localtube/compare/v1.2.13...v1.2.14) - 2026-07-16
+
+### Documentation
+
+- update CHANGELOG for v1.2.13 ([a72180e](https://github.com/limboy/localtube/commit/a72180e07fc2ac25090858e323e3e1276be7a9f3))
+
+### Other Changes
+
+- Prevent sidebar context menus from bubbling to parent items ([864218c](https://github.com/limboy/localtube/commit/864218c281c17ae51b8f2961b5f9829d4ab9d95b))
+- Preserve insertion zone below the last top-level folder ([a70dde7](https://github.com/limboy/localtube/commit/a70dde7f5e560a7e8138c2b541796cd5fb04ae6a))
+- Add sidebar drag and drop reordering ([5e7d580](https://github.com/limboy/localtube/commit/5e7d580a8beede7ffedf699a7662655c27237e09))
+- Improve sidebar refresh button accessibility and loading state ([0c39d0d](https://github.com/limboy/localtube/commit/0c39d0d0b0d06b45ca4d8ae1b43fda9caf83b458))
+- Add tooltip and aria label for sidebar add action ([a811b44](https://github.com/limboy/localtube/commit/a811b44a5cb1c82075a3efc26a77166dd2f8b9ff))
+- Move refresh-all action into collections header tooltip ([843102b](https://github.com/limboy/localtube/commit/843102beb96437142d192c9c5d169c88c2e0d8c7))
+- Add unseen videos view and bulk mark-as-seen action ([45a1c1f](https://github.com/limboy/localtube/commit/45a1c1f88ba2e68d95297a76731ed04fec783067))
+
 ## [v1.2.13](https://github.com/limboy/localtube/compare/v1.2.12...v1.2.13) - 2026-07-16
 
 ### Features
