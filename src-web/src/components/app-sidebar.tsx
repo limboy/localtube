@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, Download, Upload } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, CircleDot, Download, Upload } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   DropdownMenu,
@@ -47,7 +47,6 @@ import {
   markPlaylistAsSeen,
   markChannelAsSeen,
   markFolderAsSeen,
-  markAllUnseenAsSeen,
   addOrUpdateChannel,
   loadPlaylists,
   loadChannels,
@@ -62,7 +61,7 @@ import {
   exportData,
   importData,
 } from "@/lib/utils";
-import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem, VideoItem, RefreshFailure } from "@/types";
+import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem, RefreshFailure } from "@/types";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 import { checkAllPlaylistsForUpdates, fullRefreshAllPlaylists, parseYouTubePlaylist } from "@/lib/playlist-parser";
@@ -397,9 +396,7 @@ export default function AppSidebar() {
     const unlistenFocus = window.electron.onWindowFocus(focusHandler);
 
     const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
-      if (eventId === "mark-latest-seen") {
-        await markAllUnseenAsSeen();
-      } else if (eventId.startsWith("mark-playlist-seen-")) {
+      if (eventId.startsWith("mark-playlist-seen-")) {
         const playlistId = eventId.replace("mark-playlist-seen-", "");
         await markPlaylistAsSeen(playlistId);
       } else if (eventId.startsWith("mark-channel-seen-")) {
@@ -701,6 +698,11 @@ export default function AppSidebar() {
     shouldThrow: false
   });
 
+  const unseenMatch = useMatch({
+    from: "/unseen",
+    shouldThrow: false
+  });
+
 
 
   const handleChannelClick = async (channelId: string, fromBookmarks = false) => {
@@ -742,35 +744,19 @@ export default function AppSidebar() {
   const channelsMap = useMemo(() => new Map(channels.map(c => [c.id, c])), [channels]);
   const foldersMap = useMemo(() => new Map(folders.map(f => [f.id, f])), [folders]);
 
-  // Count of unseen videos among the videos the Latest view actually shows: the
-  // same dedupe + sort-by-date + cap as loadLatestVideos, so old videos from a
-  // stale channel that fall outside the list don't inflate the badge.
-  const latestUnreadCount = useMemo(() => {
+  // Total unseen videos across every source, deduped by video ID.
+  const unseenCount = useMemo(() => {
     const seen = new Set<string>();
-    const allVideos: VideoItem[] = [];
+    let count = 0;
     for (const source of [...channels, ...playlists]) {
       for (const v of source.items) {
         if (seen.has(v.id)) continue;
         seen.add(v.id);
-        allVideos.push(v);
+        if (v.unseen) count++;
       }
     }
-    allVideos.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
-    return allVideos.slice(0, 100).filter((v) => v.unseen).length;
+    return count;
   }, [channels, playlists]);
-
-
-
-  async function latestContextMenuHandler(event: React.MouseEvent) {
-    event.preventDefault();
-    try {
-      await window.electron.showContextMenu([
-        { id: "mark-latest-seen", label: "Mark All as Seen" }
-      ]);
-    } catch (error) {
-      console.error("Error creating latest context menu:", error);
-    }
-  }
 
 
 
@@ -1068,16 +1054,32 @@ export default function AppSidebar() {
                         >
                           <div
                             onClick={() => navigate({ to: '/latest' })}
-                            onContextMenu={latestContextMenuHandler}
                             className="flex items-center gap-2 w-full cursor-default"
                           >
                             <Clock size={16} className="shrink-0" />
                             <span>Latest</span>
                           </div>
                         </SidebarMenuButton>
-                        {latestUnreadCount > 0 && (
+                      </SidebarMenuItem>
+                      <SidebarMenuItem className="list-none w-full">
+                        <SidebarMenuButton
+                          asChild
+                          className={cn(
+                            "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
+                            unseenMatch ? "bg-sidebar-accent" : ""
+                          )}
+                        >
+                          <div
+                            onClick={() => navigate({ to: '/unseen' })}
+                            className="flex items-center gap-2 w-full cursor-default"
+                          >
+                            <CircleDot size={16} className="shrink-0" />
+                            <span>Unseen</span>
+                          </div>
+                        </SidebarMenuButton>
+                        {unseenCount > 0 && (
                           <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
-                            {latestUnreadCount}
+                            {unseenCount}
                           </SidebarMenuBadge>
                         )}
                       </SidebarMenuItem>
