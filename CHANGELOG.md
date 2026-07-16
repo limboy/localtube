@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.15](https://github.com/limboy/localtube/compare/v1.2.14...v1.2.15) - 2026-07-16
+
+### Refactoring
+
+- **ui:** remove toast notification from mark all as seen ([9328c11](https://github.com/limboy/localtube/commit/9328c1185a7cfe16317b8baf7000f996457ac307))
+
+### Documentation
+
+- update CHANGELOG for v1.2.14 ([8ec8c78](https://github.com/limboy/localtube/commit/8ec8c780df3b9b261184a5fb00852768dd5a65e3))
+
 ## [v1.2.14](https://github.com/limboy/localtube/compare/v1.2.13...v1.2.14) - 2026-07-16
 
 ### Documentation
