@@ -26,7 +26,6 @@ import { PanelRight } from "lucide-react";
 import { UpdateIndicator } from "./update-indicator";
 import { formatRelativeTime } from "@/lib/time-utils";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 
 export default function LatestPlayer({
   onlyUnseen = false,
@@ -185,16 +184,11 @@ export default function LatestPlayer({
   const handleMarkAllAsSeen = async () => {
     if (unseenCount === 0) return;
 
-    const markedCount = unseenCount;
     await markAllUnseenAsSeen();
     setUnseenCount(0);
     setVideos([]);
     setShouldAutoPlay(false);
     await switchVideo(null);
-
-    // toast({
-    //   title: `${markedCount} ${markedCount === 1 ? "video" : "videos"} marked as seen`,
-    // });
   };
 
   const displayVideos = videos.map(video => ({
