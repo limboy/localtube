@@ -537,54 +537,54 @@ export default function VideoListPlayer({
                   ))}
                 </div>
               ) : (
-                <div className="grid gap-0.5">
-                  {processedVideos.map((video) => (
-                    <div
-                      key={video.id}
-                      id={`video-item-${video.id}`}
-                      className={cn(
-                        "flex items-start gap-2 w-full hover:bg-accent p-2 rounded group/video cursor-default",
-                        currentVideoId === video.id && "bg-accent",
-                        video.isSkipped && "opacity-50"
+                <div className="grid gap-0.5 w-full min-w-0">
+                {processedVideos.map((video) => (
+                  <div
+                    key={video.id}
+                    id={`video-item-${video.id}`}
+                    className={cn(
+                      "flex items-start gap-2 w-full min-w-0 overflow-hidden hover:bg-accent p-2 rounded group/video cursor-default",
+                      currentVideoId === video.id && "bg-accent",
+                      video.isSkipped && "opacity-50"
+                    )}
+                    onClick={() => {
+                      if (currentVideoId !== video.id) {
+                        userInitiatedRef.current = true;
+                        switchVideo(video.id);
+                      }
+                      setShouldAutoPlay(true);
+                      markVideoAsSeen(video.id);
+                    }}
+                  >
+                    <div className="w-24 h-14 flex-none bg-muted rounded overflow-hidden relative">
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                      />
+                      {video.duration && (
+                        <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-white text-[9px] font-medium px-1 rounded-sm select-none">
+                          {video.duration}
+                        </span>
                       )}
-                      onClick={() => {
-                        if (currentVideoId !== video.id) {
-                          userInitiatedRef.current = true;
-                          switchVideo(video.id);
-                        }
-                        setShouldAutoPlay(true);
-                        markVideoAsSeen(video.id);
-                      }}
-                    >
-                      <div className="w-24 h-14 flex-none bg-muted rounded overflow-hidden relative">
-                        <img
-                          src={video.thumbnail}
-                          alt={video.title}
-                          className="w-full h-full object-cover"
-                        />
-                        {video.duration && (
-                          <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-white text-[9px] font-medium px-1 rounded-sm select-none">
-                            {video.duration}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 user-select-none flex flex-col justify-between h-14" style={{ WebkitUserSelect: "none" }}>
-                        <span className="line-clamp-2 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
-                        <div className="flex items-center justify-between opacity-50 text-xs font-normal min-w-0">
-                          <div className="flex items-center gap-1 min-w-0 mr-2 flex-1">
-                            {video.publishedAt ? (
-                              <span className="shrink-0">{formatRelativeTime(video.publishedAt)}</span>
-                            ) : null}
-                            {(!playlistId && !channelId) && video.sourceTitle ? (
-                              <>
-                                {video.publishedAt ? <span className="shrink-0">·</span> : null}
-                                <span className="truncate min-w-0">{video.sourceTitle}</span>
-                              </>
-                            ) : null}
-                            {video.unseen && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-700 dark:bg-blue-200 shrink-0 mt-0.5" />
-                            )}
-                          </div>
+                    </div>
+                    <div className="flex-1 min-w-0 user-select-none flex flex-col justify-between h-14 overflow-hidden" style={{ WebkitUserSelect: "none" }}>
+                      <span className="line-clamp-2 text-sm leading-tight mb-0.5 break-words" title={video.title}>{video.title}</span>
+                      <div className="flex items-center justify-between opacity-50 text-xs font-normal min-w-0 w-full overflow-hidden">
+                        <div className="flex items-center gap-1 min-w-0 mr-2 flex-1 overflow-hidden">
+                          {video.publishedAt ? (
+                            <span className="shrink-0">{formatRelativeTime(video.publishedAt)}</span>
+                          ) : null}
+                          {(!playlistId && !channelId) && video.sourceTitle ? (
+                            <>
+                              {video.publishedAt ? <span className="shrink-0">·</span> : null}
+                              <span className="inline-block truncate min-w-0 flex-1">{video.sourceTitle}</span>
+                            </>
+                          ) : null}
+                          {video.unseen && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-700 dark:bg-blue-200 shrink-0 mt-0.5" />
+                          )}
+                        </div>
                           <div className="flex items-center gap-0.5 shrink-0">
                             {video.isSkipped ? (
                               <button

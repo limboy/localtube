@@ -310,13 +310,13 @@ export default function LatestPlayer({
                 ))}
               </div>
             ) : (
-              <div className="grid gap-0.5">
+              <div className="grid gap-0.5 w-full min-w-0">
                 {displayVideos.map((video) => (
                   <div
                     key={video.id}
                     id={`video-item-${video.id}`}
                     className={cn(
-                      "flex items-start gap-2 w-full hover:bg-accent p-2 rounded group/video cursor-default",
+                      "flex items-start gap-2 w-full min-w-0 overflow-hidden hover:bg-accent p-2 rounded group/video cursor-default",
                       currentVideoId === video.id && "bg-accent",
                       video.isSkipped && "opacity-50"
                     )}
@@ -338,17 +338,17 @@ export default function LatestPlayer({
                         </span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0 user-select-none flex flex-col justify-between h-14" style={{ WebkitUserSelect: "none" }}>
-                      <span className="line-clamp-2 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
-                      <div className="flex items-center justify-between opacity-50 text-xs font-normal min-w-0">
-                        <div className="flex items-center gap-1 min-w-0 mr-2 flex-1">
+                    <div className="flex-1 min-w-0 user-select-none flex flex-col justify-between h-14 overflow-hidden" style={{ WebkitUserSelect: "none" }}>
+                      <span className="line-clamp-2 text-sm leading-tight mb-0.5 break-words" title={video.title}>{video.title}</span>
+                      <div className="flex items-center justify-between opacity-50 text-xs font-normal min-w-0 w-full overflow-hidden">
+                        <div className="flex items-center gap-1 min-w-0 mr-2 flex-1 overflow-hidden">
                           {video.publishedAt ? (
                             <span className="shrink-0">{formatRelativeTime(video.publishedAt)}</span>
                           ) : null}
                           {video.sourceTitle ? (
                             <>
                               {video.publishedAt ? <span className="shrink-0">·</span> : null}
-                              <span className="truncate min-w-0">{video.sourceTitle}</span>
+                              <span className="inline-block truncate min-w-0 flex-1">{video.sourceTitle}</span>
                             </>
                           ) : null}
                           {video.unseen && (
