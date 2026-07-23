@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.17](https://github.com/limboy/localtube/compare/v1.2.16...v1.2.17) - 2026-07-23
+
+## [v1.2.16](https://github.com/limboy/localtube/compare/v1.2.15...v1.2.16) - 2026-07-23
+
+### Features
+
+- show channel/playlist name next to timestamp in aggregate video lists ([61e9b29](https://github.com/limboy/localtube/commit/61e9b29ed52ddfaf5d5f98ccfc5f347278d50690))
+- support folder selection in sidebar and display folder items reverse chronologically ([2f3bf32](https://github.com/limboy/localtube/commit/2f3bf32996b16d68f232a027125acd0bda273572))
+
+### Bug Fixes
+
+- prevent right sidebar video item overflow by enforcing strict inline-block truncation and min-w-0 flex constraints ([0dcbb22](https://github.com/limboy/localtube/commit/0dcbb22c22cc6ed71deb50657ff19947fa3fd039))
+
+### Documentation
+
+- update CHANGELOG for v1.2.15 ([70511da](https://github.com/limboy/localtube/commit/70511da5cb4d653c8512b0404d27636402c43040))
+
 ## [v1.2.15](https://github.com/limboy/localtube/compare/v1.2.14...v1.2.15) - 2026-07-16
 
 ### Refactoring
