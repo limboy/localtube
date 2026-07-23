@@ -86,7 +86,7 @@ import {
   importData,
 } from "@/lib/utils";
 import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem, RefreshFailure } from "@/types";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 import { checkAllPlaylistsForUpdates, fullRefreshAllPlaylists, parseYouTubePlaylist } from "@/lib/playlist-parser";
@@ -589,8 +589,10 @@ interface FolderItemProps {
   dropIndicator?: "before" | "after";
   showEndDropIndicator: boolean;
   unreadCount: number;
+  isActive?: boolean;
   onContextMenu: (e: React.MouseEvent, folderId: string) => void;
   onToggleCollapse: (folderId: string, collapsed: boolean) => void;
+  onFolderClick: (folderId: string) => void;
   renamingFolderId: string | null;
   onRenameCommit: (folderId: string, name: string) => void;
   onRenameCancel: () => void;
@@ -604,8 +606,10 @@ function FolderItem({
   dropIndicator,
   showEndDropIndicator,
   unreadCount,
+  isActive,
   onContextMenu,
   onToggleCollapse,
+  onFolderClick,
   renamingFolderId,
   onRenameCommit,
   onRenameCancel,
@@ -671,6 +675,18 @@ function FolderItem({
     }
   };
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isRenaming) {
+      onFolderClick(folder.id);
+    }
+  };
+
+  const handleChevronClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleCollapse(folder.id, !folder.isCollapsed);
+  };
+
   return (
     <div
       ref={setFolderDropRef}
@@ -686,46 +702,52 @@ function FolderItem({
         />
       )}
       {showEndDropIndicator && folder.isCollapsed && <SidebarDropLine position="after" indented />}
-      <Collapsible open={!folder.isCollapsed} onOpenChange={(open) => onToggleCollapse(folder.id, !open)}>
+      <Collapsible open={!folder.isCollapsed}>
         <SidebarMenuItem
           ref={setFolderHeaderRef}
           className="list-none w-full rounded-md"
           {...attributes}
           {...listeners}
         >
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton
-              className={cn(
-                "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5",
-                canAcceptDrop && isOverFolder
-                  && "bg-transparent! hover:bg-transparent! data-[state=open]:bg-transparent! data-[state=open]:hover:bg-transparent!",
-              )}
-              onContextMenu={(e) => onContextMenu(e, folder.id)}
+          <SidebarMenuButton
+            className={cn(
+              "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0 mb-0.5 relative",
+              isActive ? "bg-sidebar-accent" : "",
+              canAcceptDrop && isOverFolder
+                && "bg-transparent! hover:bg-transparent! data-[state=open]:bg-transparent! data-[state=open]:hover:bg-transparent!",
+            )}
+            onContextMenu={(e) => onContextMenu(e, folder.id)}
+            onClick={handleRowClick}
+          >
+            <button
+              type="button"
+              onClick={handleChevronClick}
+              className="p-0.5 rounded hover:bg-muted/50 transition-colors shrink-0 z-10"
             >
               <ChevronRight size={14} className={cn("shrink-0 transition-transform duration-200", !folder.isCollapsed && "rotate-90")} />
-              {folder.isCollapsed ? (
-                <Folder size={16} className="shrink-0 text-muted-foreground" />
-              ) : (
-                <FolderOpen size={16} className="shrink-0 text-muted-foreground" />
-              )}
-              {isRenaming ? (
-                <input
-                  ref={inputRef}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onBlur={commitRename}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
-                    if (e.key === 'Escape') { e.preventDefault(); onRenameCancel(); }
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-1 bg-transparent border-b border-foreground/30 outline-none text-sm py-0 px-0"
-                />
-              ) : (
-                <span className="line-clamp-1 font-normal">{folder.name}</span>
-              )}
-            </SidebarMenuButton>
-          </CollapsibleTrigger>
+            </button>
+            {folder.isCollapsed ? (
+              <Folder size={16} className="shrink-0 text-muted-foreground" />
+            ) : (
+              <FolderOpen size={16} className="shrink-0 text-muted-foreground" />
+            )}
+            {isRenaming ? (
+              <input
+                ref={inputRef}
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                  if (e.key === 'Escape') { e.preventDefault(); onRenameCancel(); }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 bg-transparent border-b border-foreground/30 outline-none text-sm py-0 px-0 z-10"
+              />
+            ) : (
+              <span className="line-clamp-1 font-normal flex-1">{folder.name}</span>
+            )}
+          </SidebarMenuButton>
           {!isRenaming && unreadCount > 0 && (
             <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
               {unreadCount}
@@ -1190,6 +1212,11 @@ export default function AppSidebar() {
     shouldThrow: false
   });
 
+  const folderMatch = useMatch({
+    from: "/folder/$folderId",
+    shouldThrow: false
+  });
+
   const bookmarkMatch = useMatch({
     from: "/bookmarks",
     shouldThrow: false
@@ -1209,6 +1236,13 @@ export default function AppSidebar() {
     from: "/unseen",
     shouldThrow: false
   });
+
+  const handleFolderClick = (folderId: string) => {
+    navigate({
+      to: "/folder/$folderId",
+      params: { folderId }
+    });
+  };
 
 
 
@@ -1713,8 +1747,10 @@ export default function AppSidebar() {
                               dropIndicator={dropIndicatorFor(TOP_LEVEL_SIDEBAR_CONTAINER, "folder", entry.id)}
                               showEndDropIndicator={showsEndDropIndicator(sidebarFolderContainerId(entry.id))}
                               unreadCount={folderUnread}
+                              isActive={folderMatch?.params.folderId === folder.id}
                               onContextMenu={folderContextMenuHandler}
                               onToggleCollapse={handleFolderToggleCollapse}
+                              onFolderClick={handleFolderClick}
                               renamingFolderId={renamingFolderId}
                               onRenameCommit={handleFolderRenameCommit}
                               onRenameCancel={handleFolderRenameCancel}

@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlaylistIndexRouteImport } from './routes/playlist.index'
 import { Route as ChannelIndexRouteImport } from './routes/channel.index'
 import { Route as PlaylistPlaylistIdRouteImport } from './routes/playlist.$playlistId'
+import { Route as FolderFolderIdRouteImport } from './routes/folder.$folderId'
 import { Route as ChannelChannelIdRouteImport } from './routes/channel.$channelId'
 
 const UnseenRoute = UnseenRouteImport.update({
@@ -59,6 +60,11 @@ const PlaylistPlaylistIdRoute = PlaylistPlaylistIdRouteImport.update({
   path: '/playlist/$playlistId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FolderFolderIdRoute = FolderFolderIdRouteImport.update({
+  id: '/folder/$folderId',
+  path: '/folder/$folderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChannelChannelIdRoute = ChannelChannelIdRouteImport.update({
   id: '/channel/$channelId',
   path: '/channel/$channelId',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/latest': typeof LatestRoute
   '/unseen': typeof UnseenRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
+  '/folder/$folderId': typeof FolderFolderIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/channel/': typeof ChannelIndexRoute
   '/playlist/': typeof PlaylistIndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/latest': typeof LatestRoute
   '/unseen': typeof UnseenRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
+  '/folder/$folderId': typeof FolderFolderIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/channel': typeof ChannelIndexRoute
   '/playlist': typeof PlaylistIndexRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/latest': typeof LatestRoute
   '/unseen': typeof UnseenRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
+  '/folder/$folderId': typeof FolderFolderIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/channel/': typeof ChannelIndexRoute
   '/playlist/': typeof PlaylistIndexRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/latest'
     | '/unseen'
     | '/channel/$channelId'
+    | '/folder/$folderId'
     | '/playlist/$playlistId'
     | '/channel/'
     | '/playlist/'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/latest'
     | '/unseen'
     | '/channel/$channelId'
+    | '/folder/$folderId'
     | '/playlist/$playlistId'
     | '/channel'
     | '/playlist'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/latest'
     | '/unseen'
     | '/channel/$channelId'
+    | '/folder/$folderId'
     | '/playlist/$playlistId'
     | '/channel/'
     | '/playlist/'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   LatestRoute: typeof LatestRoute
   UnseenRoute: typeof UnseenRoute
   ChannelChannelIdRoute: typeof ChannelChannelIdRoute
+  FolderFolderIdRoute: typeof FolderFolderIdRoute
   PlaylistPlaylistIdRoute: typeof PlaylistPlaylistIdRoute
   ChannelIndexRoute: typeof ChannelIndexRoute
   PlaylistIndexRoute: typeof PlaylistIndexRoute
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlaylistPlaylistIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/folder/$folderId': {
+      id: '/folder/$folderId'
+      path: '/folder/$folderId'
+      fullPath: '/folder/$folderId'
+      preLoaderRoute: typeof FolderFolderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/channel/$channelId': {
       id: '/channel/$channelId'
       path: '/channel/$channelId'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   LatestRoute: LatestRoute,
   UnseenRoute: UnseenRoute,
   ChannelChannelIdRoute: ChannelChannelIdRoute,
+  FolderFolderIdRoute: FolderFolderIdRoute,
   PlaylistPlaylistIdRoute: PlaylistPlaylistIdRoute,
   ChannelIndexRoute: ChannelIndexRoute,
   PlaylistIndexRoute: PlaylistIndexRoute,

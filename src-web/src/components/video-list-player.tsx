@@ -2,6 +2,7 @@ import {
   loadPlaylist,
   cn,
   loadChannel,
+  loadFolderData,
   loadBookmarks,
   saveBookmarks,
   loadPlaylists,
@@ -32,12 +33,14 @@ import { UpdateIndicator } from "./update-indicator";
 export default function VideoListPlayer({
   playlistId,
   channelId,
+  folderId,
   showBookmarkedOnly = false,
   initialVideoId,
   autoPlay = true
 }: {
   playlistId?: string;
   channelId?: string;
+  folderId?: string;
   showBookmarkedOnly?: boolean;
   initialVideoId?: string;
   autoPlay?: boolean;
@@ -106,7 +109,7 @@ export default function VideoListPlayer({
   const lastSourceKeyRef = useRef<string>("");
 
   useEffect(() => {
-    const sourceKey = `${playlistId ?? ""}::${channelId ?? ""}::${showBookmarkedOnly}`;
+    const sourceKey = `${playlistId ?? ""}::${channelId ?? ""}::${folderId ?? ""}::${showBookmarkedOnly}`;
     const isSourceChange = lastSourceKeyRef.current !== sourceKey;
     lastSourceKeyRef.current = sourceKey;
 
@@ -126,7 +129,7 @@ export default function VideoListPlayer({
         const bookmarks = await loadBookmarks();
         setBookmarkedVideos(bookmarks);
 
-        if (showBookmarkedOnly && !playlistId && !channelId) {
+        if (showBookmarkedOnly && !playlistId && !channelId && !folderId) {
           const playlists = await loadPlaylists();
           const channels = await loadChannels();
           const allPlaylistItems = playlists.flatMap(p => p.items);
@@ -170,6 +173,8 @@ export default function VideoListPlayer({
           data = await loadPlaylist(playlistId);
         } else if (channelId) {
           data = await loadChannel(channelId);
+        } else if (folderId) {
+          data = await loadFolderData(folderId);
         }
 
         if (data) {
@@ -188,8 +193,8 @@ export default function VideoListPlayer({
             const firstNonSkipped = processedVideos.find(video => !skippedVideos.has(video.id));
             await switchVideo(initialVideoId || firstNonSkipped?.id || null);
           }
-        } else if (playlistId || channelId) {
-          if (isSourceChange) setError("Playlist or channel not found");
+        } else if (playlistId || channelId || folderId) {
+          if (isSourceChange) setError("Playlist, channel, or folder not found");
         }
       } catch (e) {
         if (isSourceChange) setError(e instanceof Error ? e.message : "Failed to load content");
@@ -198,7 +203,7 @@ export default function VideoListPlayer({
       }
     }
     fetchData();
-  }, [playlistId, channelId, showBookmarkedOnly, refreshKey]);
+  }, [playlistId, channelId, folderId, showBookmarkedOnly, refreshKey]);
 
   // Add a safety check to ensure currentVideoId belongs to current playlist
   useEffect(() => {

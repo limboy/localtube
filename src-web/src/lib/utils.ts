@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { ChannelInfo, PlaylistInfo, BookmarkData, EnrichedBookmark, VideoItem, FolderInfo, SidebarItem, WatchHistoryEntry } from "@/types";
+import { ChannelInfo, PlaylistInfo, VideoListInfo, BookmarkData, EnrichedBookmark, VideoItem, FolderInfo, SidebarItem, WatchHistoryEntry } from "@/types";
 import { setupKonamiCode } from "./konami";
 import { getInnertube } from "./innertube";
 
@@ -791,4 +791,46 @@ export async function getVideoDescription(videoId: string): Promise<string> {
   } catch {
     return "";
   }
+}
+
+export async function loadFolderData(folderId: string): Promise<VideoListInfo | null> {
+  const folders = await loadFolders();
+  const folder = folders.find((f) => f.id === folderId);
+  if (!folder) return null;
+
+  const sidebarOrder = await loadSidebarOrder();
+  const folderEntry = sidebarOrder.find((e) => e.type === "folder" && e.id === folderId);
+  const children = folderEntry?.type === "folder" ? folderEntry.children : [];
+
+  const playlists = await loadPlaylists();
+  const channels = await loadChannels();
+
+  const playlistsMap = new Map(playlists.map((p) => [p.id, p]));
+  const channelsMap = new Map(channels.map((c) => [c.id, c]));
+
+  const seen = new Set<string>();
+  const items: VideoItem[] = [];
+
+  for (const child of children) {
+    const source = child.type === "playlist" ? playlistsMap.get(child.id) : channelsMap.get(child.id);
+    if (source && source.items) {
+      for (const video of source.items) {
+        if (!seen.has(video.id)) {
+          seen.add(video.id);
+          items.push(video);
+        }
+      }
+    }
+  }
+
+  // Sort by time descending (latest published video first)
+  items.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
+
+  return {
+    id: folder.id,
+    title: folder.name,
+    lastUpdated: Date.now(),
+    unreadCount: items.filter((i) => i.unseen).length,
+    items,
+  };
 }
