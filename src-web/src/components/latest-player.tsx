@@ -341,8 +341,16 @@ export default function LatestPlayer({
                     <div className="flex-1 min-w-0 user-select-none flex flex-col justify-between h-14" style={{ WebkitUserSelect: "none" }}>
                       <span className="line-clamp-2 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
                       <div className="flex items-center justify-between opacity-50 text-xs font-normal min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0 mr-2 flex-1">
-                          <span className="truncate">{video.publishedAt ? formatRelativeTime(video.publishedAt) : ""}</span>
+                        <div className="flex items-center gap-1 min-w-0 mr-2 flex-1">
+                          {video.publishedAt ? (
+                            <span className="shrink-0">{formatRelativeTime(video.publishedAt)}</span>
+                          ) : null}
+                          {video.sourceTitle ? (
+                            <>
+                              {video.publishedAt ? <span className="shrink-0">·</span> : null}
+                              <span className="truncate min-w-0">{video.sourceTitle}</span>
+                            </>
+                          ) : null}
                           {video.unseen && (
                             <span className="w-1.5 h-1.5 rounded-full bg-blue-700 dark:bg-blue-200 shrink-0 mt-0.5" />
                           )}

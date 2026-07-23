@@ -132,8 +132,8 @@ export default function VideoListPlayer({
         if (showBookmarkedOnly && !playlistId && !channelId && !folderId) {
           const playlists = await loadPlaylists();
           const channels = await loadChannels();
-          const allPlaylistItems = playlists.flatMap(p => p.items);
-          const allChannelItems = channels.flatMap(c => c.items);
+          const allPlaylistItems = playlists.flatMap(p => p.items.map(item => ({ ...item, sourceTitle: item.sourceTitle || p.title })));
+          const allChannelItems = channels.flatMap(c => c.items.map(item => ({ ...item, sourceTitle: item.sourceTitle || c.title })));
           const bookmarkItems = Array.from(bookmarks.entries()).map(([videoId, bookmark]) => {
               const video = allPlaylistItems.find((item) => item.id === videoId) || allChannelItems.find((item) => item.id === videoId);
               if (video) {
@@ -571,8 +571,16 @@ export default function VideoListPlayer({
                       <div className="flex-1 min-w-0 user-select-none flex flex-col justify-between h-14" style={{ WebkitUserSelect: "none" }}>
                         <span className="line-clamp-2 text-sm leading-tight mb-0.5" title={video.title}>{video.title}</span>
                         <div className="flex items-center justify-between opacity-50 text-xs font-normal min-w-0">
-                          <div className="flex items-center gap-1.5 min-w-0 mr-2 flex-1">
-                            <span className="truncate">{video.publishedAt ? formatRelativeTime(video.publishedAt) : ""}</span>
+                          <div className="flex items-center gap-1 min-w-0 mr-2 flex-1">
+                            {video.publishedAt ? (
+                              <span className="shrink-0">{formatRelativeTime(video.publishedAt)}</span>
+                            ) : null}
+                            {(!playlistId && !channelId) && video.sourceTitle ? (
+                              <>
+                                {video.publishedAt ? <span className="shrink-0">·</span> : null}
+                                <span className="truncate min-w-0">{video.sourceTitle}</span>
+                              </>
+                            ) : null}
                             {video.unseen && (
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-700 dark:bg-blue-200 shrink-0 mt-0.5" />
                             )}

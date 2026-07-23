@@ -5,6 +5,7 @@ export interface VideoItem {
   duration: string;
   publishedAt?: number;
   unseen?: boolean;
+  sourceTitle?: string;
 }
 
 export interface VideoListInfo {

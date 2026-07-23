@@ -743,7 +743,10 @@ export async function loadLatestVideos(): Promise<VideoItem[]> {
     for (const video of source.items) {
       if (seen.has(video.id)) continue;
       seen.add(video.id);
-      allVideos.push(video);
+      allVideos.push({
+        ...video,
+        sourceTitle: video.sourceTitle || source.title,
+      });
     }
   }
 
@@ -763,7 +766,12 @@ export async function loadUnseenVideos(): Promise<VideoItem[]> {
     for (const video of source.items) {
       if (seen.has(video.id)) continue;
       seen.add(video.id);
-      if (video.unseen) allVideos.push(video);
+      if (video.unseen) {
+        allVideos.push({
+          ...video,
+          sourceTitle: video.sourceTitle || source.title,
+        });
+      }
     }
   }
 
@@ -817,7 +825,10 @@ export async function loadFolderData(folderId: string): Promise<VideoListInfo | 
       for (const video of source.items) {
         if (!seen.has(video.id)) {
           seen.add(video.id);
-          items.push(video);
+          items.push({
+            ...video,
+            sourceTitle: video.sourceTitle || source.title,
+          });
         }
       }
     }
