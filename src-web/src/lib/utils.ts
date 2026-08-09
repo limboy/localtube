@@ -786,8 +786,20 @@ export async function getVideoDescription(videoId: string): Promise<string> {
 
   try {
     const yt = await getInnertube();
-    const info = await yt.getBasicInfo(videoId);
-    const description = info.basic_info.short_description ?? "";
+    let description = "";
+
+    try {
+      const basicInfo = await yt.getBasicInfo(videoId);
+      description = basicInfo.basic_info.short_description ?? "";
+    } catch {}
+
+    if (!description) {
+      const info = await yt.getInfo(videoId);
+      description =
+        info.basic_info.short_description ||
+        (info as any).secondary_info?.description?.toString?.() ||
+        "";
+    }
 
     if (description) {
       cache[videoId] = description;

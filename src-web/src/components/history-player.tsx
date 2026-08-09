@@ -84,6 +84,7 @@ export default function HistoryPlayer() {
   }, [currentVideoId, history]);
 
   useEffect(() => {
+    let isCancelled = false;
     if (currentVideoId) {
       const el = document.getElementById(`video-item-${currentVideoId}`);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -91,10 +92,15 @@ export default function HistoryPlayer() {
       setDescription("");
       setIsLoadingDescription(true);
       getVideoDescription(currentVideoId).then(desc => {
-        setDescription(desc);
-        setIsLoadingDescription(false);
+        if (!isCancelled) {
+          setDescription(desc);
+          setIsLoadingDescription(false);
+        }
       });
     }
+    return () => {
+      isCancelled = true;
+    };
   }, [currentVideoId]);
 
   useEffect(() => {

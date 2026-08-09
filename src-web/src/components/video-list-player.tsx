@@ -333,6 +333,7 @@ export default function VideoListPlayer({
   }, [isShuffled, loopMode, currentVideoId, videolist, shuffledItems, bookmarkedVideos, showBookmarkedOnly]);
 
   useEffect(() => {
+    let isCancelled = false;
     if (currentVideoId) {
       const el = document.getElementById(`video-item-${currentVideoId}`);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -340,12 +341,17 @@ export default function VideoListPlayer({
       setDescription("");
       setIsLoadingDescription(true);
       getVideoDescription(currentVideoId).then(desc => {
-        setDescription(desc);
-        setIsLoadingDescription(false);
+        if (!isCancelled) {
+          setDescription(desc);
+          setIsLoadingDescription(false);
+        }
       });
 
       userInitiatedRef.current = false;
     }
+    return () => {
+      isCancelled = true;
+    };
   }, [currentVideoId]);
 
   useEffect(() => {
