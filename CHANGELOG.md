@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.18](https://github.com/limboy/localtube/compare/v1.2.17...v1.2.18) - 2026-08-09
+
+### Bug Fixes
+
+- fallback to getInfo when getBasicInfo description is missing ([5327e4b](https://github.com/limboy/localtube/commit/5327e4b5ae730804d12bfc2789ea439cdde46387))
+
+### Documentation
+
+- update CHANGELOG for v1.2.17 ([c4ea5c8](https://github.com/limboy/localtube/commit/c4ea5c81e482cb96318b76253cda999dc72d9438))
+
 ## [v1.2.17](https://github.com/limboy/localtube/compare/v1.2.16...v1.2.17) - 2026-07-23
 
 ## [v1.2.16](https://github.com/limboy/localtube/compare/v1.2.15...v1.2.16) - 2026-07-23
