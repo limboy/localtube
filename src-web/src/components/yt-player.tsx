@@ -81,7 +81,10 @@ const YTPlayer = forwardRef<YTPlayerHandle, {
       const player = new (window as any).YT.Player(playerEl, {
         height: '100%',
         width: '100%',
-        host: 'https://www.youtube-nocookie.com',
+        // Not youtube-nocookie: privacy-enhanced mode blocks the visitor
+        // cookies, so every playback looks like a brand-new anonymous client
+        // and trips the "confirm you're not a bot" check.
+        host: 'https://www.youtube.com',
         playerVars: {
           playsinline: 1,
           disablekb: 0,

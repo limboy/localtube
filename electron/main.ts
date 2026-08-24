@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, nativeTheme } from "electron";
+import { app, BrowserWindow, net, session, shell, nativeTheme } from "electron";
 import path from "node:path";
 import { registerIpcHandlers, store } from "./ipc";
 import { setupMenu } from "./menu";
@@ -103,6 +103,26 @@ function createMainWindow() {
   });
 }
 
+// A cold install has no youtube.com cookies at all, which is exactly the
+// profile YouTube's "confirm you're not a bot" check targets. One request
+// through the shared session seeds VISITOR_INFO1_LIVE so the embedded player
+// has a visitor session to present on its first load.
+async function warmYouTubeSession() {
+  try {
+    await net.fetch("https://www.youtube.com/", { credentials: "include" });
+  } catch (err) {
+    console.warn("[youtube] visitor session warm-up failed:", err);
+  }
+
+  const cookies = await session.defaultSession.cookies.get({ domain: ".youtube.com" });
+  console.log(
+    "[youtube] visitor cookies:",
+    cookies.length
+      ? cookies.map((c) => c.name).join(", ")
+      : "none — the embed will likely hit the bot check"
+  );
+}
+
 app.name = "LocalTube";
 
 // Strip "Electron/<version>" from the default UA — YouTube's embed checks
@@ -115,6 +135,10 @@ app.whenReady().then(async () => {
     const port = await startStaticServer(distDir);
     prodURL = `http://localhost:${port}`;
   }
+
+  // Not awaited: the iframe API only loads once a video is opened, and
+  // blocking startup on a network call would stall launch when offline.
+  void warmYouTubeSession();
 
   registerIpcHandlers(() => mainWindow);
   setupMenu(() => mainWindow);

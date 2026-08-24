@@ -21,6 +21,11 @@ const MIME_TYPES: Record<string, string> = {
   ".map": "application/json; charset=utf-8",
 };
 
+// Prefer a stable port so the app's origin — and the `origin` player var the
+// embed reports — stays identical across launches. A port that changes every
+// run makes the app look like a brand-new embedder to YouTube each time.
+const PREFERRED_PORT = 17422;
+
 export function startStaticServer(rootDir: string): Promise<number> {
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
@@ -56,10 +61,17 @@ export function startStaticServer(rootDir: string): Promise<number> {
       });
     });
 
-    server.on("error", reject);
-    // Bind on "localhost" (not "127.0.0.1"). YouTube's embed checks treat
-    // http://localhost as a trusted dev origin but reject raw-IP embedders.
-    server.listen(0, "localhost", () => {
+    let triedFallback = false;
+    server.on("error", (err: NodeJS.ErrnoException) => {
+      if (err.code === "EADDRINUSE" && !triedFallback) {
+        triedFallback = true;
+        server.listen(0, "localhost");
+        return;
+      }
+      reject(err);
+    });
+
+    server.on("listening", () => {
       const address = server.address();
       if (address && typeof address === "object") {
         resolve(address.port);
@@ -67,5 +79,9 @@ export function startStaticServer(rootDir: string): Promise<number> {
         reject(new Error("Failed to acquire server port"));
       }
     });
+
+    // Bind on "localhost" (not "127.0.0.1"). YouTube's embed checks treat
+    // http://localhost as a trusted dev origin but reject raw-IP embedders.
+    server.listen(PREFERRED_PORT, "localhost");
   });
 }
