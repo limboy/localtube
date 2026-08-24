@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.19](https://github.com/limboy/localtube/compare/v1.2.18...v1.2.19) - 2026-08-24
+
+### Bug Fixes
+
+- warm YouTube session to prevent bot checks ([15586f6](https://github.com/limboy/localtube/commit/15586f6175ab7b04cc301a140c624c8adb7eb98e))
+
+### Documentation
+
+- update CHANGELOG for v1.2.18 ([ee20d2b](https://github.com/limboy/localtube/commit/ee20d2b3c15c21d70455efdef35cb3a0c45d1b60))
+
 ## [v1.2.18](https://github.com/limboy/localtube/compare/v1.2.17...v1.2.18) - 2026-08-09
 
 ### Bug Fixes
