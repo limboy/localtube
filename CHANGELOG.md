@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.20](https://github.com/limboy/localtube/compare/v1.2.19...v1.2.20) - 2026-08-26
+
+### Refactoring
+
+- reorganize storage and move data management to main process ([17dd6df](https://github.com/limboy/localtube/commit/17dd6dfe64dcda3852798a839996d5992382de52))
+- reorganize storage and move data management to main process ([eef7bf7](https://github.com/limboy/localtube/commit/eef7bf736f22649a59221ded00e12b83a871370c))
+
+### Documentation
+
+- update CHANGELOG for v1.2.19 ([f7e49e5](https://github.com/limboy/localtube/commit/f7e49e52565a5043c513935ada287f38e2933f5b))
+
 ## [v1.2.19](https://github.com/limboy/localtube/compare/v1.2.18...v1.2.19) - 2026-08-24
 
 ### Bug Fixes
