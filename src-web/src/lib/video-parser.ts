@@ -1,5 +1,6 @@
 import { VideoItem } from "@/types";
 import { getInnertube } from "./innertube";
+import { normalizeThumbnail } from "./thumbnails";
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -64,7 +65,7 @@ export async function parseYouTubeVideo(url: string): Promise<VideoItem> {
 
   const title = info.basic_info.title;
   const thumbs = info.basic_info.thumbnail ?? [];
-  const thumbnail = thumbs[thumbs.length - 1]?.url ?? thumbs[0]?.url ?? "";
+  const thumbnail = normalizeThumbnail(thumbs[thumbs.length - 1]?.url ?? thumbs[0]?.url);
   const duration = info.basic_info.duration ? formatDuration(info.basic_info.duration) : "Live";
   
   return {

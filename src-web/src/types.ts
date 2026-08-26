@@ -8,12 +8,15 @@ export interface VideoItem {
   sourceTitle?: string;
 }
 
-export interface VideoListInfo {
-  lastUpdated: number;
-  unreadCount: number;
+export interface SourceMeta {
   id: string;
   title: string;
   thumbnail?: string;
+  unreadCount: number;
+  lastUpdated: number;
+}
+
+export interface VideoListInfo extends SourceMeta {
   items: VideoItem[];
 }
 

@@ -1,5 +1,14 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { ConfirmOptions, ContextMenuItem, FetchInit, FetchResult } from "./types";
+import type {
+  ConfirmOptions,
+  ContextMenuItem,
+  FetchInit,
+  FetchResult,
+  PlaybackPosition,
+  SidebarData,
+  SourceKind,
+  StoredSource,
+} from "./types";
 
 const api = {
   store: {
@@ -8,6 +17,31 @@ const api = {
     set: (key: string, value: unknown) => ipcRenderer.invoke("store:set", key, value) as Promise<void>,
     save: () => ipcRenderer.invoke("store:save") as Promise<void>,
   },
+
+  library: {
+    sidebar: () => ipcRenderer.invoke("library:sidebar") as Promise<SidebarData>,
+    source: (kind: SourceKind, id: string) =>
+      ipcRenderer.invoke("library:source", kind, id) as Promise<StoredSource | null>,
+    markVideoSeen: (videoId: string) =>
+      ipcRenderer.invoke("library:markVideoSeen", videoId) as Promise<boolean>,
+  },
+
+  descriptions: {
+    get: (videoId: string) => ipcRenderer.invoke("description:get", videoId) as Promise<string | null>,
+    put: (videoId: string, text: string) =>
+      ipcRenderer.invoke("description:put", videoId, text) as Promise<void>,
+  },
+
+  playback: {
+    get: (videoId: string) =>
+      ipcRenderer.invoke("playback:get", videoId) as Promise<PlaybackPosition | null>,
+    put: (videoId: string, position: number, duration: number) =>
+      ipcRenderer.invoke("playback:put", videoId, position, duration) as Promise<void>,
+    clear: (videoId: string) => ipcRenderer.invoke("playback:clear", videoId) as Promise<void>,
+  },
+
+  cacheAvatar: (channelId: string, remoteUrl?: string, existing?: string) =>
+    ipcRenderer.invoke("avatar:ensure", channelId, remoteUrl, existing) as Promise<string | undefined>,
 
   fetch: (url: string, init?: FetchInit) =>
     ipcRenderer.invoke("net:fetch", url, init) as Promise<FetchResult>,

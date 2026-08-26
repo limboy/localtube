@@ -27,6 +27,28 @@ export interface ConfirmOptions {
   cancelLabel?: string;
 }
 
+export interface PlaybackPosition {
+  position: number;
+  duration: number;
+  updatedAt: number;
+}
+
+export interface SourceMeta {
+  id: string;
+  title: string;
+  thumbnail?: string;
+  unreadCount: number;
+  lastUpdated: number;
+}
+
+export interface SidebarData {
+  playlists: SourceMeta[];
+  channels: SourceMeta[];
+  unseenCount: number;
+}
+
+export type SourceKind = "playlist" | "channel";
+
 export interface ElectronAPI {
   store: {
     get<T>(key: string): Promise<T | undefined>;
@@ -34,6 +56,21 @@ export interface ElectronAPI {
     set(key: string, value: unknown): Promise<void>;
     save(): Promise<void>;
   };
+  library: {
+    sidebar(): Promise<SidebarData>;
+    source<T>(kind: SourceKind, id: string): Promise<T | null>;
+    markVideoSeen(videoId: string): Promise<boolean>;
+  };
+  descriptions: {
+    get(videoId: string): Promise<string | null>;
+    put(videoId: string, text: string): Promise<void>;
+  };
+  playback: {
+    get(videoId: string): Promise<PlaybackPosition | null>;
+    put(videoId: string, position: number, duration: number): Promise<void>;
+    clear(videoId: string): Promise<void>;
+  };
+  cacheAvatar(channelId: string, remoteUrl?: string, existing?: string): Promise<string | undefined>;
   fetch(url: string, init?: FetchInit): Promise<FetchResult>;
   fetchImageAsDataUrl(url: string): Promise<string | null>;
   openUrl(url: string): Promise<void>;

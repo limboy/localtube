@@ -2,6 +2,7 @@ import type { PlaylistInfo, RefreshFailure, VideoItem } from "@/types";
 import { addOrUpdatePlaylist, loadPlaylist, loadPlaylists } from "./utils";
 import { getInnertube } from "./innertube";
 import { parseRelativeTime } from "./time-utils";
+import { normalizeThumbnail } from "./thumbnails";
 
 const PLAYLIST_VIDEO_CAP = 500;
 
@@ -21,7 +22,7 @@ function mapVideo(v: any): VideoItem | null {
     if (!title) return null;
 
     const sources = v.content_image?.image || [];
-    const thumbnail = sources[0]?.url || "";
+    const thumbnail = normalizeThumbnail(sources[0]?.url);
 
     const bottomOverlay = v.content_image?.overlays?.find(
       (o: any) => o.type === 'ThumbnailBottomOverlayView'
@@ -54,8 +55,9 @@ function mapVideo(v: any): VideoItem | null {
   }
 
   const thumbs = v.thumbnails ?? [];
-  const thumbnail: string =
-    v.best_thumbnail?.url ?? thumbs[thumbs.length - 1]?.url ?? thumbs[0]?.url ?? "";
+  const thumbnail: string = normalizeThumbnail(
+    v.best_thumbnail?.url ?? thumbs[thumbs.length - 1]?.url ?? thumbs[0]?.url
+  );
 
   const isLive = v.is_live === true;
   const duration: string = isLive

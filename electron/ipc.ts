@@ -1,21 +1,54 @@
 import { BrowserWindow, Menu, MenuItem, dialog, ipcMain, net, shell } from "electron";
-import Store from "electron-store";
 import * as fs from "fs";
-import type { ConfirmOptions, ContextMenuItem, FetchInit, FetchResult } from "./types";
-
-export const store = new Store({ name: "app-data" });
+import { appGet, appSet } from "./store";
+import { ensureAvatar } from "./avatars";
+import {
+  clearPlaybackPosition,
+  getDescription,
+  getPlaybackPosition,
+  putDescription,
+  putPlaybackPosition,
+} from "./cache";
+import { getSidebarData, getSource, markVideoSeen } from "./library";
+import type { ConfirmOptions, ContextMenuItem, FetchInit, FetchResult, SourceKind } from "./types";
 
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
-  ipcMain.handle("store:get", (_e, key: string) => store.get(key));
+  ipcMain.handle("store:get", (_e, key: string) => appGet(key));
   ipcMain.handle("store:set", (_e, key: string, value: unknown) => {
-    store.set(key, value);
+    appSet(key, value);
   });
   ipcMain.handle("store:save", () => {
     // electron-store persists on every set; no-op for API parity.
   });
 
   ipcMain.on("store:get-sync", (event, key: string) => {
-    event.returnValue = store.get(key);
+    event.returnValue = appGet(key);
+  });
+
+  ipcMain.handle("library:sidebar", () => getSidebarData());
+
+  ipcMain.handle("library:source", (_e, kind: SourceKind, id: string) => getSource(kind, id));
+
+  ipcMain.handle("library:markVideoSeen", (_e, videoId: string) => markVideoSeen(videoId));
+
+  ipcMain.handle("avatar:ensure", (_e, channelId: string, remoteUrl?: string, existing?: string) =>
+    ensureAvatar(channelId, remoteUrl, existing)
+  );
+
+  ipcMain.handle("description:get", (_e, videoId: string) => getDescription(videoId));
+
+  ipcMain.handle("description:put", (_e, videoId: string, text: string) => {
+    putDescription(videoId, text);
+  });
+
+  ipcMain.handle("playback:get", (_e, videoId: string) => getPlaybackPosition(videoId));
+
+  ipcMain.handle("playback:put", (_e, videoId: string, position: number, duration: number) => {
+    putPlaybackPosition(videoId, position, duration);
+  });
+
+  ipcMain.handle("playback:clear", (_e, videoId: string) => {
+    clearPlaybackPosition(videoId);
   });
 
   ipcMain.handle("net:fetch", async (_e, url: string, init?: FetchInit): Promise<FetchResult> => {
@@ -129,7 +162,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
   ipcMain.handle("window:setAlwaysOnTop", (_e, flag: boolean) => {
     const win = getWindow();
     win?.setAlwaysOnTop(flag);
-    store.set("alwaysOnTop", flag);
+    appSet("alwaysOnTop", flag);
   });
 
   ipcMain.handle("dialog:saveFile", async (_e, content: string, defaultName: string) => {

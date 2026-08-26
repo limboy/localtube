@@ -71,8 +71,7 @@ import {
   markChannelAsSeen,
   markFolderAsSeen,
   addOrUpdateChannel,
-  loadPlaylists,
-  loadChannels,
+  loadSidebarData,
   loadFolders,
   loadSidebarOrder,
   saveSidebarOrder,
@@ -85,7 +84,7 @@ import {
   exportData,
   importData,
 } from "@/lib/utils";
-import { PlaylistInfo, ChannelInfo, FolderInfo, SidebarItem, RefreshFailure } from "@/types";
+import { FolderInfo, SidebarItem, RefreshFailure, SourceMeta } from "@/types";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
@@ -340,8 +339,8 @@ function normalizeSidebarDropIndicator(
 
 interface SidebarDragPreviewProps {
   entry: SidebarDragEntryData;
-  playlistsMap: Map<string, PlaylistInfo>;
-  channelsMap: Map<string, ChannelInfo>;
+  playlistsMap: Map<string, SourceMeta>;
+  channelsMap: Map<string, SourceMeta>;
   foldersMap: Map<string, FolderInfo>;
 }
 
@@ -388,7 +387,7 @@ function SidebarDragPreview({ entry, playlistsMap, channelsMap, foldersMap }: Si
 
 
 interface PlaylistItemProps {
-  playlist: PlaylistInfo;
+  playlist: SourceMeta;
   containerId: string;
   isFirstInContainer: boolean;
   dropIndicator?: "before" | "after";
@@ -484,7 +483,7 @@ function PlaylistItem({ playlist, containerId, isFirstInContainer, dropIndicator
 }
 
 interface ChannelItemProps {
-  channel: ChannelInfo;
+  channel: SourceMeta;
   containerId: string;
   isFirstInContainer: boolean;
   dropIndicator?: "before" | "after";
@@ -812,8 +811,9 @@ export default function AppSidebar() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [playlists, setPlaylists] = useState<PlaylistInfo[]>([]);
-  const [channels, setChannels] = useState<ChannelInfo[]>([]);
+  const [playlists, setPlaylists] = useState<SourceMeta[]>([]);
+  const [channels, setChannels] = useState<SourceMeta[]>([]);
+  const [unseenCount, setUnseenCount] = useState(0);
   const [folders, setFolders] = useState<FolderInfo[]>([]);
   const [sidebarOrder, setSidebarOrder] = useState<SidebarItem[]>([]);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
@@ -861,9 +861,9 @@ export default function AppSidebar() {
     }
     lastCheckTimeRef.current = now;
 
-    const actualPlaylists = await loadPlaylists();
-    const actualChannels = await loadChannels();
-    const totalCount = actualPlaylists.length + actualChannels.length;
+    const summary = await loadSidebarData();
+    const playlistCount = summary.playlists.length;
+    const totalCount = playlistCount + summary.channels.length;
 
     if (totalCount === 0) return;
 
@@ -876,17 +876,15 @@ export default function AppSidebar() {
         setRefreshProgress({ current, total: totalCount });
       });
 
-      const playlistsData = await loadPlaylists();
-      setPlaylists(playlistsData);
+      await refreshSidebarData();
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingPlaylists(false);
 
       await checkAllChannelsForUpdates((current) => {
-        setRefreshProgress({ current: actualPlaylists.length + current, total: totalCount });
+        setRefreshProgress({ current: playlistCount + current, total: totalCount });
       });
 
-      const channelsData = await loadChannels();
-      setChannels(channelsData);
+      await refreshSidebarData();
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingChannels(false);
     } catch (e) {
@@ -899,11 +897,10 @@ export default function AppSidebar() {
 
   const refreshSidebarData = async () => {
     try {
-      const pData = await loadPlaylists();
-      setPlaylists(pData);
-
-      const cData = await loadChannels();
-      setChannels(cData);
+      const summary = await loadSidebarData();
+      setPlaylists(summary.playlists);
+      setChannels(summary.channels);
+      setUnseenCount(summary.unseenCount);
 
       const fData = await loadFolders();
       setFolders(fData);
@@ -948,10 +945,9 @@ export default function AppSidebar() {
         });
         if (confirmed) {
           await removePlaylist(playlistId);
-          const updatedPlaylists = await loadPlaylists();
-          setPlaylists(updatedPlaylists);
+          const actualPlaylists = (await loadSidebarData()).playlists;
+          setPlaylists(actualPlaylists);
 
-          const actualPlaylists = updatedPlaylists;
           if (playlistMatch?.params.playlistId === playlistId && actualPlaylists.length > 0) {
             handlePlaylistClick(actualPlaylists[0].id);
           }
@@ -968,10 +964,9 @@ export default function AppSidebar() {
         });
         if (confirmed) {
           await removeChannel(channelId);
-          const updatedChannels = await loadChannels();
-          setChannels(updatedChannels);
+          const actualChannels = (await loadSidebarData()).channels;
+          setChannels(actualChannels);
 
-          const actualChannels = updatedChannels;
           if (channelMatch?.params.channelId === channelId && actualChannels.length > 0) {
             await handleChannelClick(actualChannels[0].id);
           }
@@ -1116,7 +1111,7 @@ export default function AppSidebar() {
       if (isPlaylist) {
         const playlistId = new URL(urlToParse).searchParams.get("list");
         if (playlistId) {
-          const existingPlaylists = await loadPlaylists();
+          const existingPlaylists = (await loadSidebarData()).playlists;
           const existing = existingPlaylists.find(p => p.id === playlistId);
           if (existing) {
             throw new Error(`Playlist "${existing.title}" is already in your library.`);
@@ -1157,7 +1152,7 @@ export default function AppSidebar() {
       } else if (isChannel) {
         const directMatch = urlToParse.match(/\/channel\/(UC[\w-]+)/);
         if (directMatch) {
-          const existingChannels = await loadChannels();
+          const existingChannels = (await loadSidebarData()).channels;
           const existing = existingChannels.find(c => c.id === directMatch[1]);
           if (existing) {
             throw new Error(`Channel "${existing.title}" is already in your library.`);
@@ -1167,7 +1162,7 @@ export default function AppSidebar() {
         const channel = await parseYouTubeChannel(playlistOrChannelUrl);
 
         if (!directMatch) {
-          const existingChannels = await loadChannels();
+          const existingChannels = (await loadSidebarData()).channels;
           const existing = existingChannels.find(c => c.id === channel.id);
           if (existing) {
             throw new Error(`Channel "${existing.title}" is already in your library.`);
@@ -1285,20 +1280,6 @@ export default function AppSidebar() {
   const playlistsMap = useMemo(() => new Map(playlists.map(p => [p.id, p])), [playlists]);
   const channelsMap = useMemo(() => new Map(channels.map(c => [c.id, c])), [channels]);
   const foldersMap = useMemo(() => new Map(folders.map(f => [f.id, f])), [folders]);
-
-  // Total unseen videos across every source, deduped by video ID.
-  const unseenCount = useMemo(() => {
-    const seen = new Set<string>();
-    let count = 0;
-    for (const source of [...channels, ...playlists]) {
-      for (const v of source.items) {
-        if (seen.has(v.id)) continue;
-        seen.add(v.id);
-        if (v.unseen) count++;
-      }
-    }
-    return count;
-  }, [channels, playlists]);
 
 
 
@@ -1444,8 +1425,7 @@ export default function AppSidebar() {
           setRefreshProgress({ current, total: totalCount });
         }, recordFailure);
       }
-      const newPlaylists = await loadPlaylists();
-      setPlaylists(newPlaylists);
+      await refreshSidebarData();
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingPlaylists(false);
 
@@ -1458,8 +1438,7 @@ export default function AppSidebar() {
           setRefreshProgress({ current: pItemsCount + current, total: totalCount });
         }, recordFailure);
       }
-      const newChannels = await loadChannels();
-      setChannels(newChannels);
+      await refreshSidebarData();
       window.dispatchEvent(new CustomEvent('store-updated'));
       setRefreshingChannels(false);
 

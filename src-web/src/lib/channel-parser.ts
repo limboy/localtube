@@ -3,6 +3,7 @@ import { addOrUpdateChannel, loadChannel, loadChannels } from "./utils";
 import { getInnertube } from "./innertube";
 import { YTNodes } from "youtubei.js";
 import { parseRelativeTime } from "./time-utils";
+import { normalizeThumbnail } from "./thumbnails";
 
 const CHANNEL_VIDEO_CAP = 500;
 
@@ -36,8 +37,9 @@ function mapVideo(v: any): VideoItem | null {
   }
 
   const thumbs = v.thumbnails ?? [];
-  const thumbnail: string =
-    v.best_thumbnail?.url ?? thumbs[thumbs.length - 1]?.url ?? thumbs[0]?.url ?? "";
+  const thumbnail: string = normalizeThumbnail(
+    v.best_thumbnail?.url ?? thumbs[thumbs.length - 1]?.url ?? thumbs[0]?.url
+  );
 
   const isLive = v.is_live === true;
   const duration: string = isLive
@@ -67,7 +69,7 @@ function mapLockupView(lockup: any): VideoItem | null {
   if (!title) return null;
 
   const images = lockup.content_image?.image ?? [];
-  const thumbnail: string = images[0]?.url ?? "";
+  const thumbnail: string = normalizeThumbnail(images[0]?.url);
 
   const badges = lockup.content_image?.overlays?.[0]?.badges ?? [];
   const durationBadge = badges.find(
@@ -119,13 +121,18 @@ async function collectChannelVideos(channelId: string): Promise<VideoItem[]> {
   return items;
 }
 
-async function fetchAvatarAsDataUrl(url: string | undefined): Promise<string | undefined> {
-  if (!url) return undefined;
+// Downloads the avatar to a file under userData and returns a local URL for it.
+// Main skips the network entirely when the file backing `existing` is still
+// there, so a refresh costs one stat call per channel.
+async function cacheAvatar(
+  channelId: string,
+  remoteUrl: string | undefined,
+  existing?: string
+): Promise<string | undefined> {
   try {
-    const dataUrl = await window.electron.fetchImageAsDataUrl(url);
-    return dataUrl ?? undefined;
+    return await window.electron.cacheAvatar(channelId, remoteUrl, existing);
   } catch {
-    return undefined;
+    return existing;
   }
 }
 
@@ -139,7 +146,7 @@ export async function parseYouTubeChannel(channelUrl: string): Promise<ChannelIn
   const metadata = channelRoot.metadata;
   const avatar = metadata.avatar;
   const avatarUrl = avatar?.[avatar.length - 1]?.url ?? avatar?.[0]?.url;
-  const thumbnail = await fetchAvatarAsDataUrl(avatarUrl);
+  const thumbnail = await cacheAvatar(metadata.external_id ?? channelId, avatarUrl);
 
   const items = await collectChannelVideos(channelId);
   const unseenItems = items.map((v) => ({ ...v, unseen: true }));
@@ -181,11 +188,7 @@ async function fetchChannelFirstPage(
   const avatar = metadata.avatar;
   const avatarUrl = avatar?.[avatar.length - 1]?.url ?? avatar?.[0]?.url;
 
-  // Only fetch new avatar if we don't have a cached one (data URL)
-  let thumbnail = existingThumbnail;
-  if (!existingThumbnail?.startsWith("data:") && avatarUrl) {
-    thumbnail = await fetchAvatarAsDataUrl(avatarUrl);
-  }
+  const thumbnail = await cacheAvatar(channelId, avatarUrl, existingThumbnail);
 
   const items = extractVideosFromFeed(feed);
 

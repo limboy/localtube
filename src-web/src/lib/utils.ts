@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { ChannelInfo, PlaylistInfo, VideoListInfo, BookmarkData, EnrichedBookmark, VideoItem, FolderInfo, SidebarItem, WatchHistoryEntry } from "@/types";
+import type { SidebarData } from "@/electron";
 import { setupKonamiCode } from "./konami";
 import { getInnertube } from "./innertube";
 
@@ -29,8 +30,7 @@ export async function loadChannels() {
 }
 
 export async function loadChannel(channelId: string) {
-  const data = await loadChannels();
-  return data.find((p) => p.id === channelId);
+  return (await window.electron.library.source<ChannelInfo>("channel", channelId)) ?? undefined;
 }
 
 export async function markChannelAsSeen(channelId: string) {
@@ -101,13 +101,21 @@ export async function reorderChannels(channelIds: string[]) {
 }
 
 export async function loadPlaylist(playlistId: string) {
-  const data = await loadPlaylists();
-  return data.find((p) => p.id === playlistId);
+  return (await window.electron.library.source<PlaylistInfo>("playlist", playlistId)) ?? undefined;
 }
 
 export async function loadPlaylists() {
   const store = await getStore();
   return (await store.get<PlaylistInfo[]>("playlists")) || [];
+}
+
+/**
+ * Titles, thumbnails and unread counts for every source, without the video
+ * arrays. The sidebar re-reads this on each store update, so pulling whole
+ * libraries across IPC for a badge number dominated the cost.
+ */
+export async function loadSidebarData(): Promise<SidebarData> {
+  return window.electron.library.sidebar();
 }
 
 export async function markPlaylistAsSeen(playlistId: string) {
@@ -123,39 +131,11 @@ export async function markPlaylistAsSeen(playlistId: string) {
 }
 
 // Mark a single video as seen across every playlist/channel it appears in,
-// recomputing each source's unread count. Used when a video is clicked/played.
+// recomputing each source's unread count. Runs in the main process so a click
+// does not ship the whole library over IPC and back.
 export async function markVideoAsSeen(videoId: string) {
-  const store = await getStore();
-  let changed = false;
-
-  const playlists = await loadPlaylists();
-  for (const p of playlists) {
-    let touched = false;
-    for (const v of p.items) {
-      if (v.id === videoId && v.unseen) { v.unseen = false; touched = true; }
-    }
-    if (touched) {
-      p.unreadCount = p.items.filter((v) => v.unseen).length;
-      changed = true;
-    }
-  }
-  if (changed) await store.set("playlists", playlists);
-
-  let channelsChanged = false;
-  const channels = await loadChannels();
-  for (const c of channels) {
-    let touched = false;
-    for (const v of c.items) {
-      if (v.id === videoId && v.unseen) { v.unseen = false; touched = true; }
-    }
-    if (touched) {
-      c.unreadCount = c.items.filter((v) => v.unseen).length;
-      channelsChanged = true;
-    }
-  }
-  if (channelsChanged) await store.set("channels", channels);
-
-  if (changed || channelsChanged) {
+  const changed = await window.electron.library.markVideoSeen(videoId);
+  if (changed) {
     window.dispatchEvent(new CustomEvent('store-updated'));
   }
 }
@@ -506,41 +486,16 @@ export async function saveSkippedVideos(skippedVideos: Set<string>) {
   window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
-export interface PlaybackPosition {
-  position: number;
-  duration: number;
-  updatedAt: number;
-}
-
-export async function loadPlaybackPosition(videoId: string): Promise<PlaybackPosition | null> {
-  const store = await getStore();
-  const positions = (await store.get<Record<string, PlaybackPosition>>("playbackPositions")) || {};
-  return positions[videoId] || null;
+export async function loadPlaybackPosition(videoId: string) {
+  return window.electron.playback.get(videoId);
 }
 
 export async function savePlaybackPosition(videoId: string, position: number, duration: number) {
-  if (duration <= 0) return;
-  const store = await getStore();
-  const positions = (await store.get<Record<string, PlaybackPosition>>("playbackPositions")) || {};
-  const nearEnd = (duration - position) < 10;
-  if (position < 5 || nearEnd) {
-    if (positions[videoId]) {
-      delete positions[videoId];
-      await store.set("playbackPositions", positions);
-    }
-    return;
-  }
-  positions[videoId] = { position, duration, updatedAt: Date.now() };
-  await store.set("playbackPositions", positions);
+  await window.electron.playback.put(videoId, position, duration);
 }
 
 export async function clearPlaybackPosition(videoId: string) {
-  const store = await getStore();
-  const positions = (await store.get<Record<string, PlaybackPosition>>("playbackPositions")) || {};
-  if (positions[videoId]) {
-    delete positions[videoId];
-    await store.set("playbackPositions", positions);
-  }
+  await window.electron.playback.clear(videoId);
 }
 
 export async function exportData(): Promise<boolean> {
@@ -780,9 +735,8 @@ export async function loadUnseenVideos(): Promise<VideoItem[]> {
 }
 
 export async function getVideoDescription(videoId: string): Promise<string> {
-  const store = await getStore();
-  const cache = (await store.get<Record<string, string>>("videoDescriptions")) || {};
-  if (cache[videoId]) return cache[videoId];
+  const cached = await window.electron.descriptions.get(videoId);
+  if (cached) return cached;
 
   try {
     const yt = await getInnertube();
@@ -802,9 +756,7 @@ export async function getVideoDescription(videoId: string): Promise<string> {
     }
 
     if (description) {
-      cache[videoId] = description;
-      await store.set("videoDescriptions", cache);
-      await store.save();
+      await window.electron.descriptions.put(videoId, description);
     }
 
     return description;

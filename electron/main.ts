@@ -1,9 +1,12 @@
 import { app, BrowserWindow, net, session, shell, nativeTheme } from "electron";
 import path from "node:path";
-import { registerIpcHandlers, store } from "./ipc";
+import { registerIpcHandlers } from "./ipc";
 import { setupMenu } from "./menu";
 import { setupAutoUpdater } from "./updater";
 import { startStaticServer } from "./server";
+import { appGet, migrateAppStore, windowStore } from "./store";
+import { handleAvatarProtocol, registerAvatarScheme } from "./avatars";
+import { migrateLibrary } from "./library";
 
 const isDev = !app.isPackaged && process.env.NODE_ENV !== "production";
 const DEV_URL = "http://localhost:1422";
@@ -12,12 +15,12 @@ let mainWindow: BrowserWindow | null = null;
 let prodURL: string | null = null;
 
 function createMainWindow() {
-  const lastState: any = store.get("windowState") || {
+  const lastState: any = windowStore.get("windowState") || {
     width: 1000,
     height: 800,
   };
 
-  const theme = (store.get("theme") as string) || "light";
+  const theme = appGet<string>("theme") || "light";
   let backgroundColor = "#ffffff";
 
   if (theme === "dark") {
@@ -44,35 +47,47 @@ function createMainWindow() {
       nodeIntegration: false,
       sandbox: false,
     },
-    alwaysOnTop: store.get("alwaysOnTop") === true,
+    alwaysOnTop: appGet<boolean>("alwaysOnTop") === true,
   });
 
   if (lastState.isMaximized) {
     mainWindow.maximize();
   }
 
+  let normalBounds = {
+    x: lastState.x,
+    y: lastState.y,
+    width: lastState.width,
+    height: lastState.height,
+  };
+  let pendingState: Record<string, unknown> | null = null;
+  let saveTimer: NodeJS.Timeout | null = null;
+
+  const flushState = () => {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    if (!pendingState) return;
+    windowStore.set("windowState", pendingState);
+    pendingState = null;
+  };
+
+  // "resize" and "move" fire on every frame of a drag, and electron-store
+  // rewrites its whole file synchronously per set. Writing inline stalled the
+  // main process for the length of the drag; collect the state cheaply and
+  // write once the window settles.
   const saveState = () => {
     if (!mainWindow) return;
-    const isMaximized = mainWindow.isMaximized();
-    if (!isMaximized) {
-      const bounds = mainWindow.getBounds();
-      store.set("windowState", {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height,
-        isMaximized: false,
-      });
-    } else {
-      store.set("windowState", {
-        ...lastState,
-        isMaximized: true,
-      });
-    }
+    if (!mainWindow.isMaximized()) normalBounds = mainWindow.getBounds();
+    pendingState = { ...normalBounds, isMaximized: mainWindow.isMaximized() };
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(flushState, 400);
   };
 
   mainWindow.on("resize", saveState);
   mainWindow.on("move", saveState);
+  mainWindow.on("close", flushState);
 
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
@@ -125,11 +140,19 @@ async function warmYouTubeSession() {
 
 app.name = "LocalTube";
 
+// Must run before the app is ready: the renderer loads cached channel avatars
+// through this scheme.
+registerAvatarScheme();
+
 // Strip "Electron/<version>" from the default UA — YouTube's embed checks
 // treat that token as a non-browser client and refuse playback (Error 152-4).
 app.userAgentFallback = app.userAgentFallback.replace(/ Electron\/\S+/, "");
 
 app.whenReady().then(async () => {
+  handleAvatarProtocol();
+  migrateAppStore();
+  migrateLibrary();
+
   if (!isDev) {
     const distDir = path.join(__dirname, "../../src-web/dist");
     const port = await startStaticServer(distDir);
