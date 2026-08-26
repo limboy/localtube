@@ -261,6 +261,7 @@ export default function HistoryPlayer() {
                       <img
                         src={entry.thumbnail}
                         alt={entry.title}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                       {entry.duration && (

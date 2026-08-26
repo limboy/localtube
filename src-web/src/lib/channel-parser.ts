@@ -1,5 +1,5 @@
 import type { ChannelInfo, RefreshFailure, VideoItem } from "@/types";
-import { addOrUpdateChannel, loadChannel, loadChannels } from "./utils";
+import { addOrUpdateChannel, loadChannels } from "./utils";
 import { getInnertube } from "./innertube";
 import { YTNodes } from "youtubei.js";
 import { parseRelativeTime } from "./time-utils";
@@ -159,21 +159,6 @@ export async function parseYouTubeChannel(channelUrl: string): Promise<ChannelIn
     items: unseenItems,
     lastUpdated: Date.now(),
   };
-}
-
-export async function checkForChannelUpdates(channelId: string): Promise<Boolean> {
-  const channel = await loadChannel(channelId);
-  const yt = await getInnertube();
-  const channelRoot = await yt.getChannel(channelId);
-  const feed = await channelRoot.getVideos();
-
-  const videos = extractVideosFromFeed(feed);
-  for (const v of videos) {
-    if (!channel?.items.some((video) => video.id === v.id)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 async function fetchChannelFirstPage(

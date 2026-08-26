@@ -2,6 +2,13 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import { autoUpdater } from "electron-updater";
 
 export function setupAutoUpdater(getWindow: () => BrowserWindow | null) {
+  // Always registered so the renderer's invoke resolves rather than rejecting
+  // when running unpackaged.
+  ipcMain.handle("updater:install", () => {
+    if (!app.isPackaged) return;
+    autoUpdater.quitAndInstall();
+  });
+
   if (!app.isPackaged) return;
 
   autoUpdater.autoDownload = true;
@@ -22,10 +29,5 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null) {
   setInterval(() => {
     autoUpdater.checkForUpdates().catch(() => {});
   }, 6 * 60 * 60 * 1000);
-
-  ipcMain.handle("updater:install", () => {
-    if (!app.isPackaged) return;
-    autoUpdater.quitAndInstall();
-  });
 }
 

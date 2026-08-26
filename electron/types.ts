@@ -67,3 +67,16 @@ export interface SidebarData {
 }
 
 export type SourceKind = "playlist" | "channel";
+
+export interface StoredFolder {
+  id: string;
+  name: string;
+  isCollapsed: boolean;
+}
+
+export type SidebarChildEntry = { type: SourceKind; id: string };
+
+export type SidebarItem =
+  | { type: "playlist"; id: string }
+  | { type: "channel"; id: string }
+  | { type: "folder"; id: string; children: SidebarChildEntry[] };

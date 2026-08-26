@@ -36,8 +36,8 @@ You can download the latest version of LocalTube for macOS from the [Releases pa
 
 ### State & Routing
 - **Routing**: [TanStack Router](https://tanstack.com/router)
-- **Data Fetching**: [TanStack Query](https://tanstack.com/query)
-- **State Management**: [Immer](https://immerjs.github.io/immer/)
+- **YouTube Data**: [YouTube.js](https://github.com/LuanRT/YouTube.js)
+- **Drag & Drop**: [dnd kit](https://dndkit.com/)
 
 ### Styling & UI
 - **CSS**: [Tailwind CSS v4](https://tailwindcss.com/)
@@ -47,7 +47,6 @@ You can download the latest version of LocalTube for macOS from the [Releases pa
 
 ### Desktop Utilities
 - **Storage**: `electron-store`
-- **Window Management**: `electron-window-state`
 - **Updater**: `electron-updater`
 - **Packaging**: `electron-builder`
 

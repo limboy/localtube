@@ -64,8 +64,6 @@ import {
   cn,
   addOrUpdatePlaylist,
   removePlaylist,
-  isPlaylistUrl,
-  isChannelUrl,
   removeChannel,
   markPlaylistAsSeen,
   markChannelAsSeen,
@@ -90,7 +88,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 
 import { checkAllPlaylistsForUpdates, fullRefreshAllPlaylists, parseYouTubePlaylist } from "@/lib/playlist-parser";
 import { checkAllChannelsForUpdates, fullRefreshAllChannels, parseYouTubeChannel } from "@/lib/channel-parser";
-import { isVideoUrl, parseYouTubeVideo } from "@/lib/video-parser";
+import { parseYouTubeVideo } from "@/lib/video-parser";
+import { isChannelUrl, isPlaylistUrl, isShortsOrLiveUrl, isVideoUrl } from "@/lib/youtube-url";
 import { loadBookmarks, saveBookmarks } from "@/lib/utils";
 import SearchDialog from "@/components/search-dialog";
 import { toast } from "@/hooks/use-toast";
@@ -912,105 +911,111 @@ export default function AppSidebar() {
     }
   };
 
-  useEffect(() => {
-    const focusHandler = () => {
-      checkUpdatesIfNeeded();
-      refreshSidebarData();
-    };
+  // Registered once. The handlers read each render's latest closure through a
+  // ref, so the listeners no longer tear down and re-register every time the
+  // library data changes.
+  const focusHandlerRef = useRef<() => void>(() => {});
+  focusHandlerRef.current = () => {
+    checkUpdatesIfNeeded();
+    refreshSidebarData();
+  };
 
-    const unlistenFocus = window.electron.onWindowFocus(focusHandler);
+  const menuHandlerRef = useRef<(eventId: string) => void>(() => {});
+  menuHandlerRef.current = async (eventId: string) => {
+    if (eventId.startsWith("mark-playlist-seen-")) {
+      const playlistId = eventId.replace("mark-playlist-seen-", "");
+      await markPlaylistAsSeen(playlistId);
+    } else if (eventId.startsWith("mark-channel-seen-")) {
+      const channelId = eventId.replace("mark-channel-seen-", "");
+      await markChannelAsSeen(channelId);
+    } else if (eventId.startsWith("mark-folder-seen-")) {
+      const folderId = eventId.replace("mark-folder-seen-", "");
+      await markFolderAsSeen(folderId);
+    } else if (eventId.startsWith("view-playlist-in-browser-")) {
+      const playlistId = eventId.replace("view-playlist-in-browser-", "");
+      await window.electron.openUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
+    } else if (eventId.startsWith("view-channel-in-browser-")) {
+      const channelId = eventId.replace("view-channel-in-browser-", "");
+      await window.electron.openUrl(`https://www.youtube.com/channel/${channelId}`);
+    } else if (eventId.startsWith("delete-playlist-")) {
+      const playlistId = eventId.replace("delete-playlist-", "");
+      const confirmed = await window.electron.confirm("Are you sure to delete this playlist?", {
+        title: "Delete Playlist",
+        kind: "warning",
+        okLabel: "Delete"
+      });
+      if (confirmed) {
+        await removePlaylist(playlistId);
+        const actualPlaylists = (await loadSidebarData()).playlists;
+        setPlaylists(actualPlaylists);
 
-    const unlistenMenu = window.electron.onMenuEvent(async (eventId) => {
-      if (eventId.startsWith("mark-playlist-seen-")) {
-        const playlistId = eventId.replace("mark-playlist-seen-", "");
-        await markPlaylistAsSeen(playlistId);
-      } else if (eventId.startsWith("mark-channel-seen-")) {
-        const channelId = eventId.replace("mark-channel-seen-", "");
-        await markChannelAsSeen(channelId);
-      } else if (eventId.startsWith("mark-folder-seen-")) {
-        const folderId = eventId.replace("mark-folder-seen-", "");
-        await markFolderAsSeen(folderId);
-      } else if (eventId.startsWith("view-playlist-in-browser-")) {
-        const playlistId = eventId.replace("view-playlist-in-browser-", "");
-        await window.electron.openUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
-      } else if (eventId.startsWith("view-channel-in-browser-")) {
-        const channelId = eventId.replace("view-channel-in-browser-", "");
-        await window.electron.openUrl(`https://www.youtube.com/channel/${channelId}`);
-      } else if (eventId.startsWith("delete-playlist-")) {
-        const playlistId = eventId.replace("delete-playlist-", "");
-        const confirmed = await window.electron.confirm("Are you sure to delete this playlist?", {
-          title: "Delete Playlist",
-          kind: "warning",
-          okLabel: "Delete"
-        });
-        if (confirmed) {
-          await removePlaylist(playlistId);
-          const actualPlaylists = (await loadSidebarData()).playlists;
-          setPlaylists(actualPlaylists);
-
-          if (playlistMatch?.params.playlistId === playlistId && actualPlaylists.length > 0) {
-            handlePlaylistClick(actualPlaylists[0].id);
-          }
-          if (actualPlaylists.length === 0) {
-            navigate({ to: '/playlist' });
-          }
+        if (playlistMatch?.params.playlistId === playlistId && actualPlaylists.length > 0) {
+          handlePlaylistClick(actualPlaylists[0].id);
         }
-      } else if (eventId.startsWith("delete-channel-")) {
-        const channelId = eventId.replace("delete-channel-", "");
-        const confirmed = await window.electron.confirm("Are you sure to delete this channel?", {
-          title: "Delete Channel",
-          kind: "warning",
-          okLabel: "Delete"
-        });
-        if (confirmed) {
-          await removeChannel(channelId);
-          const actualChannels = (await loadSidebarData()).channels;
-          setChannels(actualChannels);
-
-          if (channelMatch?.params.channelId === channelId && actualChannels.length > 0) {
-            await handleChannelClick(actualChannels[0].id);
-          }
-          if (actualChannels.length === 0) {
-            navigate({ to: '/channel' });
-          }
-        }
-      } else if (eventId === "new-folder") {
-        handleNewFolder();
-      } else if (eventId.startsWith("rename-folder-")) {
-        const folderId = eventId.replace("rename-folder-", "");
-        setRenamingFolderId(folderId);
-      } else if (eventId.startsWith("delete-folder-")) {
-        const folderId = eventId.replace("delete-folder-", "");
-        const confirmed = await window.electron.confirm("Delete this folder? All playlists and channels inside it will also be deleted.", {
-          title: "Delete Folder",
-          kind: "warning",
-          okLabel: "Delete"
-        });
-        if (confirmed) {
-          await removeFolder(folderId);
-          await refreshSidebarData();
-        }
-      } else if (eventId.startsWith("move-playlist-") || eventId.startsWith("move-channel-")) {
-        const match = eventId.match(/^move-(playlist|channel)-(.+?)-to-(folder-(.+)|top-level)$/);
-        if (match) {
-          const itemType = match[1] as 'playlist' | 'channel';
-          const itemId = match[2];
-          const targetFolderId = match[4];
-          if (targetFolderId) {
-            await moveItemToFolder(itemId, itemType, targetFolderId);
-          } else {
-            await moveItemToTopLevel(itemId, itemType);
-          }
-          await refreshSidebarData();
+        if (actualPlaylists.length === 0) {
+          navigate({ to: '/playlist' });
         }
       }
-    });
+    } else if (eventId.startsWith("delete-channel-")) {
+      const channelId = eventId.replace("delete-channel-", "");
+      const confirmed = await window.electron.confirm("Are you sure to delete this channel?", {
+        title: "Delete Channel",
+        kind: "warning",
+        okLabel: "Delete"
+      });
+      if (confirmed) {
+        await removeChannel(channelId);
+        const actualChannels = (await loadSidebarData()).channels;
+        setChannels(actualChannels);
+
+        if (channelMatch?.params.channelId === channelId && actualChannels.length > 0) {
+          await handleChannelClick(actualChannels[0].id);
+        }
+        if (actualChannels.length === 0) {
+          navigate({ to: '/channel' });
+        }
+      }
+    } else if (eventId === "new-folder") {
+      handleNewFolder();
+    } else if (eventId.startsWith("rename-folder-")) {
+      const folderId = eventId.replace("rename-folder-", "");
+      setRenamingFolderId(folderId);
+    } else if (eventId.startsWith("delete-folder-")) {
+      const folderId = eventId.replace("delete-folder-", "");
+      const confirmed = await window.electron.confirm("Delete this folder? All playlists and channels inside it will also be deleted.", {
+        title: "Delete Folder",
+        kind: "warning",
+        okLabel: "Delete"
+      });
+      if (confirmed) {
+        await removeFolder(folderId);
+        await refreshSidebarData();
+      }
+    } else if (eventId.startsWith("move-playlist-") || eventId.startsWith("move-channel-")) {
+      const match = eventId.match(/^move-(playlist|channel)-(.+?)-to-(folder-(.+)|top-level)$/);
+      if (match) {
+        const itemType = match[1] as 'playlist' | 'channel';
+        const itemId = match[2];
+        const targetFolderId = match[4];
+        if (targetFolderId) {
+          await moveItemToFolder(itemId, itemType, targetFolderId);
+        } else {
+          await moveItemToTopLevel(itemId, itemType);
+        }
+        await refreshSidebarData();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const unlistenFocus = window.electron.onWindowFocus(() => focusHandlerRef.current());
+    const unlistenMenu = window.electron.onMenuEvent((eventId) => menuHandlerRef.current(eventId));
 
     return () => {
       unlistenFocus();
       unlistenMenu();
     };
-  }, [playlists]);
+  }, []);
 
   useEffect(() => {
     refreshSidebarData();
@@ -1098,6 +1103,10 @@ export default function AppSidebar() {
         new URL(urlToParse);
       } catch {
         throw new Error("Please enter a valid URL.");
+      }
+
+      if (isShortsOrLiveUrl(playlistOrChannelUrl)) {
+        throw new Error("Shorts and live streams aren't supported.");
       }
 
       const isPlaylist = isPlaylistUrl(playlistOrChannelUrl);

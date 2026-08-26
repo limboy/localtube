@@ -6,7 +6,7 @@ import { setupAutoUpdater } from "./updater";
 import { startStaticServer } from "./server";
 import { appGet, migrateAppStore, windowStore } from "./store";
 import { handleAvatarProtocol, registerAvatarScheme } from "./avatars";
-import { migrateLibrary } from "./library";
+import { migrateLibrary, reconcileSidebarOrder } from "./library";
 
 const isDev = !app.isPackaged && process.env.NODE_ENV !== "production";
 const DEV_URL = "http://localhost:1422";
@@ -148,32 +148,44 @@ registerAvatarScheme();
 // treat that token as a non-browser client and refuse playback (Error 152-4).
 app.userAgentFallback = app.userAgentFallback.replace(/ Electron\/\S+/, "");
 
-app.whenReady().then(async () => {
-  handleAvatarProtocol();
-  migrateAppStore();
-  migrateLibrary();
-
-  if (!isDev) {
-    const distDir = path.join(__dirname, "../../src-web/dist");
-    const port = await startStaticServer(distDir);
-    prodURL = `http://localhost:${port}`;
-  }
-
-  // Not awaited: the iframe API only loads once a video is opened, and
-  // blocking startup on a network call would stall launch when offline.
-  void warmYouTubeSession();
-
-  registerIpcHandlers(() => mainWindow);
-  setupMenu(() => mainWindow);
-  createMainWindow();
-  if (!isDev) {
-    setupAutoUpdater(() => mainWindow);
-  }
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+// A second instance would write the same store files with last-write-wins
+// full-file rewrites, and could not bind the fixed port the YouTube embed
+// relies on for a stable origin.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
   });
-});
+
+  app.whenReady().then(async () => {
+    handleAvatarProtocol();
+    migrateAppStore();
+    migrateLibrary();
+    reconcileSidebarOrder();
+
+    if (!isDev) {
+      const distDir = path.join(__dirname, "../../src-web/dist");
+      const port = await startStaticServer(distDir);
+      prodURL = `http://localhost:${port}`;
+    }
+
+    // Not awaited: the iframe API only loads once a video is opened, and
+    // blocking startup on a network call would stall launch when offline.
+    void warmYouTubeSession();
+
+    registerIpcHandlers(() => mainWindow);
+    setupMenu(() => mainWindow);
+    createMainWindow();
+    setupAutoUpdater(() => mainWindow);
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    });
+  });
+}
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

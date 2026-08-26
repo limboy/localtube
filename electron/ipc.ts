@@ -9,7 +9,7 @@ import {
   putDescription,
   putPlaybackPosition,
 } from "./cache";
-import { getSidebarData, getSource, markVideoSeen } from "./library";
+import { getSidebarData, getSource, markVideoSeen, reconcileSidebarOrder } from "./library";
 import type { ConfirmOptions, ContextMenuItem, FetchInit, FetchResult, SourceKind } from "./types";
 
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
@@ -30,6 +30,8 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
   ipcMain.handle("library:source", (_e, kind: SourceKind, id: string) => getSource(kind, id));
 
   ipcMain.handle("library:markVideoSeen", (_e, videoId: string) => markVideoSeen(videoId));
+
+  ipcMain.handle("library:reconcileSidebar", () => reconcileSidebarOrder());
 
   ipcMain.handle("avatar:ensure", (_e, channelId: string, remoteUrl?: string, existing?: string) =>
     ensureAvatar(channelId, remoteUrl, existing)

@@ -39,7 +39,7 @@ export function setupMenu(getWindow: () => BrowserWindow | null) {
       submenu: [
         { role: "reload" },
         { role: "forceReload" },
-        { role: "toggleDevTools" },
+        ...(app.isPackaged ? [] : [{ role: "toggleDevTools" as const }]),
         { type: "separator" },
         { role: "resetZoom" },
         { role: "zoomIn" },

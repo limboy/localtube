@@ -24,6 +24,7 @@ const api = {
       ipcRenderer.invoke("library:source", kind, id) as Promise<StoredSource | null>,
     markVideoSeen: (videoId: string) =>
       ipcRenderer.invoke("library:markVideoSeen", videoId) as Promise<boolean>,
+    reconcileSidebar: () => ipcRenderer.invoke("library:reconcileSidebar") as Promise<boolean>,
   },
 
   descriptions: {

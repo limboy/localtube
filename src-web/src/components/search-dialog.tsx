@@ -230,6 +230,7 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
                       <img
                         src={result.thumbnail}
                         alt=""
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                       {result.duration && (

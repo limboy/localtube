@@ -1,16 +1,11 @@
 import type { PlaylistInfo, RefreshFailure, VideoItem } from "@/types";
-import { addOrUpdatePlaylist, loadPlaylist, loadPlaylists } from "./utils";
+import { addOrUpdatePlaylist, loadPlaylists } from "./utils";
 import { getInnertube } from "./innertube";
 import { parseRelativeTime } from "./time-utils";
 import { normalizeThumbnail } from "./thumbnails";
+import { extractPlaylistId } from "./youtube-url";
 
 const PLAYLIST_VIDEO_CAP = 500;
-
-function extractPlaylistId(url: string): string {
-  const playlistId = new URL(url).searchParams.get("list");
-  if (!playlistId) throw new Error("Invalid YouTube playlist URL");
-  return playlistId;
-}
 
 function mapVideo(v: any): VideoItem | null {
   if (v?.type === 'LockupView') {
@@ -130,22 +125,6 @@ export async function parseYouTubePlaylist(playlistUrl: string): Promise<Playlis
     items: unseenItems,
     lastUpdated: Date.now(),
   };
-}
-
-export async function checkForPlaylistUpdates(playlistId: string): Promise<Boolean> {
-  const stored = await loadPlaylist(playlistId);
-  const yt = await getInnertube();
-  const playlist = await yt.getPlaylist(playlistId);
-
-  const playlistVideos = getPlaylistVideos(playlist);
-  for (const v of playlistVideos) {
-    const mapped = mapVideo(v);
-    if (!mapped) continue;
-    if (!stored?.items.some((video) => video.id === mapped.id)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 async function fetchPlaylistFirstPage(

@@ -20,7 +20,7 @@ import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 
 import { Loader, Shuffle, Repeat1, Repeat, BookmarkIcon, Eye, EyeOff } from "lucide-react";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Nav from "./nav";
 import YTPlayer, { YTPlayerHandle } from "./yt-player";
 import { VideoDescription } from "./video-description";
@@ -93,18 +93,18 @@ export default function VideoListPlayer({
 
   const playNextVideoRef = useRef<() => void>(() => { });
 
-  const processVideoList = (videos: VideoItem[], bookmarks: Map<string, BookmarkData>, showBookmarkedOnly: boolean) => {
-    const processedVideos = videos.map(video => ({
-      ...video,
-      isBookmarked: bookmarks.has(video.id),
-      isSkipped: skippedVideos.has(video.id),
-      bookmarkedAt: bookmarks.get(video.id)?.createdAt,
-      originalIndex: videolist?.items.findIndex(v => v.id === video.id) || 0
-    }))
-      .filter(video => !showBookmarkedOnly || video.isBookmarked);
-
-    return processedVideos;
-  };
+  const processVideoList = useCallback(
+    (videos: VideoItem[], bookmarks: Map<string, BookmarkData>, showBookmarkedOnly: boolean) =>
+      videos
+        .map(video => ({
+          ...video,
+          isBookmarked: bookmarks.has(video.id),
+          isSkipped: skippedVideos.has(video.id),
+          bookmarkedAt: bookmarks.get(video.id)?.createdAt,
+        }))
+        .filter(video => !showBookmarkedOnly || video.isBookmarked),
+    [skippedVideos]
+  );
 
   const lastSourceKeyRef = useRef<string>("");
 
@@ -401,11 +401,10 @@ export default function VideoListPlayer({
     await saveSkippedVideos(newSkipped);
   };
 
-  const processedVideos = processVideoList(
-    videolist?.items || [],
-    bookmarkedVideos,
-    showBookmarkedOnly
-  )
+  const processedVideos = useMemo(
+    () => processVideoList(videolist?.items || [], bookmarkedVideos, showBookmarkedOnly),
+    [processVideoList, videolist, bookmarkedVideos, showBookmarkedOnly]
+  );
 
   const showEmptyState = !isLoading && !error && processedVideos.length === 0;
 
@@ -566,6 +565,7 @@ export default function VideoListPlayer({
                       <img
                         src={video.thumbnail}
                         alt={video.title}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                       {video.duration && (

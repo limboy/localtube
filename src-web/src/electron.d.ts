@@ -60,6 +60,7 @@ export interface ElectronAPI {
     sidebar(): Promise<SidebarData>;
     source<T>(kind: SourceKind, id: string): Promise<T | null>;
     markVideoSeen(videoId: string): Promise<boolean>;
+    reconcileSidebar(): Promise<boolean>;
   };
   descriptions: {
     get(videoId: string): Promise<string | null>;

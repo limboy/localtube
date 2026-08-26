@@ -1,6 +1,14 @@
 import { appGet, appSet, appReplace, appStore } from "./store";
 import { isAvatarUrl, migrateDataUrlAvatar, pruneAvatars } from "./avatars";
-import type { SidebarData, SourceKind, SourceMeta, StoredSource } from "./types";
+import type {
+  SidebarChildEntry,
+  SidebarData,
+  SidebarItem,
+  SourceKind,
+  SourceMeta,
+  StoredFolder,
+  StoredSource,
+} from "./types";
 
 const KEY_BY_KIND: Record<SourceKind, string> = {
   playlist: "playlists",
@@ -140,4 +148,78 @@ export function migrateLibrary() {
   if (changed) appReplace(data);
 
   pruneAvatars(read("channel").map((channel) => channel.thumbnail));
+}
+
+
+/**
+ * Makes `sidebarOrder` agree with what actually exists. Nothing kept the two in
+ * sync, so a source could end up listed but deleted (an invisible row) or saved
+ * but unlisted (unreachable from the sidebar). Repairs both, plus folder
+ * entries whose folder record is gone, whose children are promoted rather than
+ * dropped.
+ */
+export function reconcileSidebarOrder(): boolean {
+  const order = appGet<SidebarItem[]>("sidebarOrder");
+  if (!Array.isArray(order)) return false;
+
+  const exists: Record<SourceKind, Set<string>> = {
+    playlist: new Set(read("playlist").map((source) => source.id)),
+    channel: new Set(read("channel").map((source) => source.id)),
+  };
+  const folders = appGet<StoredFolder[]>("folders") ?? [];
+  const folderIds = new Set(folders.map((folder) => folder.id));
+
+  const placed = new Set<string>();
+  const key = (entry: { type: string; id: string }) => `${entry.type}:${entry.id}`;
+
+  const keepChild = (child: SidebarChildEntry) => {
+    if (!exists[child.type]?.has(child.id) || placed.has(key(child))) return false;
+    placed.add(key(child));
+    return true;
+  };
+
+  const next: SidebarItem[] = [];
+  const promoted: SidebarChildEntry[] = [];
+
+  for (const entry of order) {
+    if (entry.type === "folder") {
+      const children = (entry.children ?? []).filter(keepChild);
+      if (!folderIds.has(entry.id) || placed.has(key(entry))) {
+        promoted.push(...children);
+        continue;
+      }
+      placed.add(key(entry));
+      next.push({ ...entry, children });
+      continue;
+    }
+    if (keepChild(entry)) next.push(entry);
+  }
+
+  // New entries go above the folders, matching where adding a source puts it.
+  const firstFolder = next.findIndex((entry) => entry.type === "folder");
+  const appendTop = (entries: SidebarItem[]) => {
+    if (entries.length === 0) return;
+    if (firstFolder === -1) next.push(...entries);
+    else next.splice(firstFolder, 0, ...entries);
+  };
+
+  const missing: SidebarItem[] = [...promoted];
+  for (const kind of ["playlist", "channel"] as const) {
+    for (const id of exists[kind]) {
+      if (placed.has(`${kind}:${id}`)) continue;
+      placed.add(`${kind}:${id}`);
+      missing.push({ type: kind, id });
+    }
+  }
+  appendTop(missing);
+
+  for (const folder of folders) {
+    if (placed.has(`folder:${folder.id}`)) continue;
+    placed.add(`folder:${folder.id}`);
+    next.push({ type: "folder", id: folder.id, children: [] });
+  }
+
+  if (JSON.stringify(next) === JSON.stringify(order)) return false;
+  appSet("sidebarOrder", next);
+  return true;
 }

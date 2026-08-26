@@ -61,16 +61,6 @@ export interface BookmarkData {
   videoDetails?: VideoItem;
 }
 
-export interface EnrichedBookmark {
-  id: string;
-  title: string;
-  thumbnail?: string;
-  duration?: string;
-  type: 'playlist' | 'channel' | 'video';
-  bookmarkedAt: number;
-  data?: PlaylistInfo | ChannelInfo;
-}
-
 export interface FolderInfo {
   id: string;
   name: string;

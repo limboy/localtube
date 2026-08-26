@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { ChannelInfo, PlaylistInfo, VideoListInfo, BookmarkData, EnrichedBookmark, VideoItem, FolderInfo, SidebarItem, WatchHistoryEntry } from "@/types";
+import { ChannelInfo, PlaylistInfo, VideoListInfo, BookmarkData, VideoItem, FolderInfo, SidebarItem, WatchHistoryEntry } from "@/types";
 import type { SidebarData } from "@/electron";
 import { setupKonamiCode } from "./konami";
 import { getInnertube } from "./innertube";
@@ -89,17 +89,6 @@ export async function removeChannel(channelId: string) {
   }
 }
 
-export async function reorderChannels(channelIds: string[]) {
-  const data = await loadChannels();
-  const store = await getStore();
-
-  const reorderedData = channelIds.map(id => data.find(c => c.id === id)).filter(Boolean) as ChannelInfo[];
-
-  await store.set("channels", reorderedData);
-  await store.save();
-  window.dispatchEvent(new CustomEvent('store-updated'));
-}
-
 export async function loadPlaylist(playlistId: string) {
   return (await window.electron.library.source<PlaylistInfo>("playlist", playlistId)) ?? undefined;
 }
@@ -138,30 +127,6 @@ export async function markVideoAsSeen(videoId: string) {
   if (changed) {
     window.dispatchEvent(new CustomEvent('store-updated'));
   }
-}
-
-// Mark only the videos shown in the "Latest" view as seen (the same capped/sorted
-// set as loadLatestVideos), leaving older videos outside that list untouched.
-export async function markAllLatestAsSeen() {
-  const store = await getStore();
-  const latest = await loadLatestVideos();
-  const latestIds = new Set(latest.map((v) => v.id));
-
-  const playlists = await loadPlaylists();
-  for (const p of playlists) {
-    p.items.forEach((v) => { if (latestIds.has(v.id)) v.unseen = false; });
-    p.unreadCount = p.items.filter((v) => v.unseen).length;
-  }
-  await store.set("playlists", playlists);
-
-  const channels = await loadChannels();
-  for (const c of channels) {
-    c.items.forEach((v) => { if (latestIds.has(v.id)) v.unseen = false; });
-    c.unreadCount = c.items.filter((v) => v.unseen).length;
-  }
-  await store.set("channels", channels);
-
-  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 // Mark every unseen video across all sources as seen (used by the "All Unseen" view).
@@ -271,17 +236,6 @@ export async function removePlaylist(playlistId: string) {
     await store.save();
     window.dispatchEvent(new CustomEvent('store-updated'));
   }
-}
-
-export async function reorderPlaylists(playlistIds: string[]) {
-  const data = await loadPlaylists();
-  const store = await getStore();
-
-  const reorderedData = playlistIds.map(id => data.find(p => p.id === id)).filter(Boolean) as PlaylistInfo[];
-
-  await store.set("playlists", reorderedData);
-  await store.save();
-  window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
 // --- Folder & Sidebar Order ---
@@ -433,20 +387,12 @@ export async function saveBookmarks(bookmarks: Map<string, BookmarkData>) {
   window.dispatchEvent(new CustomEvent('store-updated'));
 }
 
-export async function removeBookmark(videoId: string) {
-  const bookmarks = await loadBookmarks();
-  if (bookmarks.has(videoId)) {
-    bookmarks.delete(videoId);
-    await saveBookmarks(bookmarks);
-  }
-}
-
 export async function loadWatchHistory(): Promise<WatchHistoryEntry[]> {
   const store = await getStore();
   return (await store.get<WatchHistoryEntry[]>("watchHistory")) || [];
 }
 
-export async function saveWatchHistory(history: WatchHistoryEntry[]) {
+async function saveWatchHistory(history: WatchHistoryEntry[]) {
   const store = await getStore();
   await store.set("watchHistory", history);
   await store.save();
@@ -562,6 +508,11 @@ export async function importData(): Promise<boolean> {
     await s.set("sidebarOrder", existingOrder);
   }
 
+  // The merge can leave entries pointing at sources that were skipped as
+  // duplicates, and an export without a sidebarOrder leaves new sources
+  // unlisted entirely. Both are repaired here.
+  await window.electron.library.reconcileSidebar();
+
   window.dispatchEvent(new CustomEvent("store-updated"));
   return true;
 }
@@ -588,104 +539,6 @@ export function disableInspectShortcut() {
     console.log("Developer tools shortcut enabled!");
   });
 }
-
-export function isValidUrl(url: string): boolean {
-  try {
-    let urlToParse = url.trim();
-    if (!urlToParse.startsWith('http://') && !urlToParse.startsWith('https://')) {
-      urlToParse = 'https://' + urlToParse;
-    }
-    new URL(urlToParse);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Checks if a URL is a valid YouTube playlist URL
- */
-export function isPlaylistUrl(url: string): boolean {
-  if (!isValidUrl(url)) return false;
-  return url.includes("list=") && url.includes("youtube.com");
-}
-
-/**
- * Checks if a URL is a valid YouTube channel URL
- */
-export function isChannelUrl(url: string): boolean {
-  if (!isValidUrl(url)) return false;
-  return (
-    url.includes("/channel/") ||
-    url.includes("/c/") ||
-    url.includes("/user/") ||
-    url.includes("/@") ||
-    url.includes("youtube.com")
-  );
-}
-
-export async function enrichBookmarks(
-  providedPlaylists?: PlaylistInfo[],
-  providedChannels?: ChannelInfo[]
-): Promise<EnrichedBookmark[]> {
-  const bookmarks = await loadBookmarks();
-  if (bookmarks.size === 0) return [];
-
-  const playlists = providedPlaylists || await loadPlaylists();
-  const channels = providedChannels || await loadChannels();
-
-  const videoLookup = new Map<string, {
-    video: VideoItem,
-    owner: PlaylistInfo | ChannelInfo,
-    type: 'playlist' | 'channel'
-  }>();
-
-  for (const playlist of playlists) {
-    for (const item of playlist.items) {
-      if (!videoLookup.has(item.id)) {
-        videoLookup.set(item.id, { video: item, owner: playlist, type: 'playlist' });
-      }
-    }
-  }
-
-  for (const channel of channels) {
-    for (const item of channel.items) {
-      if (!videoLookup.has(item.id)) {
-        videoLookup.set(item.id, { video: item, owner: channel, type: 'channel' });
-      }
-    }
-  }
-
-  const enriched: EnrichedBookmark[] = [];
-
-  for (const [id, bookmark] of bookmarks) {
-    const info = videoLookup.get(id);
-    if (info) {
-      enriched.push({
-        id,
-        title: info.video.title,
-        thumbnail: info.video.thumbnail,
-        duration: info.video.duration,
-        type: info.type,
-        bookmarkedAt: bookmark.createdAt,
-        data: info.owner
-      });
-    } else if (bookmark.videoDetails) {
-      enriched.push({
-        id,
-        title: bookmark.videoDetails.title,
-        thumbnail: bookmark.videoDetails.thumbnail,
-        duration: bookmark.videoDetails.duration,
-        type: 'video',
-        bookmarkedAt: bookmark.createdAt,
-      });
-    }
-  }
-
-  // Sort by bookmark date, newest first
-  return enriched.sort((a, b) => b.bookmarkedAt - a.bookmarkedAt);
-}
-
 
 export async function loadLatestVideos(): Promise<VideoItem[]> {
   const playlists = await loadPlaylists();
