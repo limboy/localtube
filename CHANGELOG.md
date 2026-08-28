@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.22](https://github.com/limboy/localtube/compare/v1.2.21...v1.2.22) - 2026-08-28
+
+### Bug Fixes
+
+- keep the YouTube cookie out of the keychain ([f3d6468](https://github.com/limboy/localtube/commit/f3d646821011026b3e59b1bab00a233aab691090))
+
+### Documentation
+
+- update CHANGELOG for v1.2.21 ([a5f8ae2](https://github.com/limboy/localtube/commit/a5f8ae2d3a8a247139e256e2e53d2e5db83710d4))
+
 ## [v1.2.21](https://github.com/limboy/localtube/compare/v1.2.20...v1.2.21) - 2026-08-28
 
 ### Features
