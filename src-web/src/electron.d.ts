@@ -71,6 +71,10 @@ export interface ElectronAPI {
     put(videoId: string, position: number, duration: number): Promise<void>;
     clear(videoId: string): Promise<void>;
   };
+  youtubeCookie: {
+    get(): Promise<string>;
+    set(value: string): Promise<void>;
+  };
   cacheAvatar(channelId: string, remoteUrl?: string, existing?: string): Promise<string | undefined>;
   fetch(url: string, init?: FetchInit): Promise<FetchResult>;
   fetchImageAsDataUrl(url: string): Promise<string | null>;

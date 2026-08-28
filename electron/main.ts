@@ -6,6 +6,7 @@ import { setupAutoUpdater } from "./updater";
 import { startStaticServer } from "./server";
 import { appGet, migrateAppStore, windowStore } from "./store";
 import { handleAvatarProtocol, registerAvatarScheme } from "./avatars";
+import { restoreSessionCookies } from "./cookies";
 import { migrateLibrary, reconcileSidebarOrder } from "./library";
 
 const isDev = !app.isPackaged && process.env.NODE_ENV !== "production";
@@ -123,6 +124,10 @@ function createMainWindow() {
 // through the shared session seeds VISITOR_INFO1_LIVE so the embedded player
 // has a visitor session to present on its first load.
 async function warmYouTubeSession() {
+  // A saved account cookie belongs in the session before anything warms it, so
+  // the player presents that account instead of a fresh anonymous visitor.
+  await restoreSessionCookies();
+
   try {
     await net.fetch("https://www.youtube.com/", { credentials: "include" });
   } catch (err) {

@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, CircleDot, Download, Upload } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, CircleDot, Download, Upload, Cookie } from "lucide-react";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -92,6 +92,7 @@ import { parseYouTubeVideo } from "@/lib/video-parser";
 import { isChannelUrl, isPlaylistUrl, isShortsOrLiveUrl, isVideoUrl } from "@/lib/youtube-url";
 import { loadBookmarks, saveBookmarks } from "@/lib/utils";
 import SearchDialog from "@/components/search-dialog";
+import YoutubeCookieDialog from "@/components/youtube-cookie-dialog";
 import { toast } from "@/hooks/use-toast";
 import {
   TOP_LEVEL_SIDEBAR_CONTAINER,
@@ -810,6 +811,7 @@ export default function AppSidebar() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [cookieOpen, setCookieOpen] = useState(false);
   const [playlists, setPlaylists] = useState<SourceMeta[]>([]);
   const [channels, setChannels] = useState<SourceMeta[]>([]);
   const [unseenCount, setUnseenCount] = useState(0);
@@ -1901,6 +1903,11 @@ export default function AppSidebar() {
                     <Upload className="h-4 w-4" />
                     <span>Import Data</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setCookieOpen(true)}>
+                    <Cookie className="h-4 w-4" />
+                    <span>YouTube Cookie</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <SidebarMenuButton
@@ -1915,6 +1922,7 @@ export default function AppSidebar() {
         <SidebarRail />
       </Sidebar>
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      <YoutubeCookieDialog open={cookieOpen} onOpenChange={setCookieOpen} />
     </>
   );
 }

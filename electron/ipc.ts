@@ -10,6 +10,14 @@ import {
   putPlaybackPosition,
 } from "./cache";
 import { getSidebarData, getSource, markVideoSeen, reconcileSidebarOrder } from "./library";
+import {
+  acceptsCredentials,
+  hasCookieHeader,
+  getYoutubeCookie,
+  setYoutubeCookie,
+  stripCredentialHeaders,
+  syncSessionCookies,
+} from "./cookies";
 import type { ConfirmOptions, ContextMenuItem, FetchInit, FetchResult, SourceKind } from "./types";
 
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
@@ -53,18 +61,36 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
     clearPlaybackPosition(videoId);
   });
 
+  ipcMain.handle("cookie:get", () => getYoutubeCookie());
+
+  ipcMain.handle("cookie:set", async (_e, value: string) => {
+    setYoutubeCookie(value);
+    // The player reads its credentials from the session, not from us, so the
+    // jar has to be updated in step with the stored value.
+    await syncSessionCookies(value.trim());
+  });
+
   ipcMain.handle("net:fetch", async (_e, url: string, init?: FetchInit): Promise<FetchResult> => {
     const timeoutMs = init?.timeout ?? 30000;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const requestHeaders = acceptsCredentials(url)
+      ? init?.headers
+      : stripCredentialHeaders(init?.headers);
 
     try {
       const response = await net.fetch(url, {
         method: init?.method ?? "GET",
-        headers: init?.headers,
+        headers: requestHeaders,
         body: init?.body,
         signal: controller.signal,
         redirect: "follow",
+        // Chromium overwrites a Cookie header we set with whatever the session
+        // jar holds for that host, and the embedded player leaves signed-out
+        // visitor cookies there — enough to replace the account cookie and make
+        // every request anonymous. Opting out of session credentials is what
+        // keeps our own header intact.
+        ...(hasCookieHeader(requestHeaders) ? { credentials: "omit" as const } : {}),
       });
 
       const body = await response.text();

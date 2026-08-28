@@ -65,11 +65,30 @@ async function normalizeBody(body: BodyInit): Promise<string> {
 
 export function getInnertube(): Promise<Innertube> {
   if (!instance) {
-    instance = Innertube.create({
-      fetch: proxiedFetch,
-      generate_session_locally: true,
-      retrieve_player: false,
+    // A failed session must not be cached: the next call would keep replaying
+    // the same rejection with no way back short of a restart.
+    instance = createSession().catch((error) => {
+      instance = null;
+      throw error;
     });
   }
   return instance;
+}
+
+async function createSession(): Promise<Innertube> {
+  const cookie = await window.electron.youtubeCookie.get();
+
+  return Innertube.create({
+    fetch: proxiedFetch,
+    generate_session_locally: true,
+    retrieve_player: false,
+    // Signs requests as the user's account, which is what gets past the
+    // "confirm you're not a bot" checks YouTube applies to anonymous traffic.
+    cookie: cookie || undefined,
+  });
+}
+
+/** Drops the cached session so the next request picks up a changed cookie. */
+export function resetInnertube() {
+  instance = null;
 }

@@ -41,6 +41,11 @@ const api = {
     clear: (videoId: string) => ipcRenderer.invoke("playback:clear", videoId) as Promise<void>,
   },
 
+  youtubeCookie: {
+    get: () => ipcRenderer.invoke("cookie:get") as Promise<string>,
+    set: (value: string) => ipcRenderer.invoke("cookie:set", value) as Promise<void>,
+  },
+
   cacheAvatar: (channelId: string, remoteUrl?: string, existing?: string) =>
     ipcRenderer.invoke("avatar:ensure", channelId, remoteUrl, existing) as Promise<string | undefined>,
 
