@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [v1.2.21](https://github.com/limboy/localtube/compare/v1.2.20...v1.2.21) - 2026-08-28
+
+### Features
+
+- sign requests and playback with a YouTube account cookie ([739ad5b](https://github.com/limboy/localtube/commit/739ad5b3fcd8a304b403bbbbcdfd7a4393a2d9f2))
+
+### Documentation
+
+- update CHANGELOG for v1.2.20 ([385488b](https://github.com/limboy/localtube/commit/385488b23ee445028bc42107d7609fbb85daf8de))
+
 ## [v1.2.20](https://github.com/limboy/localtube/compare/v1.2.19...v1.2.20) - 2026-08-26
 
 ### Refactoring
