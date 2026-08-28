@@ -1,71 +1,32 @@
-import { safeStorage, session } from "electron";
+import { session } from "electron";
 import { appGet, appSet } from "./store";
 
 const KEY = "youtubeCookie";
-// Marks a value as ciphertext. Cookies saved before safeStorage was available
-// (or on a machine whose keychain is locked) stay readable as plain text.
+// Written by the version that encrypted the cookie with safeStorage. Reading
+// one back means a keychain unlock prompt on every launch, so the value is
+// dropped unread and the cookie is asked for again.
 const ENCRYPTED_PREFIX = "enc:";
 
-function canEncrypt(): boolean {
-  try {
-    return safeStorage.isEncryptionAvailable();
-  } catch {
-    return false;
-  }
-}
-
 /**
- * The YouTube cookie header, in plain text. These cookies carry full account
- * access, so they live encrypted on disk whenever the OS keychain will have
- * them.
+ * The YouTube cookie header. Stored as plain text in the app's own data file:
+ * these cookies carry full account access, so anything on this machine running
+ * as you can read them, exactly as it could read the browser profile they came
+ * from.
  */
 export function getYoutubeCookie(): string {
   const stored = appGet<string>(KEY);
   if (!stored) return "";
-  if (!stored.startsWith(ENCRYPTED_PREFIX)) return stored;
 
-  const cookie = decrypt(stored);
-  if (cookie) return cookie;
-
-  // The key safeStorage hands out is not guaranteed to survive across runs —
-  // in development every Electron app shares one keychain entry, and losing it
-  // leaves ciphertext nothing can read. Drop the dead value rather than let the
-  // UI keep reporting a saved cookie while every request goes out anonymous.
-  appSet(KEY, "");
-  return "";
-}
-
-function decrypt(stored: string): string {
-  if (!canEncrypt()) return "";
-  try {
-    return safeStorage.decryptString(
-      Buffer.from(stored.slice(ENCRYPTED_PREFIX.length), "base64")
-    );
-  } catch {
+  if (stored.startsWith(ENCRYPTED_PREFIX)) {
+    appSet(KEY, "");
     return "";
   }
+
+  return stored;
 }
 
 export function setYoutubeCookie(value: string) {
-  const cookie = value.trim();
-  if (!cookie) {
-    appSet(KEY, "");
-    return;
-  }
-
-  const encrypted = encrypt(cookie);
-  // Storing ciphertext this machine cannot read back would lose the cookie
-  // silently, so keep it only once a round trip proves it survives.
-  appSet(KEY, encrypted && decrypt(encrypted) === cookie ? encrypted : cookie);
-}
-
-function encrypt(cookie: string): string {
-  if (!canEncrypt()) return "";
-  try {
-    return `${ENCRYPTED_PREFIX}${safeStorage.encryptString(cookie).toString("base64")}`;
-  } catch {
-    return "";
-  }
+  appSet(KEY, value.trim());
 }
 
 const CREDENTIALED_HOSTS = [

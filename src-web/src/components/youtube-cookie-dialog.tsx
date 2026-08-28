@@ -136,9 +136,9 @@ export default function YoutubeCookieDialog({ open, onOpenChange }: Props) {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          These cookies give full access to your Google account. They are stored encrypted on this
-          Mac and are only ever sent to YouTube. While one is saved, playback is signed in, so
-          watching here counts towards your account's history and recommendations.
+          These cookies give full access to your Google account. They are kept in this app's data
+          folder in plain text and are only ever sent to YouTube. While one is saved, playback is
+          signed in, so watching here counts towards your account's history and recommendations.
         </p>
       </DialogContent>
     </Dialog>
