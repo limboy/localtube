@@ -17,7 +17,6 @@ import YTPlayer, { YTPlayerHandle } from "./yt-player";
 import { VideoDescription } from "./video-description";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { PanelRight } from "lucide-react";
-import { UpdateIndicator } from "./update-indicator";
 import { formatRelativeTime } from "@/lib/time-utils";
 
 export default function HistoryPlayer() {
@@ -137,7 +136,6 @@ export default function HistoryPlayer() {
         <Nav>
           <div />
           <div className="flex flex-row gap-2 items-center">
-            <UpdateIndicator />
             <SidebarTrigger className="shrink-0 ml-1">
               <PanelRight size={18} strokeWidth={2} />
             </SidebarTrigger>

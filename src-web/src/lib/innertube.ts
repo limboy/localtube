@@ -82,6 +82,12 @@ async function createSession(): Promise<Innertube> {
     fetch: proxiedFetch,
     generate_session_locally: true,
     retrieve_player: false,
+    // Upload dates arrive only as localized text ("2 years ago") — there is no
+    // absolute timestamp anywhere in the response — and `hl` decides which
+    // language that is. Left unset it happens to resolve to English today, so
+    // pinning it changes nothing now but stops an account or library default
+    // from silently turning every date into "2年前", which parses as nothing.
+    lang: "en",
     // Signs requests as the user's account, which is what gets past the
     // "confirm you're not a bot" checks YouTube applies to anonymous traffic.
     cookie: cookie || undefined,

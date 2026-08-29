@@ -1,7 +1,7 @@
 import type { PlaylistInfo, RefreshFailure, VideoItem } from "@/types";
 import { addOrUpdatePlaylist, loadPlaylists } from "./utils";
 import { getInnertube } from "./innertube";
-import { parseRelativeTime } from "./time-utils";
+import { parseLockupPublishedAt, parseRelativeTime } from "./time-utils";
 import { normalizeThumbnail } from "./thumbnails";
 import { extractPlaylistId } from "./youtube-url";
 
@@ -24,19 +24,7 @@ function mapVideo(v: any): VideoItem | null {
     );
     const duration = bottomOverlay?.badges?.[0]?.text || "Live";
 
-    const rows = v.metadata?.metadata?.metadata_rows || [];
-    let publishedText = "";
-    if (rows.length > 0) {
-      const parts = rows[0].metadata_parts || [];
-      if (parts.length > 1) {
-        publishedText = parts[parts.length - 1]?.text?.text || parts[parts.length - 1]?.text?.toString() || "";
-      } else if (parts.length === 1) {
-        publishedText = parts[0]?.text?.text || parts[0]?.text?.toString() || "";
-      }
-    }
-    const publishedAt = parseRelativeTime(publishedText);
-
-    return { id, title, thumbnail, duration, publishedAt };
+    return { id, title, thumbnail, duration, publishedAt: parseLockupPublishedAt(v) };
   }
 
   const id: string | undefined = v?.video_id ?? v?.id;
