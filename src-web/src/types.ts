@@ -4,7 +4,6 @@ export interface VideoItem {
   thumbnail: string;
   duration: string;
   publishedAt?: number;
-  unseen?: boolean;
   sourceTitle?: string;
 }
 
@@ -12,7 +11,6 @@ export interface SourceMeta {
   id: string;
   title: string;
   thumbnail?: string;
-  unreadCount: number;
   lastUpdated: number;
 }
 

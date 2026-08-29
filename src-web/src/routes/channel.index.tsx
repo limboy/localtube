@@ -73,11 +73,6 @@ function RouteComponent() {
                       <CircleUserRound size={48} className="text-muted-foreground/20" />
                     </div>
                   )}
-                  {channel.unreadCount > 0 && (
-                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-background">
-                      {channel.unreadCount}
-                    </div>
-                  )}
                 </div>
                 <h3 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                   {channel.title}

@@ -37,14 +37,12 @@ export interface SourceMeta {
   id: string;
   title: string;
   thumbnail?: string;
-  unreadCount: number;
   lastUpdated: number;
 }
 
 export interface SidebarData {
   playlists: SourceMeta[];
   channels: SourceMeta[];
-  unseenCount: number;
 }
 
 export type SourceKind = "playlist" | "channel";
@@ -59,7 +57,6 @@ export interface ElectronAPI {
   library: {
     sidebar(): Promise<SidebarData>;
     source<T>(kind: SourceKind, id: string): Promise<T | null>;
-    markVideoSeen(videoId: string): Promise<boolean>;
     reconcileSidebar(): Promise<boolean>;
   };
   descriptions: {

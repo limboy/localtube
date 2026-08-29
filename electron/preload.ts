@@ -22,8 +22,6 @@ const api = {
     sidebar: () => ipcRenderer.invoke("library:sidebar") as Promise<SidebarData>,
     source: (kind: SourceKind, id: string) =>
       ipcRenderer.invoke("library:source", kind, id) as Promise<StoredSource | null>,
-    markVideoSeen: (videoId: string) =>
-      ipcRenderer.invoke("library:markVideoSeen", videoId) as Promise<boolean>,
     reconcileSidebar: () => ipcRenderer.invoke("library:reconcileSidebar") as Promise<boolean>,
   },
 

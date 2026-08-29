@@ -39,7 +39,6 @@ export interface StoredVideo {
   thumbnail: string;
   duration: string;
   publishedAt?: number;
-  unseen?: boolean;
   sourceTitle?: string;
 }
 
@@ -47,7 +46,6 @@ export interface StoredSource {
   id: string;
   title: string;
   thumbnail?: string;
-  unreadCount: number;
   lastUpdated: number;
   items: StoredVideo[];
 }
@@ -56,14 +54,12 @@ export interface SourceMeta {
   id: string;
   title: string;
   thumbnail?: string;
-  unreadCount: number;
   lastUpdated: number;
 }
 
 export interface SidebarData {
   playlists: SourceMeta[];
   channels: SourceMeta[];
-  unseenCount: number;
 }
 
 export type SourceKind = "playlist" | "channel";

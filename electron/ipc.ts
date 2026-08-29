@@ -9,7 +9,7 @@ import {
   putDescription,
   putPlaybackPosition,
 } from "./cache";
-import { getSidebarData, getSource, markVideoSeen, reconcileSidebarOrder } from "./library";
+import { getSidebarData, getSource, reconcileSidebarOrder } from "./library";
 import {
   acceptsCredentials,
   hasCookieHeader,
@@ -36,8 +36,6 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
   ipcMain.handle("library:sidebar", () => getSidebarData());
 
   ipcMain.handle("library:source", (_e, kind: SourceKind, id: string) => getSource(kind, id));
-
-  ipcMain.handle("library:markVideoSeen", (_e, videoId: string) => markVideoSeen(videoId));
 
   ipcMain.handle("library:reconcileSidebar", () => reconcileSidebarOrder());
 
