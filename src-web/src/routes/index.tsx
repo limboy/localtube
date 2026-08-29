@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import Nav from "@/components/nav";
-import { UpdateIndicator } from "@/components/update-indicator";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/")({
@@ -19,9 +18,7 @@ function Index() {
     <div className={cn("flex flex-col h-screen items-center")}>
       <Nav>
         <div />
-        <div className="flex items-center">
-          <UpdateIndicator />
-        </div>
+        <div />
       </Nav>
 
       <div className="flex-1 flex flex-col gap-2 items-center justify-center">

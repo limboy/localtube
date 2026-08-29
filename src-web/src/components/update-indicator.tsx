@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
@@ -40,34 +40,31 @@ export function UpdateIndicator() {
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="sm"
-            variant="outline"
-            className={cn(
-              "h-7 px-2.5 text-xs shrink-0 rounded-md border-amber-600! text-amber-600 transition-all hover:bg-amber-600/10 hover:text-amber-600 hover:border-amber-600 shadow-none",
-              isInstalling && "opacity-50 cursor-default"
-            )}
-            disabled={isInstalling}
-            onClick={handleApply}
-          >
-            {isInstalling ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ArrowUpCircle className="h-4 w-4" />
-            )}
-            <span className="">
-              {isInstalling ? "Restarting..." : "Update Available"}
-            </span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Version {updateVersion} is ready to install</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <SidebarMenuItem>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SidebarMenuButton
+              className={cn(
+                "justify-start text-amber-600 hover:bg-amber-600/10 hover:text-amber-600",
+                isInstalling && "opacity-50 cursor-default"
+              )}
+              disabled={isInstalling}
+              onClick={handleApply}
+            >
+              {isInstalling ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowUpCircle className="h-4 w-4" />
+              )}
+              <span>{isInstalling ? "Restarting..." : "Update Available"}</span>
+            </SidebarMenuButton>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p>Version {updateVersion} is ready to install</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </SidebarMenuItem>
   );
 }
-

@@ -89,6 +89,7 @@ import { isChannelUrl, isPlaylistUrl, isShortsOrLiveUrl, isVideoUrl } from "@/li
 import { loadBookmarks, saveBookmarks } from "@/lib/utils";
 import SearchDialog from "@/components/search-dialog";
 import YoutubeCookieDialog from "@/components/youtube-cookie-dialog";
+import { UpdateIndicator } from "@/components/update-indicator";
 import { toast } from "@/hooks/use-toast";
 import {
   TOP_LEVEL_SIDEBAR_CONTAINER,
@@ -1774,6 +1775,7 @@ export default function AppSidebar() {
         </SidebarContent>
         <SidebarFooter className="">
           <SidebarMenu>
+            <UpdateIndicator />
             <SidebarMenuItem className="flex flex-row items-center gap-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

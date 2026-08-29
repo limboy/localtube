@@ -19,6 +19,44 @@ export function parseRelativeTime(text: string): number | undefined {
   return Date.now() - amount * ms;
 }
 
+/**
+ * Pulls the upload date out of a LockupView node's metadata rows.
+ *
+ * The date has no fixed position — row 0 is usually the channel name and row 1
+ * holds "N views" plus the date — so every part is tried and the first one that
+ * parses as a date wins. Reading a fixed index instead used to silently drop
+ * the date for whole playlists.
+ */
+export function parseLockupPublishedAt(lockup: any): number | undefined {
+  const rows = lockup?.metadata?.metadata?.metadata_rows ?? [];
+  const unparsed: string[] = [];
+
+  for (const row of rows) {
+    for (const part of row.metadata_parts ?? []) {
+      const text = part.text?.toString?.() ?? "";
+      const ts = parseRelativeTime(text);
+      if (ts) return ts;
+      if (text) unparsed.push(text);
+    }
+  }
+
+  // Dropping the date is invisible in the UI — the row just renders without
+  // one — which is how a whole library of playlists lost its dates unnoticed.
+  // Say so once per session, with the text that failed, so the next reshuffle
+  // or locale change announces itself instead of quietly degrading.
+  if (unparsed.length > 0) warnUnparsedDate(unparsed);
+
+  return undefined;
+}
+
+let hasWarnedUnparsedDate = false;
+
+function warnUnparsedDate(texts: string[]) {
+  if (hasWarnedUnparsedDate) return;
+  hasWarnedUnparsedDate = true;
+  console.warn("No upload date could be parsed from video metadata:", texts);
+}
+
 export function formatRelativeTime(timestamp: number | undefined): string {
   if (!timestamp) return "";
   const diff = Date.now() - timestamp;

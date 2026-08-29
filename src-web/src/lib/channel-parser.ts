@@ -2,7 +2,7 @@ import type { ChannelInfo, RefreshFailure, VideoItem } from "@/types";
 import { addOrUpdateChannel, loadChannels } from "./utils";
 import { getInnertube } from "./innertube";
 import { YTNodes } from "youtubei.js";
-import { parseRelativeTime } from "./time-utils";
+import { parseLockupPublishedAt, parseRelativeTime } from "./time-utils";
 import { normalizeThumbnail } from "./thumbnails";
 
 const CHANNEL_VIDEO_CAP = 500;
@@ -77,18 +77,7 @@ function mapLockupView(lockup: any): VideoItem | null {
   );
   const duration: string = durationBadge?.text ?? "Live";
 
-  let publishedAt: number | undefined;
-  const rows = lockup.metadata?.metadata?.metadata_rows ?? [];
-  for (const row of rows) {
-    for (const part of row.metadata_parts ?? []) {
-      const text = part.text?.toString?.() ?? "";
-      const ts = parseRelativeTime(text);
-      if (ts) { publishedAt = ts; break; }
-    }
-    if (publishedAt) break;
-  }
-
-  return { id, title, thumbnail, duration, publishedAt };
+  return { id, title, thumbnail, duration, publishedAt: parseLockupPublishedAt(lockup) };
 }
 
 function extractVideosFromFeed(feed: any): VideoItem[] {
