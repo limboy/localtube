@@ -3,6 +3,43 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
+## [Unreleased](https://github.com/limboy/localtube/compare/v1.2.24...HEAD)
+
+### Styles
+
+- update primary color palette ([43335f1](https://github.com/limboy/localtube/commit/43335f16a794afe9ea06d63b9d965bea0b83d521))
+
+### Other Changes
+
+- Move UpdateIndicator to sidebar and extract date parsing ([bf8e064](https://github.com/limboy/localtube/commit/bf8e064885ec45bbee30548950c6b6446396a345))
+- Remove unseen video and unread tracking ([011fc8c](https://github.com/limboy/localtube/commit/011fc8c53fb10a034a45ca04006fdff0ae26c392))
+
+## [v1.2.24](https://github.com/limboy/localtube/compare/v1.2.23...v1.2.24) - 2026-08-29
+
+### Documentation
+
+- update CHANGELOG for v1.2.22 ([9913ffa](https://github.com/limboy/localtube/commit/9913ffadc940da8fa11bc7882973685765b568e4))
+
+### Styles
+
+- update primary color palette ([9cbfcb0](https://github.com/limboy/localtube/commit/9cbfcb03f62f00fa71b42e6d6ee084aa075038e5))
+
+### Other Changes
+
+- Move UpdateIndicator to sidebar and extract date parsing ([eab493b](https://github.com/limboy/localtube/commit/eab493bfbfa6ceff4b07719c03e17dc16f84ca60))
+- Remove unseen video and unread tracking ([66204d5](https://github.com/limboy/localtube/commit/66204d52f0dcd10f86e689f6853e27ecbdd2d758))
+
+## [v1.2.23](https://github.com/limboy/localtube/compare/v1.2.22...v1.2.23) - 2026-08-29
+
+### Styles
+
+- update primary color palette ([43335f1](https://github.com/limboy/localtube/commit/43335f16a794afe9ea06d63b9d965bea0b83d521))
+
+### Other Changes
+
+- Move UpdateIndicator to sidebar and extract date parsing ([bf8e064](https://github.com/limboy/localtube/commit/bf8e064885ec45bbee30548950c6b6446396a345))
+- Remove unseen video and unread tracking ([011fc8c](https://github.com/limboy/localtube/commit/011fc8c53fb10a034a45ca04006fdff0ae26c392))
+
 ## [v1.2.22](https://github.com/limboy/localtube/compare/v1.2.21...v1.2.22) - 2026-08-28
 
 ### Bug Fixes
