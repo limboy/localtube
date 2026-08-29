@@ -115,14 +115,11 @@ export async function parseYouTubePlaylist(playlistUrl: string): Promise<Playlis
     thumbnail = items[0].thumbnail;
   }
 
-  const unseenItems = items.map((v) => ({ ...v, unseen: true }));
-
   return {
-    unreadCount: unseenItems.length,
     id: playlistId,
     title,
     thumbnail,
-    items: unseenItems,
+    items,
     lastUpdated: Date.now(),
   };
 }
@@ -165,9 +162,7 @@ export async function checkAllPlaylistsForUpdates(
       const { items: firstPage, thumbnail } = await fetchPlaylistFirstPage(playlist.id);
 
       const storedIds = new Set(playlist.items.map((v) => v.id));
-      const newVideos = firstPage
-        .filter((v) => !storedIds.has(v.id))
-        .map((v) => ({ ...v, unseen: true }));
+      const newVideos = firstPage.filter((v) => !storedIds.has(v.id));
 
       if (newVideos.length > 0) {
         needsUpdate = true;
@@ -179,7 +174,6 @@ export async function checkAllPlaylistsForUpdates(
         ...playlist,
         items: mergedItems,
         thumbnail: thumbnail ?? playlist.thumbnail,
-        unreadCount: mergedItems.filter((v) => v.unseen).length,
         lastUpdated: Date.now(),
       };
       await addOrUpdatePlaylist(updatedPlaylist);
@@ -212,8 +206,6 @@ export async function fullRefreshAllPlaylists(
 
       await addOrUpdatePlaylist({
         ...fresh,
-        items: fresh.items.map((v) => ({ ...v, unseen: false })),
-        unreadCount: 0,
         lastUpdated: Date.now(),
       });
     } catch (error) {

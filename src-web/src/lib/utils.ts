@@ -33,19 +33,6 @@ export async function loadChannel(channelId: string) {
   return (await window.electron.library.source<ChannelInfo>("channel", channelId)) ?? undefined;
 }
 
-export async function markChannelAsSeen(channelId: string) {
-  const data = await loadChannels();
-  const index = data.findIndex((p) => p.id === channelId);
-  if (index !== -1) {
-    data[index].items.forEach((v) => { v.unseen = false; });
-    data[index].unreadCount = 0;
-  }
-
-  const store = await getStore();
-  await store.set("channels", data);
-  window.dispatchEvent(new CustomEvent('store-updated'));
-}
-
 export async function addOrUpdateChannel(channel: ChannelInfo) {
   const data = await loadChannels();
   const store = await getStore();
@@ -99,100 +86,12 @@ export async function loadPlaylists() {
 }
 
 /**
- * Titles, thumbnails and unread counts for every source, without the video
- * arrays. The sidebar re-reads this on each store update, so pulling whole
- * libraries across IPC for a badge number dominated the cost.
+ * Titles and thumbnails for every source, without the video arrays. The
+ * sidebar re-reads this on each store update, so pulling whole libraries
+ * across IPC just to render a row dominated the cost.
  */
 export async function loadSidebarData(): Promise<SidebarData> {
   return window.electron.library.sidebar();
-}
-
-export async function markPlaylistAsSeen(playlistId: string) {
-  const data = await loadPlaylists();
-  const store = await getStore();
-  const index = data.findIndex((p) => p.id === playlistId);
-  if (index !== -1) {
-    data[index].items.forEach((v) => { v.unseen = false; });
-    data[index].unreadCount = 0;
-  }
-  await store.set("playlists", data);
-  window.dispatchEvent(new CustomEvent('store-updated'));
-}
-
-// Mark a single video as seen across every playlist/channel it appears in,
-// recomputing each source's unread count. Runs in the main process so a click
-// does not ship the whole library over IPC and back.
-export async function markVideoAsSeen(videoId: string) {
-  const changed = await window.electron.library.markVideoSeen(videoId);
-  if (changed) {
-    window.dispatchEvent(new CustomEvent('store-updated'));
-  }
-}
-
-// Mark every unseen video across all sources as seen (used by the "All Unseen" view).
-export async function markAllUnseenAsSeen() {
-  const store = await getStore();
-
-  const playlists = await loadPlaylists();
-  for (const p of playlists) {
-    p.items.forEach((v) => { v.unseen = false; });
-    p.unreadCount = 0;
-  }
-  await store.set("playlists", playlists);
-
-  const channels = await loadChannels();
-  for (const c of channels) {
-    c.items.forEach((v) => { v.unseen = false; });
-    c.unreadCount = 0;
-  }
-  await store.set("channels", channels);
-
-  window.dispatchEvent(new CustomEvent('store-updated'));
-}
-
-// Mark all unseen videos in the playlists and channels within a folder as seen.
-export async function markFolderAsSeen(folderId: string) {
-  const order = await loadSidebarOrder();
-  const entry = order.find(e => e.type === 'folder' && e.id === folderId);
-  if (!entry || entry.type !== 'folder') return;
-
-  const playlistIds = new Set(entry.children.filter(c => c.type === 'playlist').map(c => c.id));
-  const channelIds = new Set(entry.children.filter(c => c.type === 'channel').map(c => c.id));
-  const store = await getStore();
-  let changed = false;
-
-  if (playlistIds.size > 0) {
-    const playlists = await loadPlaylists();
-    playlists.forEach(p => {
-      if (playlistIds.has(p.id)) {
-        p.items.forEach(v => { v.unseen = false; });
-        p.unreadCount = 0;
-        changed = true;
-      }
-    });
-    if (changed) {
-      await store.set("playlists", playlists);
-    }
-  }
-
-  let channelsChanged = false;
-  if (channelIds.size > 0) {
-    const channels = await loadChannels();
-    channels.forEach(c => {
-      if (channelIds.has(c.id)) {
-        c.items.forEach(v => { v.unseen = false; });
-        c.unreadCount = 0;
-        channelsChanged = true;
-      }
-    });
-    if (channelsChanged) {
-      await store.set("channels", channels);
-    }
-  }
-
-  if (changed || channelsChanged) {
-    window.dispatchEvent(new CustomEvent('store-updated'));
-  }
 }
 
 export async function addOrUpdatePlaylist(playlist: PlaylistInfo) {
@@ -562,31 +461,6 @@ export async function loadLatestVideos(): Promise<VideoItem[]> {
   return allVideos.slice(0, 100);
 }
 
-// All unseen videos across every source, deduped and sorted newest-first (uncapped).
-export async function loadUnseenVideos(): Promise<VideoItem[]> {
-  const playlists = await loadPlaylists();
-  const channels = await loadChannels();
-
-  const seen = new Set<string>();
-  const allVideos: VideoItem[] = [];
-
-  for (const source of [...channels, ...playlists]) {
-    for (const video of source.items) {
-      if (seen.has(video.id)) continue;
-      seen.add(video.id);
-      if (video.unseen) {
-        allVideos.push({
-          ...video,
-          sourceTitle: video.sourceTitle || source.title,
-        });
-      }
-    }
-  }
-
-  allVideos.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
-  return allVideos;
-}
-
 export async function getVideoDescription(videoId: string): Promise<string> {
   const cached = await window.electron.descriptions.get(videoId);
   if (cached) return cached;
@@ -658,7 +532,6 @@ export async function loadFolderData(folderId: string): Promise<VideoListInfo | 
     id: folder.id,
     title: folder.name,
     lastUpdated: Date.now(),
-    unreadCount: items.filter((i) => i.unseen).length,
     items,
   };
 }

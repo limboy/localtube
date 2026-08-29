@@ -8,7 +8,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuBadge,
   SidebarHeader,
   SidebarRail,
   SidebarSeparator
@@ -23,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useMatch, useLocation } from "@tanstack/react-router";
-import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, CircleDot, Download, Upload, Cookie } from "lucide-react";
+import { Plus, Loader, RefreshCw, List, CircleUserRound, Settings, Check, Monitor, Sun, Moon, SunMoon, Pin, PinOff, BookmarkIcon, ChevronRight, Folder, FolderOpen, Search, History, Clock, Download, Upload, Cookie } from "lucide-react";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -65,9 +64,6 @@ import {
   addOrUpdatePlaylist,
   removePlaylist,
   removeChannel,
-  markPlaylistAsSeen,
-  markChannelAsSeen,
-  markFolderAsSeen,
   addOrUpdateChannel,
   loadSidebarData,
   loadFolders,
@@ -473,11 +469,6 @@ function PlaylistItem({ playlist, containerId, isFirstInContainer, dropIndicator
           </div>
         </div>
       </SidebarMenuButton>
-      {playlist.unreadCount > 0 && (
-        <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
-          {playlist.unreadCount}
-        </SidebarMenuBadge>
-      )}
     </SidebarMenuItem>
   );
 }
@@ -569,11 +560,6 @@ function ChannelItem({ channel, containerId, isFirstInContainer, dropIndicator, 
           </div>
         </div>
       </SidebarMenuButton>
-      {channel.unreadCount > 0 && (
-        <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
-          {channel.unreadCount}
-        </SidebarMenuBadge>
-      )}
     </SidebarMenuItem>
   );
 }
@@ -587,7 +573,6 @@ interface FolderItemProps {
   isFirstInContainer: boolean;
   dropIndicator?: "before" | "after";
   showEndDropIndicator: boolean;
-  unreadCount: number;
   isActive?: boolean;
   onContextMenu: (e: React.MouseEvent, folderId: string) => void;
   onToggleCollapse: (folderId: string, collapsed: boolean) => void;
@@ -604,7 +589,6 @@ function FolderItem({
   isFirstInContainer,
   dropIndicator,
   showEndDropIndicator,
-  unreadCount,
   isActive,
   onContextMenu,
   onToggleCollapse,
@@ -747,11 +731,6 @@ function FolderItem({
               <span className="line-clamp-1 font-normal flex-1">{folder.name}</span>
             )}
           </SidebarMenuButton>
-          {!isRenaming && unreadCount > 0 && (
-            <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
-              {unreadCount}
-            </SidebarMenuBadge>
-          )}
         </SidebarMenuItem>
         <CollapsibleContent>
           <SortableContext
@@ -814,7 +793,6 @@ export default function AppSidebar() {
   const [cookieOpen, setCookieOpen] = useState(false);
   const [playlists, setPlaylists] = useState<SourceMeta[]>([]);
   const [channels, setChannels] = useState<SourceMeta[]>([]);
-  const [unseenCount, setUnseenCount] = useState(0);
   const [folders, setFolders] = useState<FolderInfo[]>([]);
   const [sidebarOrder, setSidebarOrder] = useState<SidebarItem[]>([]);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
@@ -901,7 +879,6 @@ export default function AppSidebar() {
       const summary = await loadSidebarData();
       setPlaylists(summary.playlists);
       setChannels(summary.channels);
-      setUnseenCount(summary.unseenCount);
 
       const fData = await loadFolders();
       setFolders(fData);
@@ -924,16 +901,7 @@ export default function AppSidebar() {
 
   const menuHandlerRef = useRef<(eventId: string) => void>(() => {});
   menuHandlerRef.current = async (eventId: string) => {
-    if (eventId.startsWith("mark-playlist-seen-")) {
-      const playlistId = eventId.replace("mark-playlist-seen-", "");
-      await markPlaylistAsSeen(playlistId);
-    } else if (eventId.startsWith("mark-channel-seen-")) {
-      const channelId = eventId.replace("mark-channel-seen-", "");
-      await markChannelAsSeen(channelId);
-    } else if (eventId.startsWith("mark-folder-seen-")) {
-      const folderId = eventId.replace("mark-folder-seen-", "");
-      await markFolderAsSeen(folderId);
-    } else if (eventId.startsWith("view-playlist-in-browser-")) {
+    if (eventId.startsWith("view-playlist-in-browser-")) {
       const playlistId = eventId.replace("view-playlist-in-browser-", "");
       await window.electron.openUrl(`https://www.youtube.com/playlist?list=${playlistId}`);
     } else if (eventId.startsWith("view-channel-in-browser-")) {
@@ -1081,8 +1049,6 @@ export default function AppSidebar() {
         menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(playlistId, 'playlist') });
         menuItems.push({ type: "separator" });
       }
-      menuItems.push({ id: `mark-playlist-seen-${playlistId}`, label: "Mark as Seen" });
-      menuItems.push({ type: "separator" });
       menuItems.push({ id: `view-playlist-in-browser-${playlistId}`, label: "View In Browser" });
       menuItems.push({ type: "separator" });
       menuItems.push({ id: `delete-playlist-${playlistId}`, label: "Delete" });
@@ -1238,11 +1204,6 @@ export default function AppSidebar() {
     shouldThrow: false
   });
 
-  const unseenMatch = useMatch({
-    from: "/unseen",
-    shouldThrow: false
-  });
-
   const handleFolderClick = (folderId: string) => {
     navigate({
       to: "/folder/$folderId",
@@ -1271,8 +1232,6 @@ export default function AppSidebar() {
         menuItems.push({ label: "Move to Folder", submenu: buildMoveToFolderSubmenu(channelId, 'channel') });
         menuItems.push({ type: "separator" });
       }
-      menuItems.push({ id: `mark-channel-seen-${channelId}`, label: "Mark as Seen" });
-      menuItems.push({ type: "separator" });
       menuItems.push({ id: `view-channel-in-browser-${channelId}`, label: "View In Browser" });
       menuItems.push({ type: "separator" });
       menuItems.push({ id: `delete-channel-${channelId}`, label: "Delete" });
@@ -1325,8 +1284,6 @@ export default function AppSidebar() {
     event.stopPropagation();
     try {
       await window.electron.showContextMenu([
-        { id: `mark-folder-seen-${folderId}`, label: "Mark All as Seen" },
-        { type: "separator" },
         { id: `rename-folder-${folderId}`, label: "Rename" },
         { type: "separator" },
         { id: `delete-folder-${folderId}`, label: "Delete Folder" }
@@ -1633,29 +1590,6 @@ export default function AppSidebar() {
                           </div>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                      <SidebarMenuItem className="list-none w-full">
-                        <SidebarMenuButton
-                          asChild
-                          className={cn(
-                            "w-full text-left cursor-default hover:bg-sidebar-accent text-sidebar-foreground shrink-0",
-                            unseenMatch ? "bg-sidebar-accent" : ""
-                          )}
-                        >
-                          <div
-                            onClick={() => navigate({ to: '/unseen' })}
-                            className="flex items-center gap-2 w-full cursor-default"
-                          >
-                            <CircleDot size={16} className="shrink-0" />
-                            <span>Unseen</span>
-                          </div>
-                        </SidebarMenuButton>
-                        {unseenCount > 0 && (
-                          <SidebarMenuBadge className="bg-transparent text-sidebar-foreground/50 mr-0.5">
-                            {unseenCount}
-                          </SidebarMenuBadge>
-                        )}
-                      </SidebarMenuItem>
-
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
@@ -1723,11 +1657,6 @@ export default function AppSidebar() {
                         if (entry.type === 'folder') {
                           const folder = foldersMap.get(entry.id);
                           if (!folder) return null;
-                          const folderUnread = entry.children.reduce((sum, child) => {
-                            if (child.type === 'playlist') return sum + (playlistsMap.get(child.id)?.unreadCount ?? 0);
-                            if (child.type === 'channel') return sum + (channelsMap.get(child.id)?.unreadCount ?? 0);
-                            return sum;
-                          }, 0);
                           return (
                             <FolderItem
                               key={`folder-${entry.id}`}
@@ -1736,7 +1665,6 @@ export default function AppSidebar() {
                               isFirstInContainer={entryIndex === 0}
                               dropIndicator={dropIndicatorFor(TOP_LEVEL_SIDEBAR_CONTAINER, "folder", entry.id)}
                               showEndDropIndicator={showsEndDropIndicator(sidebarFolderContainerId(entry.id))}
-                              unreadCount={folderUnread}
                               isActive={folderMatch?.params.folderId === folder.id}
                               onContextMenu={folderContextMenuHandler}
                               onToggleCollapse={handleFolderToggleCollapse}

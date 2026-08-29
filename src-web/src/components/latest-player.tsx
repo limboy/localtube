@@ -1,7 +1,6 @@
 import {
   cn,
   loadLatestVideos,
-  loadUnseenVideos,
   getVideoDescription,
   loadPlaybackPosition,
   savePlaybackPosition,
@@ -10,8 +9,6 @@ import {
   saveBookmarks,
   loadSkippedVideos,
   saveSkippedVideos,
-  markVideoAsSeen,
-  markAllUnseenAsSeen,
 } from "@/lib/utils";
 import { VideoItem, BookmarkData } from "@/types";
 
@@ -25,17 +22,13 @@ import { SidebarProvider, Sidebar, SidebarContent, SidebarRail, SidebarTrigger }
 import { PanelRight } from "lucide-react";
 import { UpdateIndicator } from "./update-indicator";
 import { formatRelativeTime } from "@/lib/time-utils";
-import { Button } from "@/components/ui/button";
 
 export default function LatestPlayer({
-  onlyUnseen = false,
   title = "Latest",
 }: {
-  onlyUnseen?: boolean;
   title?: string;
 } = {}) {
   const [videos, setVideos] = useState<VideoItem[]>([]);
-  const [unseenCount, setUnseenCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
@@ -61,9 +54,8 @@ export default function LatestPlayer({
   useEffect(() => {
     async function fetchVideos() {
       setIsLoading(true);
-      const data = onlyUnseen ? await loadUnseenVideos() : await loadLatestVideos();
+      const data = await loadLatestVideos();
       setVideos(data);
-      if (onlyUnseen) setUnseenCount(data.length);
       if (data.length > 0 && !currentVideoId) {
         await switchVideo(data[0].id);
       }
@@ -81,16 +73,7 @@ export default function LatestPlayer({
           loadBookmarks(),
           loadSkippedVideos(),
         ]);
-        if (onlyUnseen) {
-          // Keep the list membership stable for the session so the video being
-          // watched doesn't vanish when it gets marked seen — just refresh the dots.
-          const unseen = await loadUnseenVideos();
-          setUnseenCount(unseen.length);
-          const unseenIds = new Set(unseen.map((v) => v.id));
-          setVideos((prev) => prev.map((v) => ({ ...v, unseen: unseenIds.has(v.id) })));
-        } else {
-          setVideos(await loadLatestVideos());
-        }
+        setVideos(await loadLatestVideos());
         setBookmarkedVideos(bookmarks);
         setSkippedVideos(skipped);
       }, 50);
@@ -110,7 +93,6 @@ export default function LatestPlayer({
       if (nextIdx < videos.length) {
         switchVideo(videos[nextIdx].id);
         setShouldAutoPlay(true);
-        markVideoAsSeen(videos[nextIdx].id);
       }
     };
   }, [currentVideoId, videos]);
@@ -187,16 +169,6 @@ export default function LatestPlayer({
     await saveSkippedVideos(newSkipped);
   };
 
-  const handleMarkAllAsSeen = async () => {
-    if (unseenCount === 0) return;
-
-    await markAllUnseenAsSeen();
-    setUnseenCount(0);
-    setVideos([]);
-    setShouldAutoPlay(false);
-    await switchVideo(null);
-  };
-
   const displayVideos = videos.map(video => ({
     ...video,
     isSkipped: skippedVideos.has(video.id),
@@ -225,7 +197,7 @@ export default function LatestPlayer({
           ) : !currentVideoId ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-muted-foreground">
-                <p>{onlyUnseen ? "You’re all caught up." : "No videos yet. Subscribe to channels or playlists first."}</p>
+                <p>No videos yet. Subscribe to channels or playlists first.</p>
               </div>
             </div>
           ) : (
@@ -289,16 +261,6 @@ export default function LatestPlayer({
                   </span>
                 )}
               </h2>
-              {onlyUnseen && unseenCount > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 shadow-none shrink-0 px-2 text-xs [app-region:no-drag] [-webkit-app-region:no-drag]"
-                  onClick={handleMarkAllAsSeen}
-                >
-                  Mark as Seen
-                </Button>
-              )}
             </div>
           </div>
 
@@ -329,7 +291,6 @@ export default function LatestPlayer({
                     onClick={() => {
                       switchVideo(video.id);
                       setShouldAutoPlay(true);
-                      markVideoAsSeen(video.id);
                     }}
                   >
                     <div className="w-24 h-14 flex-none bg-muted rounded overflow-hidden relative">
@@ -358,9 +319,6 @@ export default function LatestPlayer({
                               <span className="inline-block truncate min-w-0 flex-1">{video.sourceTitle}</span>
                             </>
                           ) : null}
-                          {video.unseen && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-700 dark:bg-blue-200 shrink-0 mt-0.5" />
-                          )}
                         </div>
                         <div className="flex items-center gap-0.5 shrink-0">
                           {video.isSkipped ? (

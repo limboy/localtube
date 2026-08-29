@@ -14,7 +14,6 @@ import {
   loadPlaybackPosition,
   savePlaybackPosition,
   clearPlaybackPosition,
-  markVideoAsSeen,
 } from "@/lib/utils";
 import { VideoListInfo, VideoItem, BookmarkData } from "@/types";
 
@@ -157,7 +156,6 @@ export default function VideoListPlayer({
             id: "bookmarks",
             title: "Bookmarked Videos",
             lastUpdated: Date.now(),
-            unreadCount: 0,
             items: bookmarkItems
           };
           setVideoList(videoList);
@@ -312,7 +310,6 @@ export default function VideoListPlayer({
         }
         if (nextIdx >= 0 && nextIdx < shuffledItems.length) {
           switchVideo(shuffledItems[nextIdx].id);
-          markVideoAsSeen(shuffledItems[nextIdx].id);
         }
       } else {
         const items = processVideoList(videolist.items, bookmarkedVideos, showBookmarkedOnly);
@@ -326,7 +323,6 @@ export default function VideoListPlayer({
         }
         if (nextIndex >= 0 && nextIndex < items.length) {
           switchVideo(items[nextIndex].id);
-          markVideoAsSeen(items[nextIndex].id);
         }
       }
     };
@@ -558,7 +554,6 @@ export default function VideoListPlayer({
                         switchVideo(video.id);
                       }
                       setShouldAutoPlay(true);
-                      markVideoAsSeen(video.id);
                     }}
                   >
                     <div className="w-24 h-14 flex-none bg-muted rounded overflow-hidden relative">
@@ -587,9 +582,6 @@ export default function VideoListPlayer({
                               <span className="inline-block truncate min-w-0 flex-1">{video.sourceTitle}</span>
                             </>
                           ) : null}
-                          {video.unseen && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-700 dark:bg-blue-200 shrink-0 mt-0.5" />
-                          )}
                         </div>
                           <div className="flex items-center gap-0.5 shrink-0">
                             {video.isSkipped ? (

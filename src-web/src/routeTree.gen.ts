@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UnseenRouteImport } from './routes/unseen'
 import { Route as LatestRouteImport } from './routes/latest'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as BookmarksRouteImport } from './routes/bookmarks'
@@ -20,11 +19,6 @@ import { Route as PlaylistPlaylistIdRouteImport } from './routes/playlist.$playl
 import { Route as FolderFolderIdRouteImport } from './routes/folder.$folderId'
 import { Route as ChannelChannelIdRouteImport } from './routes/channel.$channelId'
 
-const UnseenRoute = UnseenRouteImport.update({
-  id: '/unseen',
-  path: '/unseen',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LatestRoute = LatestRouteImport.update({
   id: '/latest',
   path: '/latest',
@@ -76,7 +70,6 @@ export interface FileRoutesByFullPath {
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
   '/latest': typeof LatestRoute
-  '/unseen': typeof UnseenRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
   '/folder/$folderId': typeof FolderFolderIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
@@ -88,7 +81,6 @@ export interface FileRoutesByTo {
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
   '/latest': typeof LatestRoute
-  '/unseen': typeof UnseenRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
   '/folder/$folderId': typeof FolderFolderIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
@@ -101,7 +93,6 @@ export interface FileRoutesById {
   '/bookmarks': typeof BookmarksRoute
   '/history': typeof HistoryRoute
   '/latest': typeof LatestRoute
-  '/unseen': typeof UnseenRoute
   '/channel/$channelId': typeof ChannelChannelIdRoute
   '/folder/$folderId': typeof FolderFolderIdRoute
   '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
@@ -115,7 +106,6 @@ export interface FileRouteTypes {
     | '/bookmarks'
     | '/history'
     | '/latest'
-    | '/unseen'
     | '/channel/$channelId'
     | '/folder/$folderId'
     | '/playlist/$playlistId'
@@ -127,7 +117,6 @@ export interface FileRouteTypes {
     | '/bookmarks'
     | '/history'
     | '/latest'
-    | '/unseen'
     | '/channel/$channelId'
     | '/folder/$folderId'
     | '/playlist/$playlistId'
@@ -139,7 +128,6 @@ export interface FileRouteTypes {
     | '/bookmarks'
     | '/history'
     | '/latest'
-    | '/unseen'
     | '/channel/$channelId'
     | '/folder/$folderId'
     | '/playlist/$playlistId'
@@ -152,7 +140,6 @@ export interface RootRouteChildren {
   BookmarksRoute: typeof BookmarksRoute
   HistoryRoute: typeof HistoryRoute
   LatestRoute: typeof LatestRoute
-  UnseenRoute: typeof UnseenRoute
   ChannelChannelIdRoute: typeof ChannelChannelIdRoute
   FolderFolderIdRoute: typeof FolderFolderIdRoute
   PlaylistPlaylistIdRoute: typeof PlaylistPlaylistIdRoute
@@ -162,13 +149,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/unseen': {
-      id: '/unseen'
-      path: '/unseen'
-      fullPath: '/unseen'
-      preLoaderRoute: typeof UnseenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/latest': {
       id: '/latest'
       path: '/latest'
@@ -240,7 +220,6 @@ const rootRouteChildren: RootRouteChildren = {
   BookmarksRoute: BookmarksRoute,
   HistoryRoute: HistoryRoute,
   LatestRoute: LatestRoute,
-  UnseenRoute: UnseenRoute,
   ChannelChannelIdRoute: ChannelChannelIdRoute,
   FolderFolderIdRoute: FolderFolderIdRoute,
   PlaylistPlaylistIdRoute: PlaylistPlaylistIdRoute,

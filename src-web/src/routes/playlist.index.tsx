@@ -73,11 +73,6 @@ function RouteComponent() {
                       <List size={48} className="text-muted-foreground/20" />
                     </div>
                   )}
-                  {playlist.unreadCount > 0 && (
-                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                      {playlist.unreadCount}
-                    </div>
-                  )}
                 </div>
                 <h3 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                   {playlist.title}

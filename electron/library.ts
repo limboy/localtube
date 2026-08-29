@@ -25,7 +25,6 @@ function toMeta(source: StoredSource): SourceMeta {
     id: source.id,
     title: source.title,
     thumbnail: source.thumbnail,
-    unreadCount: source.unreadCount,
     lastUpdated: source.lastUpdated,
   };
 }
@@ -37,61 +36,13 @@ export function getSource(kind: SourceKind, id: string): StoredSource | null {
 /**
  * Everything the sidebar renders, without the video arrays. Reading the full
  * library here meant shipping megabytes over IPC on every store update, purely
- * to show a title and an unread badge.
+ * to show a title and a thumbnail.
  */
 export function getSidebarData(): SidebarData {
-  const playlists = read("playlist");
-  const channels = read("channel");
-
-  const seen = new Set<string>();
-  let unseenCount = 0;
-  for (const source of [...channels, ...playlists]) {
-    for (const video of source.items ?? []) {
-      if (seen.has(video.id)) continue;
-      seen.add(video.id);
-      if (video.unseen) unseenCount++;
-    }
-  }
-
   return {
-    playlists: playlists.map(toMeta),
-    channels: channels.map(toMeta),
-    unseenCount,
+    playlists: read("playlist").map(toMeta),
+    channels: read("channel").map(toMeta),
   };
-}
-
-/**
- * Clears the unseen flag for one video across every source that contains it.
- * Runs in main so a click does not round-trip the whole library twice.
- */
-export function markVideoSeen(videoId: string): boolean {
-  let changed = false;
-
-  for (const kind of ["playlist", "channel"] as const) {
-    const sources = read(kind);
-    let touched = false;
-
-    for (const source of sources) {
-      let hit = false;
-      for (const video of source.items ?? []) {
-        if (video.id === videoId && video.unseen) {
-          video.unseen = false;
-          hit = true;
-        }
-      }
-      if (hit) {
-        source.unreadCount = (source.items ?? []).filter((video) => video.unseen).length;
-        touched = true;
-      }
-    }
-
-    if (touched) {
-      appSet(KEY_BY_KIND[kind], sources);
-      changed = true;
-    }
-  }
-
-  return changed;
 }
 
 // Thumbnail URLs come back from YouTube carrying a long signed query string.
@@ -105,8 +56,9 @@ export function normalizeThumbnail(url: string | undefined): string {
 }
 
 /**
- * One-time cleanup of the stored library: inline avatars move to disk and
- * thumbnail URLs shrink to their canonical form. Both rewrite the same two
+ * One-time cleanup of the stored library: inline avatars move to disk,
+ * thumbnail URLs shrink to their canonical form, and leftovers from the
+ * removed unseen/unread tracking are dropped. All three rewrite the same two
  * arrays, so they share a single pass and a single write.
  */
 export function migrateLibrary() {
@@ -119,6 +71,11 @@ export function migrateLibrary() {
     if (!Array.isArray(sources)) continue;
 
     for (const source of sources as StoredSource[]) {
+      if ("unreadCount" in source) {
+        delete (source as Record<string, unknown>).unreadCount;
+        changed = true;
+      }
+
       if (kind === "channel" && source.thumbnail?.startsWith("data:")) {
         const moved = migrateDataUrlAvatar(source.id, source.thumbnail);
         if (moved) {
@@ -136,6 +93,11 @@ export function migrateLibrary() {
       }
 
       for (const video of source.items ?? []) {
+        if ("unseen" in video) {
+          delete (video as Record<string, unknown>).unseen;
+          changed = true;
+        }
+
         const normalized = normalizeThumbnail(video.thumbnail);
         if (normalized !== video.thumbnail) {
           video.thumbnail = normalized;
