@@ -3,17 +3,6 @@
 All notable changes to this project are documented here.
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) — run `npm run changelog` to regenerate.
 
-## [Unreleased](https://github.com/limboy/localtube/compare/v1.2.24...HEAD)
-
-### Styles
-
-- update primary color palette ([43335f1](https://github.com/limboy/localtube/commit/43335f16a794afe9ea06d63b9d965bea0b83d521))
-
-### Other Changes
-
-- Move UpdateIndicator to sidebar and extract date parsing ([bf8e064](https://github.com/limboy/localtube/commit/bf8e064885ec45bbee30548950c6b6446396a345))
-- Remove unseen video and unread tracking ([011fc8c](https://github.com/limboy/localtube/commit/011fc8c53fb10a034a45ca04006fdff0ae26c392))
-
 ## [v1.2.24](https://github.com/limboy/localtube/compare/v1.2.23...v1.2.24) - 2026-08-29
 
 ### Documentation
